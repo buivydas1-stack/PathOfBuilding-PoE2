@@ -1130,7 +1130,7 @@ function PassiveTreeViewClass:Draw(build, viewPort, inputEvents)
 				SetDrawColor(1, 1, 1)
 			end
 		end
-		if self.searchStrResults[nodeId] then
+		if self.searchStrResults[nodeId] or (self.powerReportHighlight == nodeId and GetTime() < (self.powerReportHighlightUntil or 0)) then
 			-- Node matches the search string, show the highlight circle
 			SetDrawLayer(nil, 30)
 			local rgbColor = rgbColor or {1, 0, 0}

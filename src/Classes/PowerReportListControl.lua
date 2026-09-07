@@ -8,7 +8,7 @@ local t_insert = table.insert
 local t_remove = table.remove
 local t_sort = table.sort
 
-local PowerReportListClass = newClass("PowerReportListControl", "ListControl", function(self, anchor, rect, nodeSelectCallback)
+local PowerReportListClass = newClass("PowerReportListControl", "ListControl", function(self, anchor, rect, nodeSelectCallback, nodeIgnoreCallback, ignoredNodes)
 	self.ListControl(anchor, rect, 16, "VERTICAL", false)
 
 	local width = rect[3]
@@ -22,6 +22,8 @@ local PowerReportListClass = newClass("PowerReportListControl", "ListControl", f
 	}
 	self.colLabels = true
 	self.nodeSelectCallback = nodeSelectCallback
+	self.nodeIgnoreCallback = nodeIgnoreCallback
+	self.ignoredNodes = ignoredNodes or { }
 	self.showClusters = false
 	self.allocated = false
 	self.label = "Building Tree..."
@@ -41,15 +43,19 @@ function PowerReportListClass:SetReport(stat, report)
 	self.originalList = report or {}
 
 	if stat and stat.stat then
-		self.label = report and "Click to focus node on tree" or "Building Tree..."
+		self.label = report and "Click to focus; right-click to ignore" or "Building Tree..."
 	else
 		self.label = "^7\""..self.powerColumn.label.."\" not supported.  Select a specific stat from the dropdown."
 	end
 
 	self:ReList()
+	if self.sortColumn then
+		self:ReSort(self.sortColumn)
+	end
 end
 
 function PowerReportListClass:ReSort(colIndex)
+	self.sortColumn = colIndex
 	-- Reverse power sort for allocated because it uses negative numbers
 	local compare = self.allocated and 
 		function(a, b) return a < b end
@@ -91,6 +97,7 @@ end
 
 function PowerReportListClass:ReList()
 	self.list = { }
+	self.selIndex, self.selValue = nil, nil
 	if not self.originalList then
 		return
 	end
@@ -104,10 +111,40 @@ function PowerReportListClass:ReList()
 			insert = item.allocated
 		end
 
-		if insert then
+		if insert and not self.ignoredNodes[item.id] then
 			t_insert(self.list, item)
 		end
 	end
+	local region = self:GetRowRegion()
+	self.controls.scrollBarV:SetContentDimension(#self.list * self.rowHeight, region.height)
+end
+
+function PowerReportListClass:RefreshIgnoredNodes()
+	-- Node power is unchanged: reuse the complete report and preserve the chosen sort.
+	self:ReList()
+	if self.sortColumn then
+		self:ReSort(self.sortColumn)
+	end
+end
+
+function PowerReportListClass:OnKeyDown(key, doubleClick)
+	if key ~= "RIGHTBUTTON" then
+		return self.ListControl.OnKeyDown(self, key, doubleClick)
+	end
+	if not self:IsShown() or not self:IsEnabled() or not self:IsMouseOver() or self:GetMouseOverControl() then
+		return
+	end
+	local x, y = self:GetPos()
+	local cursorX, cursorY = GetCursorPos()
+	local region = self:GetRowRegion()
+	if cursorX >= x + region.x and cursorX < x + region.x + region.width and cursorY >= y + region.y and cursorY < y + region.y + region.height then
+		local index = math.floor((cursorY - y - region.y + self.controls.scrollBarV.offset) / self.rowHeight) + 1
+		local report = self.list[index]
+		if report and report.id and self.nodeIgnoreCallback then
+			self.nodeIgnoreCallback(report)
+		end
+	end
+	return self
 end
 
 function PowerReportListClass:OnSelClick(index, report, doubleClick)

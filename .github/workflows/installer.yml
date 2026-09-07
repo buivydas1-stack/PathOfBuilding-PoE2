@@ -12,6 +12,7 @@ env:
   GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 jobs:
   release:
+    if: github.repository == 'PathOfBuildingCommunity/PathOfBuilding-PoE2'
     runs-on: windows-latest
     steps:
             - name: Checkout

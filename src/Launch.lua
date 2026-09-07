@@ -19,6 +19,11 @@ collectgarbage("setpause", 400)
 
 function launch:OnInit()
 	self.devMode = false
+	local customBuildFile = io.open("custom.cfg", "r")
+	self.customBuild = customBuildFile ~= nil
+	if customBuildFile then
+		customBuildFile:close()
+	end
 	self.installedMode = false
 	self.versionNumber = "?"
 	self.versionBranch = "?"
@@ -333,6 +338,14 @@ function launch:ApplyUpdate(mode)
 end
 
 function launch:CheckForUpdate(inBackground)
+	if self.customBuild then
+		-- Stable upstream updates would overwrite this custom build's Lua files.
+		self.lastUpdateCheck = GetTime()
+		if not inBackground then
+			OpenURL("https://github.com/buivydas1-stack/PathOfBuilding-PoE2/releases")
+		end
+		return
+	end
 	if self.updateCheckRunning then
 		return
 	end

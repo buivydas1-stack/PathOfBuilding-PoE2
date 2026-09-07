@@ -35,6 +35,8 @@ local TreeTabClass = newClass("TreeTab", "ControlHost", function(self, build)
 	self.ControlHost()
 
 	self.build = build
+	-- Shared by every tree in this build; keys are passive node IDs, values are fallback names.
+	self.ignoredPowerNodes = { }
 	self.isComparing = false;
 	self.isCustomMaxDepth = false;
 
@@ -276,8 +278,13 @@ local TreeTabClass = newClass("TreeTab", "ControlHost", function(self, build)
 			self.jumpToX = selectedNode.x
 			self.jumpToY = selectedNode.y
 		end
-	end)
+	end, function(node)
+		self:IgnorePowerNode(node)
+	end, self.ignoredPowerNodes)
 	self.controls.powerReportList.shown = false
+	self.controls.powerReportList.controls.ignored = new("ButtonControl", { "RIGHT", self.controls.powerReportList.controls.filterSelect, "LEFT" }, { -8, 0, 110, 20 },
+		function() return "Ignored ("..self:GetIgnoredPowerNodeCount()..")" end,
+		function() self:OpenIgnoredPowerNodes() end)
 	-- Progress callback from the CalcsTab power builder coroutine
 	self.powerBuilderToastActive = false
 	self.lastProgressToastUpdate = 0
@@ -486,6 +493,7 @@ function TreeTabClass:GetSpecList()
 end
 
 function TreeTabClass:Load(xml, dbFileName)
+	wipeTable(self.ignoredPowerNodes)
 	self.specList = { }
 	if xml.elem == "Spec" then
 		-- Import single spec from old build
@@ -497,7 +505,16 @@ function TreeTabClass:Load(xml, dbFileName)
 	end
 	for _, node in pairs(xml) do
 		if type(node) == "table" then
-			if node.elem == "Spec" then
+			if node.elem == "IgnoredPowerNodes" then
+				for _, entry in ipairs(node) do
+					if type(entry) == "table" and entry.elem == "Node" and entry.attrib then
+						local id = tonumber(entry.attrib.id)
+						if id and id >= 0 and id <= 4294967295 and id == m_floor(id) then
+							self.ignoredPowerNodes[id] = entry.attrib.name or ("Node "..id)
+						end
+					end
+				end
+			elseif node.elem == "Spec" then
 				if node.attrib.treeVersion and not treeVersions[node.attrib.treeVersion] then
 					main:OpenMessagePopup("Unknown Passive Tree Version", "The build you are trying to load uses an unrecognised version of the passive skill tree.\nYou may need to update the program before loading this build.")
 					return true
@@ -531,6 +548,123 @@ function TreeTabClass:Save(xml)
 		spec:Save(child)
 		t_insert(xml, child)
 	end
+	if next(self.ignoredPowerNodes) then
+		local ignored = { elem = "IgnoredPowerNodes" }
+		local ids = { }
+		for id in pairs(self.ignoredPowerNodes) do
+			t_insert(ids, id)
+		end
+		t_sort(ids)
+		for _, id in ipairs(ids) do
+			t_insert(ignored, { elem = "Node", attrib = { id = tostring(id), name = self.ignoredPowerNodes[id] } })
+		end
+		t_insert(xml, ignored)
+	end
+end
+
+function TreeTabClass:GetIgnoredPowerNodeCount()
+	local count = 0
+	for _ in pairs(self.ignoredPowerNodes) do
+		count = count + 1
+	end
+	return count
+end
+
+function TreeTabClass:IgnorePowerNode(node)
+	if not node.id or self.ignoredPowerNodes[node.id] then
+		return
+	end
+	self.ignoredPowerNodes[node.id] = node.name or node.dn or ("Node "..node.id)
+	self.modFlag = true
+	self.controls.powerReportList:RefreshIgnoredNodes()
+end
+
+function TreeTabClass:RestorePowerNode(id)
+	if not self.ignoredPowerNodes[id] then
+		return
+	end
+	self.ignoredPowerNodes[id] = nil
+	self.modFlag = true
+	self.controls.powerReportList:RefreshIgnoredNodes()
+end
+
+function TreeTabClass:RestoreAllPowerNodes()
+	if not next(self.ignoredPowerNodes) then
+		return
+	end
+	wipeTable(self.ignoredPowerNodes)
+	self.modFlag = true
+	self.controls.powerReportList:RefreshIgnoredNodes()
+end
+
+function TreeTabClass:GetIgnoredPowerNodeList()
+	local list = { }
+	for id, name in pairs(self.ignoredPowerNodes) do
+		local node = self.build.spec.nodes[id]
+		t_insert(list, { id = id, name = node and node.dn or name, node = node })
+	end
+	t_sort(list, function(a, b)
+		if a.name == b.name then
+			return a.id < b.id
+		end
+		return a.name < b.name
+	end)
+	return list
+end
+
+function TreeTabClass:FocusIgnoredPowerNode(id)
+	local node = self.build.spec.nodes[id]
+	if not node or not node.x then
+		return false
+	end
+	self.jumpToNode, self.jumpToX, self.jumpToY = true, node.x, node.y
+	self.viewer.powerReportHighlight = id
+	self.viewer.powerReportHighlightUntil = GetTime() + 5000
+	return true
+end
+
+function TreeTabClass:OpenIgnoredPowerNodes()
+	local controls = { }
+	local anchor = { "TOPLEFT", nil, "TOPLEFT" }
+	local list = new("ListControl", anchor, { 10, 30, 580, 260 }, 20, "VERTICAL", false, self:GetIgnoredPowerNodeList())
+	controls.list = list
+	list.colList = { { label = "Node name", width = 450 }, { label = "Node ID", width = 105 } }
+	list.colLabels = true
+	list.GetRowValue = function(_, column, index, entry)
+		return column == 1 and entry.name or tostring(entry.id)
+	end
+	local function refresh()
+		list.list = self:GetIgnoredPowerNodeList()
+		list.selIndex, list.selValue = nil, nil
+		if #list.list > 0 then
+			list:SelectIndex(1)
+		end
+	end
+	controls.focus = new("ButtonControl", anchor, { 10, 305, 140, 20 }, "Focus on tree", function()
+		if list.selValue and self:FocusIgnoredPowerNode(list.selValue.id) then
+			main:ClosePopup()
+		end
+	end)
+	controls.focus.enabled = function() return list.selValue and list.selValue.node and list.selValue.node.x ~= nil end
+	controls.focus.tooltipText = "Focus and highlight the selected node. Unavailable if the node is absent from the active tree."
+	controls.restore = new("ButtonControl", anchor, { 160, 305, 140, 20 }, "Restore / Unignore", function()
+		if list.selValue then
+			self:RestorePowerNode(list.selValue.id)
+			refresh()
+		end
+	end)
+	controls.restore.enabled = function() return list.selValue ~= nil end
+	controls.restoreAll = new("ButtonControl", anchor, { 310, 305, 140, 20 }, "Restore All", function()
+		self:RestoreAllPowerNodes()
+		refresh()
+	end)
+	controls.restoreAll.enabled = function() return next(self.ignoredPowerNodes) ~= nil end
+	controls.close = new("ButtonControl", anchor, { 460, 305, 130, 20 }, "Close", function() main:ClosePopup() end)
+	controls.empty = new("LabelControl", anchor, { 10, 8, 0, 16 }, function()
+		return #list.list == 0 and "No ignored nodes in this build." or "Select a node to focus or restore it."
+	end)
+	refresh()
+	main:OpenPopup(600, 340, "Ignored passive nodes", controls)
 end
 
 function TreeTabClass:SetActiveSpec(specId, deferSync)
