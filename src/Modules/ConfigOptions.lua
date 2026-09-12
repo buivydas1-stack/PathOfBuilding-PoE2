@@ -986,7 +986,15 @@ Huge sets the radius to 11.
 		modList:NewMod("MinionModifier", "LIST", { mod = modLib.createMod("Condition:LeechingEnergyShield", "FLAG", true, "Config") }, "Config")
 		modList:NewMod("MinionModifier", "LIST", { mod = modLib.createMod("Condition:Leeching", "FLAG", true, "Config") }, "Config")
 	end },
-	{ var = "conditionUsingFlask", type = "check", label = "Do you have a Flask active?", ifCond = "UsingFlask", tooltip = "This is automatically enabled if you have a flask active,\nbut you can use this option to force it if necessary.", apply = function(val, modList, enemyModList)
+	{ var = "conditionUsingFlask", type = "check", label = "Do you have a Flask active?", ifCond = "UsingFlask", showIf = function(build)
+		for _, slot in ipairs(build.itemsTab.orderedSlots) do
+			local item = build.itemsTab.items[slot.selItemId]
+			if item and item.type == "Flask" and item.title == "Lavianga's Spirits" then
+				return true
+			end
+		end
+		return false
+	end, tooltip = "This is automatically enabled if you have a flask active,\nbut you can use this option to force it if necessary.\nShown when Lavianga's Spirits is equipped so you can evaluate Flask-effect passives.", apply = function(val, modList, enemyModList)
 		modList:NewMod("Condition:UsingFlask", "FLAG", true, "Config", { type = "Condition", var = "Combat" })
 	end },
 	{ var = "conditionNoLifeFlaskUsesLeft", type = "check", label = "Are you out of Life Flask uses?", ifCond = "NoLifeFlaskUsesLeft", tooltip = "This is automatically enabled if you have a flask active,\nbut you can use this option to force it if necessary.", apply = function(val, modList, enemyModList)

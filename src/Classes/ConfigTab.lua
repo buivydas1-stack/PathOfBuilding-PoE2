@@ -217,6 +217,10 @@ local ConfigTabClass = newClass("ConfigTab", "UndoHandler", "ControlHost", "Cont
 				if not searchMatch(varData) then
 					return false
 				end
+				-- Some equipped items make a condition relevant before any passive uses it.
+				if varData.showIf and varData.showIf(self.build) then
+					return true
+				end
 
 				for _, shownFunc in ipairs(shownFuncs) do
 					if not shownFunc() and not isShowAllConfig(varData) then

@@ -12,7 +12,7 @@ $outputPath = [IO.Path]::GetFullPath($OutputDirectory)
 $portablePath = Join-Path $outputPath 'PathOfBuilding-PoE2-v0.23.1-custom.1-Portable'
 New-Item -ItemType Directory -Path $portablePath -Force | Out-Null
 Expand-Archive -LiteralPath $UpstreamZip -DestinationPath $portablePath
-$patches = @('Classes/PowerReportListControl.lua', 'Classes/TreeTab.lua', 'Classes/PassiveTreeView.lua', 'Launch.lua', 'Modules/Main.lua')
+$patches = @('Classes/PowerReportListControl.lua', 'Classes/TreeTab.lua', 'Classes/PassiveTreeView.lua', 'Classes/ConfigTab.lua', 'Modules/ConfigOptions.lua', 'Launch.lua', 'Modules/Main.lua')
 foreach ($relative in $patches) {
     Copy-Item -LiteralPath (Join-Path $repoPath "src/$relative") -Destination (Join-Path $portablePath $relative)
 }

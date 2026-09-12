@@ -177,4 +177,27 @@ check("custom portable update checks cannot overwrite the feature", function()
 	launch.customBuild, OpenURL = oldCustom, oldOpenURL
 end)
 
-print(string.format("%d custom Power Report functional scenarios passed", passed))
+check("Lavianga exposes flask configuration before allocating flask passives", function()
+	newBuild()
+	local config = build.configTab
+	local control = config.varControls.conditionUsingFlask
+	local input = config.configSets[config.activeConfigSetId].input
+	assert(not control:IsShown(), "Unused flask condition should normally be hidden")
+	local item = new("Item", "Rarity: UNIQUE\nLavianga's Spirits\nGargantuan Mana Flask\nThis Flask cannot be Used but applies its Effect constantly\n75% reduced Amount Recovered")
+	build.itemsTab:AddItem(item, true)
+	assert(not control:IsShown(), "An unequipped item must not expose the option")
+	local slot = build.itemsTab.slots["Flask 2"]
+	slot.selItemId = item.id
+	assert(control:IsShown(), "Equipped Lavianga must expose the unchecked option")
+	assert(not input.conditionUsingFlask, "Visibility must not change the user's setting")
+	input.conditionUsingFlask = true
+	assert(not control.label():find(colorCodes.NEGATIVE, 1, true), "Equipped Lavianga must not show an invalid warning")
+	slot.selItemId = 0
+	assert(control.label():find(colorCodes.NEGATIVE, 1, true), "Removing Lavianga should restore normal validation")
+	input.conditionUsingFlask = false
+	assert(not control:IsShown())
+	build.calcsTab.mainEnv.conditionsUsed.UsingFlask = { }
+	assert(control:IsShown(), "Existing flask-dependent modifiers still expose the option")
+end)
+
+print(string.format("%d custom functional scenarios passed", passed))
