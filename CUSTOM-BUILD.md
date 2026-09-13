@@ -10,6 +10,8 @@ Based on the official Path of Building 2 **v0.23.1** release.
 - Focus closes the popup, centers the active tree, and highlights the node for five seconds. Nodes absent from the active tree remain listed and restorable.
 - Ignoring and restoring immediately refresh the full calculated candidate list, retaining the current report filter and sort. Fresh calculations also respect the ignored IDs.
 - Save the build normally. Ignored IDs and fallback names are saved inside its `Tree/IgnoredPowerNodes` XML section and shared by all tree variants of that build. They do not affect allocations, paths, calculation values, or other builds.
+- Power Reports calculate the Full DPS roll-up only for the Full DPS metric. Hit DPS reports omit EHP estimates while retaining basic defence stats; other report metrics and normal tree tooltips keep their required calculations. Node comparisons use fresh calculation environments.
+- Report generation yields between nodes after approximately 25 ms of work, retaining the existing progress indicator. A single calculation can exceed that interval. No runtime speedup has been benchmarked.
 
 ## Portable version
 
@@ -31,6 +33,6 @@ Keep upstream branches clean. Review new upstream releases on a temporary integr
 
 ## Verification and packaging
 
-Run `tools/Test-CustomPowerReport.ps1` from Windows PowerShell or PowerShell 7. It uses the upstream LuaJIT DLL and headless wrapper for functional checks, including actual mouse handlers, XML round-trips, popup bounds/actions, stale node IDs, and update protection.
+Run `tools/Test-CustomPowerReport.ps1` from Windows PowerShell or PowerShell 7. It uses the upstream LuaJIT DLL and headless wrapper for functional checks, including actual mouse handlers, XML round-trips, popup bounds/actions, stale node IDs, and update protection. Calculation checks compare player/minion node and path results with complete calculations, switch between report metrics, verify complete tooltips and Full DPS fallback, and exercise cooperative scheduling with a simulated clock.
 
 Run `tools/Build-CustomPortable.ps1 -UpstreamZip <official-v0.23.1-portable.zip> -OutputDirectory <new-empty-output-directory>`. The script validates the pinned upstream ZIP checksum, overlays the custom Lua files, verifies all other upstream files byte-for-byte, and creates a ZIP with SHA-256 and provenance metadata. When upgrading upstream, update the pinned release and checksum after review.

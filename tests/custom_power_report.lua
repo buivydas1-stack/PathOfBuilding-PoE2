@@ -201,3 +201,5 @@ check("Lavianga exposes flask configuration before allocating flask passives", f
 end)
 
 print(string.format("%d custom functional scenarios passed", passed))
+
+dofile("../tests/custom_power_calcs.lua")

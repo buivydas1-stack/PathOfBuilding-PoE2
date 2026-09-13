@@ -9,10 +9,10 @@ $expectedHash = '7E190D3B66191B09416A9CD4D12394D37DF374D6D6E59AB4F2366F3D9E81BAF
 if ((Get-FileHash -LiteralPath $UpstreamZip -Algorithm SHA256).Hash -ne $expectedHash) { throw 'Upstream ZIP does not match the official v0.23.1 portable used by this branch.' }
 if (Test-Path -LiteralPath $OutputDirectory) { throw 'Choose a new output directory; existing files will not be overwritten.' }
 $outputPath = [IO.Path]::GetFullPath($OutputDirectory)
-$portablePath = Join-Path $outputPath 'PathOfBuilding-PoE2-v0.23.1-custom.1-Portable'
+$portablePath = Join-Path $outputPath 'PathOfBuilding-PoE2-v0.23.1-custom.2-Portable'
 New-Item -ItemType Directory -Path $portablePath -Force | Out-Null
 Expand-Archive -LiteralPath $UpstreamZip -DestinationPath $portablePath
-$patches = @('Classes/PowerReportListControl.lua', 'Classes/TreeTab.lua', 'Classes/PassiveTreeView.lua', 'Classes/ConfigTab.lua', 'Modules/ConfigOptions.lua', 'Launch.lua', 'Modules/Main.lua')
+$patches = @('Classes/PowerReportListControl.lua', 'Classes/TreeTab.lua', 'Classes/PassiveTreeView.lua', 'Classes/ConfigTab.lua', 'Classes/CalcsTab.lua', 'Modules/ConfigOptions.lua', 'Modules/Calcs.lua', 'Launch.lua', 'Modules/Main.lua')
 foreach ($relative in $patches) {
     Copy-Item -LiteralPath (Join-Path $repoPath "src/$relative") -Destination (Join-Path $portablePath $relative)
 }

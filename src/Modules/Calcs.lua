@@ -136,7 +136,7 @@ function calcs.getMiscCalculator(build)
 	end
 	local fastEnv
 	return function(override, useFullDPS, fastCalcOptions)
-		if fastCalcOptions then
+		if fastCalcOptions and not fastCalcOptions.noEnvReuse then
 			if fastCalcOptions.fullDPSOnly and usedFullDPS and useFullDPS then
 				-- The caller only reads the FullDPS roll-up (e.g. sorting gems by Full DPS), and
 				-- calcFullDPS builds its own environments, so the main-skill pass can be skipped entirely.
@@ -163,8 +163,9 @@ function calcs.getMiscCalculator(build)
 		local env, cachedPlayerDB, cachedEnemyDB, cachedMinionDB = calcs.initEnv(build, "CALCULATOR", override)
 		-- we need to preserve the override somewhere for use by possible trigger-based build-outs with overrides
 		env.override = override
-		calcs.perform(env)
-		if (useFullDPS ~= false or build.viewMode == "TREE") and usedFullDPS then
+		-- Node comparisons use a fresh environment; only Hit DPS reports omit EHP estimates.
+		calcs.perform(env, fastCalcOptions and fastCalcOptions.skipEHP)
+		if useFullDPS ~= false and usedFullDPS then
 			-- prevent upcoming calculation from using Cached Data and thus forcing it to re-calculate new FullDPS roll-up 
 			-- without this, FullDPS increase/decrease when for node/item/gem comparison would be all 0 as it would be comparing
 			-- A with A (due to cache reuse) instead of A with B
