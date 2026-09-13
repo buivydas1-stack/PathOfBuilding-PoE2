@@ -3,6 +3,7 @@
 Based on the official Path of Building 2 **v0.23.1** release.
 
 - Equipping **Lavianga's Spirits** exposes **Do you have a Flask active?** in Configuration, without requiring an allocated flask-dependent passive. The checkbox remains manual and is not marked invalid while Lavianga is equipped.
+- Configuration also exposes supported manual scenarios for equipped charms, mana leech, recent shocks/critical hits/non-critical hits/kills, Mark use, Charged Mark's shocked ground, and skills with increased heavy-stun buildup. Hover for the source. These visibility rules preserve checkbox values and do not add automatic assumptions; already supplied backend conditions do not gain extra controls. Mark use does not expose Cast a Spell Recently.
 
 - Right-click a Power Report row to ignore that node in the current build.
 - Click **Ignored (N)** above the report to select a node, **Focus on tree**, **Restore / Unignore**, or **Restore All**.

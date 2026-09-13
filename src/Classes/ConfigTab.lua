@@ -245,6 +245,14 @@ local ConfigTabClass = newClass("ConfigTab", "UndoHandler", "ControlHost", "Cont
 			if varData.tooltip then
 				t_insert(tooltipFuncs, varData.tooltip)
 			end
+			if varData.showIf then
+				t_insert(tooltipFuncs, function()
+					local reason = varData.showIf(self.build)
+					if type(reason) == "string" then
+						return "Available because "..reason..".\nEnable only when this condition applies to the situation you want to calculate."
+					end
+				end)
+			end
 
 			if varData.ifNode then
 				t_insert(shownFuncs, listOrSingleIfOption(varData.ifNode, function(ifOption)

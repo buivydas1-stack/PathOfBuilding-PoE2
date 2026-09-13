@@ -990,7 +990,7 @@ Huge sets the radius to 11.
 		for _, slot in ipairs(build.itemsTab.orderedSlots) do
 			local item = build.itemsTab.items[slot.selItemId]
 			if item and item.type == "Flask" and item.title == "Lavianga's Spirits" then
-				return true
+				return "Lavianga's Spirits is equipped"
 			end
 		end
 		return false
@@ -2326,6 +2326,106 @@ Huge sets the radius to 11.
 			return out
 		end},
 }
+
+-- Expose manual scenarios supported by this build before a passive uses them.
+-- These rules only affect visibility; they never enable a config or add a modifier.
+local function selectedHitOutput(env)
+	local skill = env.player.mainSkill
+	local flags = skill.activeEffect.statSet.skillFlags
+	if flags.hit and not flags.trap and not flags.mine and not flags.totem and not skill.skillData.triggered then
+		return env.player.output
+	end
+end
+
+local function findSkillSource(env, predicate)
+	for _, skill in ipairs(env.player.activeSkillList) do
+		if predicate(skill) then
+			return skill.activeEffect.grantedEffect.name
+		end
+	end
+end
+
+local manualSources = {
+	conditionUsingCharm = { condition = "UsingCharm", source = function(build, env)
+		local mods = env.player.modDB
+		local charmLimit = m_min(mods:Override(nil, "CharmLimit") or mods:Sum("BASE", nil, "CharmLimit"), 3)
+		for _, slot in ipairs(build.itemsTab.orderedSlots) do
+			local item = build.itemsTab.items[slot.selItemId]
+			if item and item.type == "Charm" and slot.slotNum <= charmLimit then
+				return "you have an equipped charm"
+			end
+		end
+	end },
+	conditionLeechingMana = { condition = "LeechingMana", source = function(build, env)
+		local output = selectedHitOutput(env)
+		if output and (output.ManaLeechGainRate or 0) > 0 then
+			return "your selected skill can leech mana"
+		end
+	end },
+	conditionShockedEnemyRecently = { condition = "ShockedEnemyRecently", source = function(build, env)
+		local output = selectedHitOutput(env)
+		if output and (output.ShockChance or 0) > 0 then
+			return "your selected skill can shock enemies"
+		end
+	end },
+	conditionCritRecently = { condition = "CritRecently", source = function(build, env)
+		local output = selectedHitOutput(env)
+		if output and (output.CritChance or 0) > 0 then
+			return "your selected skill can deal critical hits"
+		end
+	end },
+	conditionNonCritRecently = { condition = "NonCritRecently", source = function(build, env)
+		local output = selectedHitOutput(env)
+		if output and (output.CritChance or 0) < 100 then
+			return "your selected skill can deal non-critical hits"
+		end
+	end },
+	conditionKilledRecently = { condition = "KilledRecently", source = function(build, env)
+		local output = selectedHitOutput(env)
+		if output and (output.TotalDPS or 0) > 0 then
+			return "your selected skill deals damage and can kill enemies"
+		end
+	end },
+	conditionCastMarkRecently = { condition = "CastMarkRecently", source = function(build, env)
+		local name = findSkillSource(env, function(skill)
+			return skill.skillTypes[SkillType.Mark] and not skill.skillData.triggered
+		end)
+		if name then return "you have "..name.." enabled" end
+	end },
+	conditionEnemyOnShockedGround = { condition = "OnShockedGround", enemy = true, source = function(build, env)
+		local name = findSkillSource(env, function(skill)
+			if skill.skillTypes[SkillType.Mark] then
+				for _, support in ipairs(skill.supportList) do
+					if support.grantedEffect.id == "SupportChargedMarkPlayer" then return true end
+				end
+			end
+		end)
+		if name then return "Charged Mark supports "..name.." and can create shocked ground when the Mark activates" end
+	end },
+	conditionEnemyHeavyStunned = { condition = "HeavyStunned", enemy = true, source = function(build, env)
+		local name = findSkillSource(env, function(skill)
+			local mods = skill.skillModList
+			return skill.activeEffect.statSet.skillFlags.hit
+				and not mods:Flag(skill.skillCfg, "CannotStun", "PinBuildupInsteadOfHeavyStunBuildup", "FreezeBuildupInsteadOfStunBuildup")
+				and mods:More(skill.skillCfg, "EnemyHeavyStunBuildup") > 1
+		end)
+		if name then return name.." has increased heavy-stun buildup; use this only during an actual heavy stun" end
+	end },
+}
+
+for _, option in ipairs(configSettings) do
+	local rule = manualSources[option.var]
+	if rule then
+		option.showIf = function(build)
+			local env = build.calcsTab.mainEnv
+			if not env or not env.player or not env.player.output then return end
+			local actor = rule.enemy and env.enemy or env.player
+			-- Automatic backend conditions need no additional manual control.
+			if actor.modDB.conditions[rule.condition] then return end
+			return rule.source(build, env)
+		end
+	end
+end
 
 addQuestModsRewardsConfigOptions(configSettings)
 
