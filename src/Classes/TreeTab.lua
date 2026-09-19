@@ -203,17 +203,23 @@ local TreeTabClass = newClass("TreeTab", "ControlHost", function(self, build)
 	end)
 
 	-- Control for setting max node depth to limit calculation time of the heat map
-	self.controls.nodePowerMaxDepthSelect = new("DropDownControl", { "LEFT", self.controls.treeHeatMap, "RIGHT" }, { 8, 0, 55, 20 }, { "All", 5, 10, 15, "Custom" }, function(index, value)
+	self.controls.nodePowerMaxDepthSelect = new("DropDownControl", { "LEFT", self.controls.treeHeatMap, "RIGHT" }, { 8, 0, 85, 20 }, { "Notables", "All", 5, 10, 15, "Custom" }, function(index, value)
+		local wasSingle = self.build.calcsTab.nodePowerSingleNotables
+		self.build.calcsTab.nodePowerSingleNotables = value == "Notables"
 		-- Show custom value control and resize/move elements
 		self.isCustomMaxDepth = value == "Custom"
 		if self.isCustomMaxDepth then
-			self.controls.nodePowerMaxDepthSelect.width = 70
+			self.controls.nodePowerMaxDepthSelect.width = 85
 			self.controls.nodePowerMaxDepthCustom.shown = true
 			self.controls.treeHeatMapStatSelect:SetAnchor("LEFT", self.controls.nodePowerMaxDepthCustom, "RIGHT", nil, nil, nil)
+			self.build.calcsTab.nodePowerMaxDepth = tonumber(self.controls.nodePowerMaxDepthCustom.buf)
+			if wasSingle and self.viewer.showHeatMap then
+				self:SetPowerCalc(self.build.calcsTab.powerStat)
+			end
 			return
 		end
 
-		self.controls.nodePowerMaxDepthSelect.width = 55
+		self.controls.nodePowerMaxDepthSelect.width = 85
 		self.controls.nodePowerMaxDepthCustom.shown = false
 		self.controls.treeHeatMapStatSelect:SetAnchor("LEFT", self.controls.nodePowerMaxDepthSelect, "RIGHT", nil, nil, nil)
 
@@ -227,13 +233,14 @@ local TreeTabClass = newClass("TreeTab", "ControlHost", function(self, build)
 
 		-- If the heat map is shown, tell it to recalculate
 		-- if the new value is larger than the old
-		if oldMax ~= value and self.viewer.showHeatMap then
-			if oldMax ~= nil and (self.build.calcsTab.nodePowerMaxDepth == nil or self.build.calcsTab.nodePowerMaxDepth > oldMax) then
+		if self.viewer.showHeatMap then
+			if wasSingle ~= self.build.calcsTab.nodePowerSingleNotables or oldMax ~= self.build.calcsTab.nodePowerMaxDepth then
 				self:SetPowerCalc(self.build.calcsTab.powerStat)
 			end
 		end
 	end)
-	self.controls.nodePowerMaxDepthSelect.tooltipText = "Limit of Node distance to search (lower = faster)"
+	self.controls.nodePowerMaxDepthSelect:SelByValue("All")
+	self.controls.nodePowerMaxDepthSelect.tooltipText = "Notables: compare unallocated non-ascendancy notables individually, without travel nodes.\nEach counts as one point. Choose Full DPS and Show Power Report to rank allocations.\nOther options limit the distance searched on the tree."
 
 	-- Control for setting max node depth by custom value
 	self.controls.nodePowerMaxDepthCustom = new("EditControl", { "LEFT", self.controls.nodePowerMaxDepthSelect, "RIGHT" }, { 8, 0, 70, 20 }, "0", nil, "%D", nil, function(value)
@@ -1060,6 +1067,7 @@ end
 
 function TreeTabClass:BuildPowerReportList(currentStat)
 	local report = {}
+	local singleNotables = self.build.calcsTab.nodePowerSingleNotables
 
 	if not (currentStat and currentStat.stat) then
 		return report
@@ -1090,15 +1098,18 @@ function TreeTabClass:BuildPowerReportList(currentStat)
 	-- search all nodes, ignoring ascendancies, sockets, etc.
 	for nodeId, node in pairs(self.build.spec.nodes) do
 		local isAlloc = node.alloc or self.build.calcsTab.mainEnv.grantedPassives[nodeId]
-		if (node.type == "Normal" or node.type == "Keystone" or node.type == "Notable") and not node.ascendancyName then
+		if (node.type == "Normal" or node.type == "Keystone" or node.type == "Notable") and not node.ascendancyName
+			and (not singleNotables or node.type == "Notable" and not isAlloc and node.power.singleStat ~= nil) then
 			local pathDist
-			if isAlloc then
+			if singleNotables then
+				pathDist = 1
+			elseif isAlloc then
 				pathDist = #(node.depends or { }) == 0 and 1 or #node.depends
 			else
 				pathDist = node.power.distance or #(node.path or {}) == 0 and 1 or #node.path
 			end
 			local nodePower = (node.power.singleStat or 0) * ((displayStat.pc or displayStat.mod) and 100 or 1)
-			local pathPower = (node.power.pathPower or 0) / pathDist * ((displayStat.pc or displayStat.mod) and 100 or 1)
+			local pathPower = (singleNotables and node.power.singleStat or node.power.pathPower or 0) / pathDist * ((displayStat.pc or displayStat.mod) and 100 or 1)
 			local nodePowerStr = s_format("%"..displayStat.fmt, nodePower)
 			local pathPowerStr = s_format("%"..displayStat.fmt, pathPower)
 
@@ -1136,7 +1147,7 @@ function TreeTabClass:BuildPowerReportList(currentStat)
 	-- search all cluster notables and add to the list
 	for nodeName, node in pairs(self.build.spec.tree.clusterNodeMap) do
 		local isAlloc = node.alloc
-		if not isAlloc then
+		if not isAlloc and not self.build.calcsTab.mainEnv.grantedPassives[node.id] then
 			local nodePower = (node.power and node.power.singleStat or 0) * ((displayStat.pc or displayStat.mod) and 100 or 1)
 			local nodePowerStr = s_format("%"..displayStat.fmt, nodePower)
 
@@ -1152,12 +1163,13 @@ function TreeTabClass:BuildPowerReportList(currentStat)
 				name = node.dn,
 				power = nodePower,
 				powerStr = nodePowerStr,
-				pathPower = 0,
-				pathPowerStr = "--",
+				pathPower = singleNotables and nodePower or 0,
+				pathPowerStr = singleNotables and nodePowerStr or "--",
 				id = node.id,
 				type = node.type,
 				sd = node.sd,
-				pathDist = "Cluster"
+				pathDist = singleNotables and 1 or "Cluster",
+				isCluster = true
 			})
 		end
 	end

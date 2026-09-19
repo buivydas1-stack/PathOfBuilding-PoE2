@@ -104,7 +104,7 @@ function PowerReportListClass:ReList()
 
 	for _, item in ipairs(self.originalList) do
 		local insert = item.power > 0
-		if not self.showClusters and item.pathDist == "Cluster" then
+		if not self.showClusters and (item.isCluster or item.pathDist == "Cluster") then
 			insert = false
 		end
 		if self.allocated then

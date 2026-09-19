@@ -520,6 +520,7 @@ end
 -- Estimate the offensive and defensive power of all unallocated nodes
 function CalcsTabClass:PowerBuilder()
 	-- local timer_start = GetTime()
+	local singleNotables = self.nodePowerSingleNotables
 	local useFullDPS = self.powerStat ~= nil and self.powerStat.stat == "FullDPS"
 	-- Retain basic defence calculations, and full EHP estimates for all other report metrics.
 	local calcOptions = { noEnvReuse = true, skipEHP = self.powerStat and self.powerStat.stat == "TotalDPS" }
@@ -548,7 +549,8 @@ function CalcsTabClass:PowerBuilder()
 
 	for nodeId, node in pairs(self.build.spec.nodes) do
 		wipeTable(node.power)
-		if node.modKey ~= "" and not self.mainEnv.grantedPassives[nodeId] then
+		if node.modKey ~= "" and not self.mainEnv.grantedPassives[nodeId]
+			and (not singleNotables or node.type == "Notable" and not node.alloc and not node.ascendancyName) then
 			local hiddenByLockedAscendancyNode = false
 			if node.unlockConstraint then
 				for _, unlockNodeId in ipairs(node.unlockConstraint.nodes) do
@@ -560,8 +562,8 @@ function CalcsTabClass:PowerBuilder()
 				end
 			end
 			if not hiddenByLockedAscendancyNode then
-				local dist = node.pathDist or 1000
-				for _, leap in ipairs(node.intuitiveLeapLikesAffecting or {}) do
+				local dist = singleNotables and 1 or node.pathDist or 1000
+				for _, leap in ipairs(not singleNotables and node.intuitiveLeapLikesAffecting or {}) do
 					if leap.alloc then
 						dist = math.max(math.min(leap.pathDist or 1000, dist), 1)
 					end
@@ -600,14 +602,14 @@ function CalcsTabClass:PowerBuilder()
 				local output = cache[node.modKey]
 				if self.powerStat and self.powerStat.stat and not self.powerStat.ignoreForNodes then
 					node.power.singleStat = self:CalculatePowerStat(self.powerStat, output, calcBase)
-					if node.path and not node.ascendancyName then
+					if (singleNotables or node.path) and not node.ascendancyName then
 						newPowerMax.singleStat = m_max(newPowerMax.singleStat, node.power.singleStat)
 						node.power.pathPower = node.power.singleStat
 						local pathNodes = { }
-						for _, node in pairs(node.path) do
+						for _, node in pairs(not singleNotables and node.path or {}) do
 							pathNodes[node] = true
 						end
-						if distance > 1 then
+						if not singleNotables and distance > 1 then
 							node.power.pathPower = self:CalculatePowerStat(self.powerStat, calcFunc({ addNodes = pathNodes }, useFullDPS, calcOptions), calcBase)
 						end
 					end
@@ -658,7 +660,7 @@ function CalcsTabClass:PowerBuilder()
 			node.power = {}
 		end
 		wipeTable(node.power)
-		if not node.alloc and node.modKey ~= "" and not self.mainEnv.grantedPassives[nodeId] then
+		if not node.alloc and node.modKey ~= "" and not self.mainEnv.grantedPassives[node.id] then
 			if not cache[node.modKey] then
 				cache[node.modKey] = calcFunc({ addNodes = { [node] = true } }, useFullDPS, calcOptions)
 			end

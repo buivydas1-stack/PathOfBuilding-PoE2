@@ -13,6 +13,8 @@ Based on the official Path of Building 2 **v0.23.1** release.
 - Power Reports calculate the Full DPS roll-up only for the Full DPS metric. Hit DPS reports omit EHP estimates while retaining basic defence stats; other report metrics and normal tree tooltips keep their required calculations. Node comparisons use fresh calculation environments.
 - Report generation yields between nodes after approximately 25 ms of work, retaining the existing progress indicator. A single calculation can exceed that interval. No runtime speedup has been benchmarked.
 
+- **Show Node Power → Notables** compares unallocated non-ascendancy notables individually, without travel nodes. Choose **Full DPS**, then **Show Power Report**. Each candidate has **Points = 1**; both **Full DPS** and **Per Point** remain sortable. Choose **Show Unallocated & Clusters** to include cluster notables. This compares the added passive only; item eligibility, replacement of an existing anoint, and jewel sockets must still be checked separately. The existing item anoint picker can compare replacement anoints.
+
 ## Portable version
 
 Extract the complete ZIP into its own folder and launch `Path of Building-PoE2.exe`. Builds and settings live in that portable folder. Existing builds can be opened or copied into its `Builds` folder.

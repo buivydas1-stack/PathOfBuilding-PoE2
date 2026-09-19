@@ -203,3 +203,4 @@ end)
 print(string.format("%d custom functional scenarios passed", passed))
 
 dofile("../tests/custom_power_calcs.lua")
+dofile("../tests/custom_single_notables.lua")
