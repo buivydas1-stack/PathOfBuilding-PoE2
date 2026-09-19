@@ -196,6 +196,9 @@ local TreeTabClass = newClass("TreeTab", "ControlHost", function(self, build)
 	self.controls.treeHeatMap = new("CheckBoxControl", { "LEFT", self.controls.treeSearch, "RIGHT" }, { 130, 0, 20 }, "Show Node Power:", function(state)
 		self.viewer.showHeatMap = state
 		self.controls.treeHeatMapStatSelect.shown = state
+		if state and not self.build.calcsTab.powerStat then
+			self:SetPowerCalc(self.normalPowerStatList[1])
+		end
 
 		if state == false then
 			self.controls.powerReportList.shown = false 
@@ -206,6 +209,7 @@ local TreeTabClass = newClass("TreeTab", "ControlHost", function(self, build)
 	self.controls.nodePowerMaxDepthSelect = new("DropDownControl", { "LEFT", self.controls.treeHeatMap, "RIGHT" }, { 8, 0, 85, 20 }, { "Notables", "All", 5, 10, 15, "Custom" }, function(index, value)
 		local wasSingle = self.build.calcsTab.nodePowerSingleNotables
 		self.build.calcsTab.nodePowerSingleNotables = value == "Notables"
+		self.powerStatList = value == "Notables" and self.notablePowerStatList or self.normalPowerStatList
 		-- Show custom value control and resize/move elements
 		self.isCustomMaxDepth = value == "Custom"
 		if self.isCustomMaxDepth then
@@ -213,9 +217,7 @@ local TreeTabClass = newClass("TreeTab", "ControlHost", function(self, build)
 			self.controls.nodePowerMaxDepthCustom.shown = true
 			self.controls.treeHeatMapStatSelect:SetAnchor("LEFT", self.controls.nodePowerMaxDepthCustom, "RIGHT", nil, nil, nil)
 			self.build.calcsTab.nodePowerMaxDepth = tonumber(self.controls.nodePowerMaxDepthCustom.buf)
-			if wasSingle and self.viewer.showHeatMap then
-				self:SetPowerCalc(self.build.calcsTab.powerStat)
-			end
+			self:SetPowerCalc(self.build.calcsTab.powerStat, true)
 			return
 		end
 
@@ -231,12 +233,9 @@ local TreeTabClass = newClass("TreeTab", "ControlHost", function(self, build)
 			self.build.calcsTab.nodePowerMaxDepth = nil
 		end
 
-		-- If the heat map is shown, tell it to recalculate
-		-- if the new value is larger than the old
-		if self.viewer.showHeatMap then
-			if wasSingle ~= self.build.calcsTab.nodePowerSingleNotables or oldMax ~= self.build.calcsTab.nodePowerMaxDepth then
-				self:SetPowerCalc(self.build.calcsTab.powerStat)
-			end
+		-- Invalidate even while hidden so re-enabling cannot reuse another mode's results.
+		if wasSingle ~= self.build.calcsTab.nodePowerSingleNotables or oldMax ~= self.build.calcsTab.nodePowerMaxDepth then
+			self:SetPowerCalc(self.build.calcsTab.powerStat, true)
 		end
 	end)
 	self.controls.nodePowerMaxDepthSelect:SelByValue("All")
@@ -262,12 +261,21 @@ local TreeTabClass = newClass("TreeTab", "ControlHost", function(self, build)
 		return "When enabled, an estimate of the offensive and defensive strength of\neach unallocated passive is calculated and displayed visually.\nOffensive power shows as "..offCol:lower()..", defensive power as "..defCol:lower().."."
 	end
 
-	self.powerStatList = { }
-	for _, stat in ipairs(data.powerStatList) do
-		if not stat.ignoreForNodes then
-			t_insert(self.powerStatList, stat)
+	self.normalPowerStatList = { }
+	for _, preferred in ipairs({ "FullDPS", "TotalEHP" }) do
+		for _, stat in ipairs(data.powerStatList) do
+			if stat.stat == preferred then t_insert(self.normalPowerStatList, stat) end
 		end
 	end
+	for _, stat in ipairs(data.powerStatList) do
+		if not stat.ignoreForNodes and stat.stat ~= "FullDPS" and stat.stat ~= "TotalEHP" then
+			t_insert(self.normalPowerStatList, stat)
+		end
+	end
+	self.notablePowerStatList = { }
+	for _, stat in ipairs(self.normalPowerStatList) do t_insert(self.notablePowerStatList, stat) end
+	t_insert(self.notablePowerStatList, 3, { stat = "FullDPSAndEHP", label = "Full DPS / EHP", combinedReport = true })
+	self.powerStatList = self.normalPowerStatList
 
 	-- Show/Hide Power Report Button
 	self.controls.powerReport = new("ButtonControl", { "LEFT", self.controls.treeHeatMapStatSelect, "RIGHT" }, { 8, 0, 150, 20 },
@@ -317,7 +325,7 @@ local TreeTabClass = newClass("TreeTab", "ControlHost", function(self, build)
 	self.build.powerBuilderCallback = function()
 		local powerStat = self.build.calcsTab.powerStat or data.powerStatList[1]
 		local report = self:BuildPowerReportList(powerStat)
-		self.controls.powerReportList:SetReport(powerStat, report)
+		self.controls.powerReportList:SetReport(powerStat, report, self.build.calcsTab.nodePowerSingleNotables)
 		local toastIndex = findToastIndex("^Building Power Report")
 		if self.powerBuilderToastActive and toastIndex then
 			-- Remove the toast from the queue instead of triggering hide animation
@@ -1057,12 +1065,16 @@ function TreeTabClass:OpenMasteryPopup(node, viewPort)
 	end
 end
 
-function TreeTabClass:SetPowerCalc(powerStat)
-	self.viewer.showHeatMap = true
+function TreeTabClass:SetPowerCalc(powerStat, keepHeatMap)
+	powerStat = powerStat or self.normalPowerStatList[1]
+	if powerStat and powerStat.combinedReport and not self.build.calcsTab.nodePowerSingleNotables then
+		powerStat = self.normalPowerStatList[1]
+	end
+	if not keepHeatMap then self.viewer.showHeatMap = true end
 	self.build.buildFlag = true
 	self.build.calcsTab.powerBuildFlag = true
 	self.build.calcsTab.powerStat = powerStat
-	self.controls.powerReportList:SetReport(powerStat, nil)
+	self.controls.powerReportList:SetReport(powerStat, nil, self.build.calcsTab.nodePowerSingleNotables)
 end
 
 function TreeTabClass:BuildPowerReportList(currentStat)
@@ -1130,6 +1142,7 @@ function TreeTabClass:BuildPowerReportList(currentStat)
 			t_insert(report, {
 				name = node.dn,
 				power = nodePower,
+				ehpPower = node.power and node.power.ehpStat or 0,
 				powerStr = nodePowerStr,
 				pathPower = pathPower,
 				pathPowerStr = pathPowerStr,
@@ -1162,6 +1175,7 @@ function TreeTabClass:BuildPowerReportList(currentStat)
 			t_insert(report, {
 				name = node.dn,
 				power = nodePower,
+				ehpPower = node.power and node.power.ehpStat or 0,
 				powerStr = nodePowerStr,
 				pathPower = singleNotables and nodePower or 0,
 				pathPowerStr = singleNotables and nodePowerStr or "--",
@@ -1171,6 +1185,20 @@ function TreeTabClass:BuildPowerReportList(currentStat)
 				pathDist = singleNotables and 1 or "Cluster",
 				isCluster = true
 			})
+		end
+	end
+
+	if singleNotables and (currentStat.stat == "FullDPS" or currentStat.stat == "TotalEHP" or currentStat.combinedReport) then
+		local baseline = self.build.calcsTab.powerReportBase or { }
+		local primary = currentStat.combinedReport and { stat = "FullDPS" } or currentStat
+		local basePower = data.powerStatList.GetFromOutput(baseline, primary)
+		local baseEHP = data.powerStatList.GetFromOutput(baseline, { stat = "TotalEHP" })
+		for _, row in ipairs(report) do
+			row.powerStr = self:FormatPowerPercent(row.power, basePower)
+			row.pathPowerStr = row.powerStr
+			if currentStat.combinedReport then
+				row.ehpPowerStr = self:FormatPowerPercent(row.ehpPower, baseEHP)
+			end
 		end
 	end
 
@@ -1186,6 +1214,16 @@ function TreeTabClass:BuildPowerReportList(currentStat)
 	end
 
 	return report
+end
+
+function TreeTabClass:FormatPowerPercent(change, baseline)
+	-- A relative change from zero or an infinite/non-finite value is undefined.
+	if baseline <= 0 or baseline == math.huge or baseline ~= baseline or change ~= change or math.abs(change) == math.huge then
+		return "N/A"
+	end
+	local percent = 100 * change / baseline
+	if math.abs(percent) < 0.005 then percent = 0 end
+	return (percent > 0 and colorCodes.POSITIVE or percent < 0 and colorCodes.NEGATIVE or "^7")..s_format("%+.2f%%", percent)
 end
 
 function TreeTabClass:FindTimelessJewel()

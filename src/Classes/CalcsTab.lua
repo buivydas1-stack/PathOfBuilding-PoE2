@@ -521,11 +521,12 @@ end
 function CalcsTabClass:PowerBuilder()
 	-- local timer_start = GetTime()
 	local singleNotables = self.nodePowerSingleNotables
-	local useFullDPS = self.powerStat ~= nil and self.powerStat.stat == "FullDPS"
+	local useFullDPS = self.powerStat ~= nil and (self.powerStat.stat == "FullDPS" or self.powerStat.combinedReport)
 	-- Retain basic defence calculations, and full EHP estimates for all other report metrics.
 	local calcOptions = { noEnvReuse = true, skipEHP = self.powerStat and self.powerStat.stat == "TotalDPS" }
 	local timeSlice = 25 -- Yield between nodes so the UI can respond during report generation.
 	local calcFunc, calcBase = self:GetMiscCalculator()
+	self.powerReportBase = calcBase
 	local cache = { }
 	local distanceMap = { }
 	local distanceList = { }
@@ -602,6 +603,9 @@ function CalcsTabClass:PowerBuilder()
 				local output = cache[node.modKey]
 				if self.powerStat and self.powerStat.stat and not self.powerStat.ignoreForNodes then
 					node.power.singleStat = self:CalculatePowerStat(self.powerStat, output, calcBase)
+					if self.powerStat.combinedReport then
+						node.power.ehpStat = self:CalculatePowerStat({ stat = "TotalEHP" }, output, calcBase)
+					end
 					if (singleNotables or node.path) and not node.ascendancyName then
 						newPowerMax.singleStat = m_max(newPowerMax.singleStat, node.power.singleStat)
 						node.power.pathPower = node.power.singleStat
@@ -630,6 +634,9 @@ function CalcsTabClass:PowerBuilder()
 				local output = cache[node.modKey.."_remove"]
 				if self.powerStat and self.powerStat.stat and not self.powerStat.ignoreForNodes then
 					node.power.singleStat = self:CalculatePowerStat(self.powerStat, output, calcBase)
+					if self.powerStat.combinedReport then
+						node.power.ehpStat = self:CalculatePowerStat({ stat = "TotalEHP" }, output, calcBase)
+					end
 					if node.depends and not node.ascendancyName then
 						node.power.pathPower = node.power.singleStat
 						local pathNodes = { }
@@ -667,6 +674,9 @@ function CalcsTabClass:PowerBuilder()
 			local output = cache[node.modKey]
 			if self.powerStat and self.powerStat.stat and not self.powerStat.ignoreForNodes then
 				node.power.singleStat = self:CalculatePowerStat(self.powerStat, output, calcBase)
+				if self.powerStat.combinedReport then
+					node.power.ehpStat = self:CalculatePowerStat({ stat = "TotalEHP" }, output, calcBase)
+				end
 			end
 			nodeIndex = nodeIndex + 1
 			if coroutine.running() and GetTime() - start > timeSlice then
@@ -684,6 +694,7 @@ function CalcsTabClass:PowerBuilder()
 end
 
 function CalcsTabClass:CalculatePowerStat(selection, original, modified)
+	if selection.combinedReport then selection = { stat = "FullDPS" } end
 	local originalValue = data.powerStatList.GetFromOutput(original, selection)
 	local modifiedValue = data.powerStatList.GetFromOutput(modified, selection)
 	return originalValue - modifiedValue

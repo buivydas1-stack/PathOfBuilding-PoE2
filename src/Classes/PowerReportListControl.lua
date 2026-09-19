@@ -38,8 +38,11 @@ local PowerReportListClass = newClass("PowerReportListControl", "ListControl", f
 		end)
 end)
 
-function PowerReportListClass:SetReport(stat, report)
-	self.powerColumn.label = stat and stat.label or ""
+function PowerReportListClass:SetReport(stat, report, singleNotables)
+	self.combinedReport = stat and stat.combinedReport or false
+	self.percentReport = singleNotables and stat and (stat.stat == "FullDPS" or stat.stat == "TotalEHP" or stat.combinedReport)
+	self.powerColumn.label = self.combinedReport and "Full DPS %" or self.percentReport and (stat.stat == "TotalEHP" and "EHP %" or "Full DPS %") or stat and stat.label or ""
+	self.colList[5].label = self.combinedReport and "EHP %" or self.percentReport and "% / Point" or "Per Point"
 	self.originalList = report or {}
 
 	if stat and stat.stat then
@@ -85,6 +88,10 @@ function PowerReportListClass:ReSort(colIndex)
 			end
 			return a.pathDist < b.pathDist
 		end)
+	elseif colIndex == 5 and self.combinedReport then
+		t_sort(self.list, function(a, b)
+			return compare(a.ehpPower or 0, b.ehpPower or 0)
+		end)
 	elseif colIndex == 5 then
 		t_sort(self.list, function (a,b)
 			if a.pathPower == b.pathPower and type(a.pathDist) == "number" and type(b.pathDist) == "number" then
@@ -103,7 +110,7 @@ function PowerReportListClass:ReList()
 	end
 
 	for _, item in ipairs(self.originalList) do
-		local insert = item.power > 0
+		local insert = self.combinedReport and (item.power ~= 0 or (item.ehpPower or 0) ~= 0) or self.percentReport and item.power ~= 0 or item.power > 0
 		if not self.showClusters and (item.isCluster or item.pathDist == "Cluster") then
 			insert = false
 		end
@@ -158,7 +165,7 @@ function PowerReportListClass:GetRowValue(column, index, report)
 		or column == 2 and report.name
 		or column == 3 and report.powerStr
 		or column == 4 and (report.pathDist == 1000 and "Anoint" or report.pathDist)
-		or column == 5 and report.pathPowerStr
+		or column == 5 and (self.combinedReport and report.ehpPowerStr or report.pathPowerStr)
 		or ""
 end
 
@@ -168,6 +175,9 @@ function PowerReportListClass:AddValueTooltip(tooltip, _, node)
 		return
 	end
 	if tooltip:CheckForUpdate(node) and node.sd then
+		if self.percentReport or self.combinedReport then
+			tooltip:AddLine(14, "Changes relative to the current build. N/A means the percentage is undefined. Single-node comparison; no travel points.")
+		end
 		for _, line in ipairs(node.sd) do
 			tooltip:AddLine(16, line)
 		end
