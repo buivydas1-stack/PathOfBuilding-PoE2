@@ -156,6 +156,24 @@ function PassiveTreeViewClass:GetCompareNodeColor(node, compareNode, spec, build
 	return nodeDefaultColor
 end
 
+-- Normalize the two actual report metrics independently, as with offence/defence.
+function PassiveTreeViewClass:GetCombinedPowerColor(power, maximum, theme)
+	local function intensity(value, peak)
+		if not value or value <= 0 or not peak or peak <= 0 or value ~= value or peak == math.huge then
+			return 0
+		end
+		return m_min(1, (value / peak * 1.5) ^ 0.5)
+	end
+	local damage = intensity(power.singleStat, maximum.singleStat)
+	local ehp = intensity(power.ehpStat, maximum.ehpStat)
+	if theme == "RED/GREEN" then
+		return damage, ehp, 0
+	elseif theme == "GREEN/BLUE" then
+		return 0, damage, ehp
+	end
+	return damage, 0, ehp
+end
+
 function PassiveTreeViewClass:Draw(build, viewPort, inputEvents)
 	local spec = build.spec
 	local tree = spec.tree
@@ -954,7 +972,9 @@ function PassiveTreeViewClass:Draw(build, viewPort, inputEvents)
 		-- Determine color for the base artwork
 		if self.showHeatMap then
 			if not isAlloc and node.type ~= "ClassStart" and node.type ~= "AscendClassStart" then
-				if self.heatMapStat and self.heatMapStat.stat then
+				if self.heatMapStat and self.heatMapStat.combinedReport then
+					SetDrawColor(self:GetCombinedPowerColor(node.power, build.calcsTab.powerMax, main.nodePowerTheme))
+				elseif self.heatMapStat and self.heatMapStat.stat then
 					-- Calculate color based on a single stat
 					local stat = m_max(node.power.singleStat or 0, 0)
 					local statCol = (stat / build.calcsTab.powerMax.singleStat * 1.5) ^ 0.5

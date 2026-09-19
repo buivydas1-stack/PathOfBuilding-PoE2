@@ -17,7 +17,7 @@ Based on the official Path of Building 2 **v0.23.1** release.
 
 ## Portable version
 
-The tree metric dropdown starts with **Full DPS**, then **Effective Hit Pool**. In **Notables** mode, both reports show signed percentage changes against the current build, with one point per node. **Full DPS / EHP** is available only in this mode and shows both changes in independently sortable columns. Defence-only gains and negative trade-offs remain visible; zero-effect nodes are omitted. Percentages with zero or non-finite baselines/results show **N/A**. The tree colour in the combined mode follows Full DPS; compare EHP in the report. Switching out of Notables returns the combined selection to Full DPS.
+The tree metric dropdown starts with **Full DPS**, then **Effective Hit Pool**. In **Notables** mode, both reports show signed percentage changes against the current build, with one point per node. **Full DPS / EHP** is available only in this mode and shows both changes in independently sortable columns. Defence-only gains and negative trade-offs remain visible; zero-effect nodes are omitted. Percentages with zero or non-finite baselines/results show **N/A**. With the default red/blue theme, the combined tree highlights DPS gains in red, EHP gains in blue, and gains to both in purple. Each colour's intensity scales independently with its metric; alternative offence/defence colour themes are respected. Decreases remain visible in the report rather than adding colour. Switching out of Notables returns the combined selection to Full DPS.
 
 Extract the complete ZIP into its own folder and launch `Path of Building-PoE2.exe`. Builds and settings live in that portable folder. Existing builds can be opened or copied into its `Builds` folder.
 

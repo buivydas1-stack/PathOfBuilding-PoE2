@@ -532,6 +532,7 @@ function CalcsTabClass:PowerBuilder()
 	local distanceList = { }
 	local newPowerMax = {
 		singleStat = 0,
+		ehpStat = 0,
 		offence = 0,
 		offencePerPoint = 0,
 		defence = 0,
@@ -608,6 +609,7 @@ function CalcsTabClass:PowerBuilder()
 					end
 					if (singleNotables or node.path) and not node.ascendancyName then
 						newPowerMax.singleStat = m_max(newPowerMax.singleStat, node.power.singleStat)
+						newPowerMax.ehpStat = m_max(newPowerMax.ehpStat, node.power.ehpStat or 0)
 						node.power.pathPower = node.power.singleStat
 						local pathNodes = { }
 						for _, node in pairs(not singleNotables and node.path or {}) do

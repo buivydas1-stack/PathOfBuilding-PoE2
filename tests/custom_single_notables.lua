@@ -82,6 +82,9 @@ for _, metric in ipairs({ {stat="TotalEHP", label="Effective Hit Pool"}, {stat="
 	report.powerStat = metric
 	report:PowerBuilder()
 	local rows = reportTree:BuildPowerReportList(metric)
+	if metric.combinedReport then
+		assert(report.powerMax.ehpStat == math.max(0, selected[1].power.ehpStat, selected[2].power.ehpStat))
+	end
 	for _, node in ipairs(selected) do
 		local complete = calcFunc({ addNodes = { [node] = true } }, true, { noEnvReuse=true })
 		local ehp = calcs:CalculatePowerStat({stat="TotalEHP"}, complete, calcBase)
@@ -133,3 +136,22 @@ assert(not list.combinedReport and list.powerColumn.label == "EHP %" and list.co
 list:SetReport({stat="FullDPS",label="Full DPS"}, {}, false)
 assert(list.powerColumn.label == "Full DPS" and list.colList[5].label == "Per Point")
 print("PASS: EHP and combined parity, percentage signs and undefined bases, both column sorts, trade-offs, and hidden-mode switching")
+
+local function color(dps, ehp, theme, maximum)
+	return tree.viewer:GetCombinedPowerColor({singleStat=dps, ehpStat=ehp}, maximum or {singleStat=100, ehpStat=100}, theme or "RED/BLUE")
+end
+local r, g, b = color(100, 0)
+assert(r == 1 and g == 0 and b == 0)
+r, g, b = color(0, 100)
+assert(r == 0 and g == 0 and b == 1)
+r, g, b = color(100, 100)
+assert(r == 1 and g == 0 and b == 1)
+r, g, b = color(-100, 100)
+assert(r == 0 and g == 0 and b == 1)
+r, g, b = color(0, 0, nil, {singleStat=0, ehpStat=0})
+assert(r == 0 and g == 0 and b == 0)
+r, g, b = color(100, 100, "RED/GREEN")
+assert(r == 1 and g == 1 and b == 0)
+r, g, b = color(100, 100, "GREEN/BLUE")
+assert(r == 0 and g == 1 and b == 1)
+print("PASS: combined tree colours, mixed gains, negative trade-offs, zero maxima, and alternative themes")
