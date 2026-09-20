@@ -46,6 +46,17 @@ local coldConvert = fillConvert("Cold")
 local fireConvert = fillConvert("Fire")
 local chaosConvert = fillConvert("Chaos")
 
+local function luckyDamageRow(label, prefix, stat, flag)
+	local row = { label = label, {}, flag = flag }
+	if not flag then row.notFlag = "attack" end
+	for _, element in ipairs({"Physical", "Lightning", "Cold", "Fire", "Chaos"}) do
+		table.insert(row, { format = "{1:output:"..prefix..element..stat.."}%",
+			{ modName = {"LuckyHitsChance", element.."LuckyHitsChance", "LuckyHits", "CritLucky", "LightningNoCritLucky", "ElementalLuckHits"}, cfg = "skill" },
+		})
+	end
+	return row
+end
+
 local function hitModifierRows()
 	local rows = { flag = "hit", colWidth = 95,
 		{ {}, { format = "Physical:" }, { format = "Lightning:" },
@@ -53,23 +64,17 @@ local function hitModifierRows()
 	}
 	for _, hand in ipairs({ {"", "", "notFlag", "attack"}, {"MH ", "MainHand.", "flag", "weapon1Attack"}, {"OH ", "OffHand.", "flag", "weapon2Attack"} }) do
 		for _, metric in ipairs({
-			{"Lucky non-crit", "HitLuckyChance"}, {"Lucky crit", "CritLuckyChance"},
 			{"Res. reductions", "ResistanceReduction"}, {"Enemy res.", "EnemyResistance"},
 			{"Penetration", "ResistancePenetration"}, {"Pen. floor", "PenetrationFloor"},
 			{"Effective res.", "EffectiveResistance"},
 		}) do
-			local lucky = metric[2] == "HitLuckyChance" or metric[2] == "CritLuckyChance"
 			local row = { label = hand[1]..metric[1], [hand[3]] = hand[4], {} }
-			if not lucky then
-				row.flagList = hand[3] == "flag" and {hand[4], "effective"} or {"effective"}
-			end
+			row.flagList = hand[3] == "flag" and {hand[4], "effective"} or {"effective"}
 			for _, element in ipairs({"Physical", "Lightning", "Cold", "Fire", "Chaos"}) do
 				local field = hand[2]..element..metric[2]
 				local cell = { format = "{1:output:"..field.."}%" }
-				if element == "Physical" and not lucky then
+				if element == "Physical" then
 					cell = {}
-				elseif lucky then
-					cell[1] = { modName = {"LuckyHitsChance", element.."LuckyHitsChance", "LuckyHits", "CritLucky", "LightningNoCritLucky", "ElementalLuckHits"}, cfg = "skill" }
 				elseif metric[2] == "ResistanceReduction" then
 					cell[1] = { label = "Resistance modifiers (reductions subtotal excludes positive values)", modName = {element.."Resist", "ElementalResist"}, enemy = true, cfg = "skill" }
 				else
@@ -85,7 +90,7 @@ end
 
 -- format {width, id, group, color, subsection:{default hidden, label, data:{}}}
 return {
-{ 3, "HitModifiers", 1, colorCodes.OFFENCE, {{ defaultCollapsed = false, label = "Lucky Damage and Enemy Resistances", data = hitModifierRows() }} },
+{ 3, "HitModifiers", 1, colorCodes.OFFENCE, {{ defaultCollapsed = false, label = "Enemy Resistances and Penetration", data = hitModifierRows() }} },
 { 3, "HitDamage", 1, colorCodes.OFFENCE, {{ defaultCollapsed = false, label = "Skill Hit Damage", data = {
 	extra = "{output:DisplayDamage}",
 	flag = "hit",
@@ -211,6 +216,8 @@ return {
 			{ label = "Conversions", cfg = "skill", modName = chaosConvert }, 
 		},
 	},
+	luckyDamageRow("Lucky non-crit", "", "HitLuckyChance", nil),
+	luckyDamageRow("Lucky crit", "", "CritLuckyChance", nil),
 	{ label = "Skill Average Hit", notFlag = "attack", { format = "{1:output:AverageHit}", { breakdown = "AverageHit" }, }, },
 	{ label = "Skill PvP Average Hit", flag = "notAttackPvP", { format = "{1:output:PvpAverageHit}", { breakdown = "PvpAverageHit" }, 
 		{ label = "Tvalue Override (ms)", modName = "MultiplierPvpTvalueOverride" }, 
@@ -283,6 +290,8 @@ return {
 			{ label = "Conversions", cfg = "weapon1", modName = chaosConvert },
 		},
 	},
+	luckyDamageRow("MH Lucky non-crit", "MainHand.", "HitLuckyChance", "weapon1Attack"),
+	luckyDamageRow("MH Lucky crit", "MainHand.", "CritLuckyChance", "weapon1Attack"),
 	{ label = "MH Average Hit", bgCol = colorCodes.MAINHANDBG, flag = "weapon1Attack", { format = "{1:output:MainHand.AverageHit}", { breakdown = "MainHand.AverageHit" }, }, },
 	{ label = "MH PvP Average Hit", bgCol = colorCodes.MAINHANDBG, flag = "weapon1AttackPvP", { format = "{1:output:MainHand.PvpAverageHit}", { breakdown = "MainHand.PvpAverageHit" }, 
 		{ label = "Tvalue Override (ms)", modName = "MultiplierPvpTvalueOverride" }, 
@@ -355,6 +364,8 @@ return {
 			{ label = "Conversions", cfg = "weapon2", modName = chaosConvert }, 
 		},
 	},
+	luckyDamageRow("OH Lucky non-crit", "OffHand.", "HitLuckyChance", "weapon2Attack"),
+	luckyDamageRow("OH Lucky crit", "OffHand.", "CritLuckyChance", "weapon2Attack"),
 	{ label = "OH Average Hit", bgCol = colorCodes.OFFHANDBG, flag = "weapon2Attack", { format = "{1:output:OffHand.AverageHit}", { breakdown = "OffHand.AverageHit" }, }, },
 	{ label = "OH PvP Average Hit", bgCol = colorCodes.OFFHANDBG, flag = "weapon2AttackPvP", { format = "{1:output:OffHand.PvpAverageHit}", { breakdown = "OffHand.PvpAverageHit" }, 
 		{ label = "Tvalue Override (ms)", modName = "MultiplierPvpTvalueOverride" }, 
