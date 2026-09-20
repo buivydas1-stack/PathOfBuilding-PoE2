@@ -384,6 +384,11 @@ function CalcBreakdownClass:AddModSection(sectionData, modList)
 		end
 		local sourceType = row.mod.source:match("[^:]+") or ""
 		row.source = sourceType
+		if sourceType == "Config" then
+			row.source = "Configuration"
+		elseif sourceType == "EnemyConfig" then
+			row.source = "Enemy settings"
+		end
 		if not modList and not sectionData.modSource then
 			-- No modifier source specified, add the source type to the table
 			row.sourceTooltip = function(tooltip)
@@ -427,6 +432,15 @@ function CalcBreakdownClass:AddModSection(sectionData, modList)
 			row.sourceName = row.mod.source:match("Spectre:(.+)")
 		elseif sourceType == "Quest" then
 			row.sourceName = row.mod.source:match("Quest:(.+)")
+		end
+
+		if row.mod.displaySourceName then
+			row.sourceName = row.mod.displaySourceName..(row.sourceName and " - "..row.sourceName or "")
+			row.sourceNameTooltip = function(tooltip)
+				tooltip:AddLine(14, row.mod.displaySourceDetail)
+			end
+		elseif sourceType == "EnemyConfig" and row.mod.name:match("Resist$") then
+			row.sourceName = "Enemy base resistance (preset or override)"
 		end
 
 		if row.mod.flags ~= 0 or row.mod.keywordFlags ~= 0 then

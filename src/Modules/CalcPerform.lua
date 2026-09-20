@@ -3400,15 +3400,18 @@ function calcs.perform(env, skipEHP)
 			or element == "Lightning" and not enemyDB:Flag(nil, "Condition:HitByLightningDamage") then
 			local magnitude = 0
 			local source = ""
+			local exposureDescription
 			local extraExposure = modDB:Sum("BASE", nil, "ExtraExposure", "Extra"..element.."Exposure")
 			local globalExposureEffect = modDB:Sum("INC", nil, element.."ExposureEffect")
 			local exposureEffectOnSelf = enemyDB:More(nil, "ExposureEffectOnSelf")
 			local function checkExposure(value, modSource, skillExposureEffect)
+				local baseValue = value
 				-- Resolve each exposure source independently so skill-specific effect only scales the exposure from that skill.
 				value = m_floor((value + extraExposure) * ((globalExposureEffect + skillExposureEffect) / 100 + 1) * exposureEffectOnSelf)
 				if value > magnitude then
 					magnitude = value
 					source = modSource
+					exposureDescription = s_format("(%g%% base + %g%% extra) x %g%% effect x %g%% enemy effectiveness = %g%% reduction (rounded down)", baseValue, extraExposure, 100 + globalExposureEffect + skillExposureEffect, exposureEffectOnSelf * 100, value)
 				end
 			end
 			for _, mod in ipairs(enemyDB:Tabulate("BASE", nil, element.."Exposure")) do
@@ -3421,7 +3424,10 @@ function calcs.perform(env, skipEHP)
 				end
 				enemyDB:NewMod("Condition:Has"..element.."Exposure", "FLAG", true, "")
 				enemyDB:NewMod("Condition:HasExposure", "FLAG", true, "")
-				enemyDB:NewMod(element.."Resist", "BASE", -magnitude, source)
+				local exposureMod = modLib.createMod(element.."Resist", "BASE", -magnitude, source)
+				exposureMod.displaySourceName = element.." Exposure"..(source == "Config" and " (Configuration)" or "")
+				exposureMod.displaySourceDetail = exposureDescription..(exposureMin and s_format("; minimum exposure: %g%%; final: %g%%", exposureMin, magnitude) or "")
+				enemyDB:AddMod(exposureMod)
 				modDB:NewMod("Condition:AppliedExposureRecently", "FLAG", true, "")
 			end
 		end

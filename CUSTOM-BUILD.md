@@ -2,6 +2,8 @@
 
 Based on the official Path of Building 2 **v0.23.1** release.
 
+- Resistance breakdowns name elemental Exposure and explain its base value, extra reduction, effect scaling, enemy effectiveness and rounding when hovering its source name. `Config` and `EnemyConfig` display as Configuration and Enemy settings; base resistance identifies presets/overrides. Internal modifier identities and calculation values are unchanged.
+
 - **Electrocuting Arrow:** Configuration exposes **Is an Electrocuting Rod attached?** when the skill is active. This manual, initially unchecked condition enables lightning Electrocution buildup and gates the gem's existing quality effects. Standard quality uses the existing hit-only `DamageGainAsLightning` calculation and gem-stat rounding (10/20/23/28 quality gives 5/10/11/14% gain). Full DPS inclusion is independent. The rod is assumed attached, not automatically maintained after Electrocution. Verified with `tests/custom_electrocuting_arrow.lua`.
 
 - **Soul Core of Xopec on martial weapons:** backports the 0.5.5 weapon modifier from upstream [#2505](https://github.com/PathOfBuildingCommunity/PathOfBuilding-PoE2/pull/2505), adapted to this release's `ModRunes` schema. Clipboard imports and the augment editor recognize **25% increased Magnitude of Shock you inflict**, using the existing Shock calculation. Enable **Is the enemy Shocked?** and leave the numeric Shock effect blank to compare automatic magnitude changes. Existing stronger manual Shock values retain precedence. Re-import an item if an earlier editor save discarded its unrecognized augment. The remaining 0.5.5 Soul Core updates are included below.
