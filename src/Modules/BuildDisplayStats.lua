@@ -195,6 +195,8 @@ local displayStats = {
 	{ stat = "MovementSpeedWhileUsingSkill", label = "Skill Movement Speed", fmt = "+.1f%%", mod = true, condFunc = function() return true end },
 	{ },
 	{ stat = "PresenceRadiusMetres", label = "Presence Radius", fmt = ".1fm", compPercent = true },
+	{ stat = "ProjectileCount", label = "Average Projectile Count", fmt = ".2f", flag = "projectile", compareBeforeAfter = true, compareUnit = "" },
+	{ stat = "SurpassingProjectileChance", label = "Surpassing Projectile Chance", fmt = ".2f%%", flag = "projectile", compareBeforeAfter = true },
 	--[[ potentially useful mods
 	{ stat = "QuantityMultiplier", label = "Quantity Multiplier", fmt = "+d%%" },
 	{ stat = "StoredUses", label = "Stored Uses", fmt = "d" },
@@ -204,7 +206,6 @@ local displayStats = {
 	{ stat = "ReserveDuration", label = "Reserve Duration", fmt = ".2f" },
 	{ stat = "SoulGainPreventionDuration", label = "Soul Gain Prevent.", fmt = ".2f" },
 	{ stat = "SustainableTrauma", label = "Sustainable Trauma", fmt = "d" },
-	{ stat = "ProjectileCount", label = "Projectile Count", fmt = "d", flag = "projectile" },
 	{ stat = "PierceCountString", label = "Pierce Count", fmt = "d" },
 	{ stat = "ForkCountString", label = "Fork Count", fmt = "d" },
 	{ stat = "ChainMaxString", label = "Max Chain Count", fmt = "d" },

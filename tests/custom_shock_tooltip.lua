@@ -39,7 +39,7 @@ assert(tooltip.lines[before+1].text == "Node alone", "Node and path sections rem
 print("PASS: compact category headings, Electrocute buildup, losses and separate path comparisons")
 
 for _, stat in ipairs(build.displayStats) do
-	if stat.compareBeforeAfter then
+	if stat.compareBeforeAfter and stat.compareUnit ~= "" then
 		local row = copyTable(stat)
 		row.flag, row.condFunc = nil, nil
 		local tip = { lines = {}, AddLine = function(self, _, line) table.insert(self.lines, line) end }
@@ -48,3 +48,4 @@ for _, stat in ipairs(build.displayStats) do
 	end
 end
 print("PASS: all displayed chance/buildup rows include before/after values")
+

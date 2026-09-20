@@ -2304,7 +2304,7 @@ function buildMode:CompareStatList(tooltip, statList, actor, baseOutput, compare
 				end
 				if statData.compareBeforeAfter then
 					local function percent(value)
-						return s_format("%.2f", value):gsub("0+$", ""):gsub("%.$", "").."%"
+						return s_format("%.2f", value):gsub("0+$", ""):gsub("%.$", "")..(statData.compareUnit or "%")
 					end
 					line = line .. " ("..percent(statVal2).." > "..percent(statVal1)..")"
 				end

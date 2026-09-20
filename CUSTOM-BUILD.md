@@ -69,3 +69,5 @@ Shock Chance now appears in the sidebar and node/item comparisons for hit skills
 Node/item comparison tooltips group changed stats under small muted Damage, Ailments, Survivability and Utility headings. Empty categories and single-category headings are omitted; node-only/path and player/minion comparisons remain separate. Electrocute Buildup uses the existing average buildup per hit, showing percentage-point and relative changes.
 
 Chance and ailment-buildup comparison rows include before/after percentages, for example (10% > 11%), alongside the existing delta. This applies to node and item comparisons; calculations are unchanged.
+
+- Projectile comparisons now show Average Projectile Count with fractional before/after values and total Surpassing Projectile Chance. Calcs exposes both totals and modifier sources. Existing projectile and DPS formulas are unchanged.
