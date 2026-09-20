@@ -46,8 +46,46 @@ local coldConvert = fillConvert("Cold")
 local fireConvert = fillConvert("Fire")
 local chaosConvert = fillConvert("Chaos")
 
+local function hitModifierRows()
+	local rows = { flag = "hit", colWidth = 95,
+		{ {}, { format = "Physical:" }, { format = colorCodes.LIGHTNING.."Lightning:" },
+			{ format = colorCodes.COLD.."Cold:" }, { format = colorCodes.FIRE.."Fire:" }, { format = colorCodes.CHAOS.."Chaos:" } },
+	}
+	for _, hand in ipairs({ {"", "", "notFlag", "attack"}, {"MH ", "MainHand.", "flag", "weapon1Attack"}, {"OH ", "OffHand.", "flag", "weapon2Attack"} }) do
+		for _, metric in ipairs({
+			{"Lucky non-crit", "HitLuckyChance"}, {"Lucky crit", "CritLuckyChance"},
+			{"Res. reductions", "ResistanceReduction"}, {"Enemy res.", "EnemyResistance"},
+			{"Penetration", "ResistancePenetration"}, {"Penetration floor", "PenetrationFloor"},
+			{"Effective res.", "EffectiveResistance"},
+		}) do
+			local lucky = metric[2] == "HitLuckyChance" or metric[2] == "CritLuckyChance"
+			local row = { label = hand[1]..metric[1], [hand[3]] = hand[4], {} }
+			if not lucky then
+				row.flagList = hand[3] == "flag" and {hand[4], "effective"} or {"effective"}
+			end
+			for _, element in ipairs({"Physical", "Lightning", "Cold", "Fire", "Chaos"}) do
+				local field = hand[2]..element..metric[2]
+				local cell = { format = "{1:output:"..field.."}%" }
+				if element == "Physical" and not lucky then
+					cell = {}
+				elseif lucky then
+					cell[1] = { modName = {"LuckyHitsChance", element.."LuckyHitsChance", "LuckyHits", "CritLucky", "LightningNoCritLucky", "ElementalLuckHits"}, cfg = "skill" }
+				elseif metric[2] == "ResistanceReduction" then
+					cell[1] = { label = "Resistance modifiers (reductions subtotal excludes positive values)", modName = {element.."Resist", "ElementalResist"}, enemy = true, cfg = "skill" }
+				else
+					cell[1] = { breakdown = hand[2]..element.."EffMult" }
+				end
+				table.insert(row, cell)
+			end
+			table.insert(rows, row)
+		end
+	end
+	return rows
+end
+
 -- format {width, id, group, color, subsection:{default hidden, label, data:{}}}
 return {
+{ 3, "HitModifiers", 1, colorCodes.OFFENCE, {{ defaultCollapsed = false, label = "Lucky Damage and Enemy Resistances", data = hitModifierRows() }} },
 { 3, "HitDamage", 1, colorCodes.OFFENCE, {{ defaultCollapsed = false, label = "Skill Hit Damage", data = {
 	extra = "{output:DisplayDamage}",
 	flag = "hit",

@@ -4076,6 +4076,9 @@ function calcs.offence(env, actor, activeSkill)
 					damageTypeHitAvgNotLucky = (damageTypeHitMin / 2 + damageTypeHitMax / 2)
 					damageTypeHitAvgLucky = (damageTypeHitMin / 3 + 2 * damageTypeHitMax / 3)
 					damageTypeHitAvg = damageTypeHitAvgNotLucky * (1 - damageTypeLuckyChance) + damageTypeHitAvgLucky * damageTypeLuckyChance
+					if env.mode == "CALCS" then
+						output[damageType..(pass == 1 and "CritLuckyChance" or "HitLuckyChance")] = damageTypeLuckyChance * 100
+					end
 
 					-- Store pre-resist/armour/penetration hit damage for ailment calculations
 					if pass == 1 then
@@ -4209,6 +4212,17 @@ function calcs.offence(env, actor, activeSkill)
 						damageTypeHitAvg = damageTypeHitAvg * effMult
 						if env.mode == "CALCS" then
 							output[damageType.."EffMult"] = effMult
+							if pass == 2 and damageType ~= "Physical" then
+								output[damageType.."EnemyResistance"] = resist
+								output[damageType.."ResistancePenetration"] = pen
+								output[damageType.."PenetrationFloor"] = minPen
+								output[damageType.."EffectiveResistance"] = useRes and effectiveResist or 0
+								local reduction = 0
+								for _, entry in ipairs(enemyDB:Tabulate("BASE", cfg, damageType.."Resist", isElemental[damageType] and "ElementalResist" or nil)) do
+									reduction = reduction - m_min(entry.value, 0)
+								end
+								output[damageType.."ResistanceReduction"] = reduction
+							end
 						end
 						if pass == 2 and breakdown and (effMult ~= 1 or sourceRes ~= damageType or invertChance > 0) and skillModList:Flag(cfg, isElemental[damageType] and "CannotElePenIgnore" or nil) then
 							t_insert(breakdown[damageType], s_format("x %.3f ^8(effective DPS modifier)", effMult))
