@@ -709,6 +709,9 @@ holding Shift will put it in the second.]])
 			tooltip:Clear()
 			if value.lines and value.lines[1] ~= "None" then
 				tooltip:AddLine(14, "^7"..value.name)
+				if value.limit then
+					tooltip:AddLine(14, "^7Limited to: "..value.limit..(value.limitId == "AncientAugment" and " Ancient Augment" or ""))
+				end
 				for _, line in ipairs(value.lines) do
 					tooltip:AddLine(14, "^7"..line)
 				end
@@ -1949,7 +1952,7 @@ local runeModLines = { { name = "None", label = "None", lines = { "None" }, orde
 for name, runeMods in pairs(data.itemMods.Runes) do
 	-- Some runes have multiple mod lines; insert each as separate entry
 	for slotType, runeMod in pairs(runeMods) do
-		t_insert(runeModLines, { name = name, label = runeMod[1], lines = runeMod, req = runeMod.rank[1], order = runeMod.statOrder[1], slot = slotType, type = runeMod.type, group = #runeMod, isSocketBound = runeMod.isSocketBound })
+		t_insert(runeModLines, { name = name, label = runeMod[1], lines = runeMod, req = runeMod.rank[1], order = runeMod.statOrder[1], slot = slotType, type = runeMod.type, group = #runeMod, isSocketBound = runeMod.isSocketBound, limit = runeMod.limit, limitId = runeMod.limitId })
 	end
 end
 table.sort(runeModLines, function(a, b)

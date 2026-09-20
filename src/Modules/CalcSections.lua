@@ -1511,6 +1511,9 @@ return {
 		{ label = "Player modifiers", modName = { "EnemyPinBuildup", "EnemyImmobilisationBuildup" }, cfg = "skill" },
 		{ label = "Enemy modifiers", modName = { "PoiseThreshold", "EnemyPinThreshold", "PinBuildup", "ImmobilisationBuildup" }, enemy = true },
 	}, },
+	{ label = "Pin Duration", haveOutput = "PinDurationMod", { format = "x {2:output:PinDurationMod}",
+		{ modName = "EnemyPinDuration", cfg = "skill" },
+	}, },
 } }
 } },
 { 1, "MiscEffects", 1, colorCodes.OFFENCE, {{ defaultCollapsed = false, label = "Other Effects", data = {

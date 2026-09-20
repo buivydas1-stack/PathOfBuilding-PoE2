@@ -5,6 +5,7 @@ return {
 	["Hayoxi's Soul Core of Heatproofing"] = {
 		["helmet"] = {
 				type = "SoulCore",
+				limit = 1,
 				"+40% of Armour also applies to Cold Damage",
 				statOrder = { 4646 },
 				tradeHashes = { [1947060170] = { "+40% of Armour also applies to Cold Damage" },  },
@@ -15,6 +16,7 @@ return {
 	["Zalatl's Soul Core of Insulation"] = {
 		["boots"] = {
 				type = "SoulCore",
+				limit = 1,
 				"+40% of Armour also applies to Lightning Damage",
 				statOrder = { 4648 },
 				tradeHashes = { [2200571612] = { "+40% of Armour also applies to Lightning Damage" },  },
@@ -25,6 +27,7 @@ return {
 	["Topotante's Soul Core of Dampening"] = {
 		["gloves"] = {
 				type = "SoulCore",
+				limit = 1,
 				"+40% of Armour also applies to Fire Damage",
 				statOrder = { 4647 },
 				tradeHashes = { [3897831687] = { "+40% of Armour also applies to Fire Damage" },  },
@@ -35,19 +38,19 @@ return {
 	["Atmohua's Soul Core of Retreat"] = {
 		["body armour"] = {
 				type = "SoulCore",
-				"Gain additional Ailment Threshold equal to 15% of maximum Energy Shield",
-				"Gain additional Stun Threshold equal to 15% of maximum Energy Shield",
-				statOrder = { 4265, 10138 },
-				tradeHashes = { [3398301358] = { "Gain additional Ailment Threshold equal to 15% of maximum Energy Shield" }, [416040624] = { "Gain additional Stun Threshold equal to 15% of maximum Energy Shield" },  },
+				limit = 1,
+				"40% increased Energy Shield from Equipped Focus",
+				statOrder = { 10758 },
+				tradeHashes = { [3174700878] = { "40% increased Energy Shield from Equipped Focus" },  },
 				isSocketBound = false,
 				rank = { 50 },
 		},
 		["focus"] = {
 				type = "SoulCore",
-				"Gain additional Ailment Threshold equal to 15% of maximum Energy Shield",
-				"Gain additional Stun Threshold equal to 15% of maximum Energy Shield",
-				statOrder = { 4265, 10138 },
-				tradeHashes = { [3398301358] = { "Gain additional Ailment Threshold equal to 15% of maximum Energy Shield" }, [416040624] = { "Gain additional Stun Threshold equal to 15% of maximum Energy Shield" },  },
+				limit = 1,
+				"30% increased Energy Shield from Equipped Body Armour",
+				statOrder = { 10759 },
+				tradeHashes = { [1195319608] = { "30% increased Energy Shield from Equipped Body Armour" },  },
 				isSocketBound = false,
 				rank = { 50 },
 		},
@@ -55,6 +58,7 @@ return {
 	["Quipolatl's Soul Core of Flow"] = {
 		["helmet"] = {
 				type = "SoulCore",
+				limit = 1,
 				"8% increased Skill Effect Duration",
 				"8% increased Cooldown Recovery Rate",
 				statOrder = { 1645, 4677 },
@@ -66,6 +70,7 @@ return {
 	["Tzamoto's Soul Core of Ferocity"] = {
 		["helmet"] = {
 				type = "SoulCore",
+				limit = 1,
 				"+4 to Maximum Rage",
 				statOrder = { 9609 },
 				tradeHashes = { [1181501418] = { "+4 to Maximum Rage" },  },
@@ -76,10 +81,11 @@ return {
 	["Uromoti's Soul Core of Attenuation"] = {
 		["boots"] = {
 				type = "SoulCore",
-				"15% increased Curse Duration",
-				"15% increased Poison Duration",
+				limit = 1,
+				"20% increased Curse Duration",
+				"20% increased Poison Duration",
 				statOrder = { 1540, 2896 },
-				tradeHashes = { [2011656677] = { "15% increased Poison Duration" }, [3824372849] = { "15% increased Curse Duration" },  },
+				tradeHashes = { [2011656677] = { "20% increased Poison Duration" }, [3824372849] = { "20% increased Curse Duration" },  },
 				isSocketBound = false,
 				rank = { 50 },
 		},
@@ -87,6 +93,7 @@ return {
 	["Opiloti's Soul Core of Assault"] = {
 		["weapon"] = {
 				type = "SoulCore",
+				limit = 1,
 				"50% chance when you gain a Frenzy Charge to gain an additional Frenzy Charge",
 				statOrder = { 5520 },
 				tradeHashes = { [2916861134] = { "50% chance when you gain a Frenzy Charge to gain an additional Frenzy Charge" },  },
@@ -95,6 +102,7 @@ return {
 		},
 		["wand"] = {
 				type = "SoulCore",
+				limit = 1,
 				"50% chance when you gain a Frenzy Charge to gain an additional Frenzy Charge",
 				statOrder = { 5520 },
 				tradeHashes = { [2916861134] = { "50% chance when you gain a Frenzy Charge to gain an additional Frenzy Charge" },  },
@@ -103,6 +111,7 @@ return {
 		},
 		["staff"] = {
 				type = "SoulCore",
+				limit = 1,
 				"50% chance when you gain a Frenzy Charge to gain an additional Frenzy Charge",
 				statOrder = { 5520 },
 				tradeHashes = { [2916861134] = { "50% chance when you gain a Frenzy Charge to gain an additional Frenzy Charge" },  },
@@ -113,6 +122,7 @@ return {
 	["Guatelitzi's Soul Core of Endurance"] = {
 		["weapon"] = {
 				type = "SoulCore",
+				limit = 1,
 				"50% chance when you gain an Endurance Charge to gain an additional Endurance Charge",
 				statOrder = { 5519 },
 				tradeHashes = { [1228682002] = { "50% chance when you gain an Endurance Charge to gain an additional Endurance Charge" },  },
@@ -121,6 +131,7 @@ return {
 		},
 		["wand"] = {
 				type = "SoulCore",
+				limit = 1,
 				"50% chance when you gain an Endurance Charge to gain an additional Endurance Charge",
 				statOrder = { 5519 },
 				tradeHashes = { [1228682002] = { "50% chance when you gain an Endurance Charge to gain an additional Endurance Charge" },  },
@@ -129,6 +140,7 @@ return {
 		},
 		["staff"] = {
 				type = "SoulCore",
+				limit = 1,
 				"50% chance when you gain an Endurance Charge to gain an additional Endurance Charge",
 				statOrder = { 5519 },
 				tradeHashes = { [1228682002] = { "50% chance when you gain an Endurance Charge to gain an additional Endurance Charge" },  },
@@ -139,6 +151,7 @@ return {
 	["Xopec's Soul Core of Power"] = {
 		["weapon"] = {
 				type = "SoulCore",
+				limit = 1,
 				"50% chance when you gain a Power Charge to gain an additional Power Charge",
 				statOrder = { 5521 },
 				tradeHashes = { [3537994888] = { "50% chance when you gain a Power Charge to gain an additional Power Charge" },  },
@@ -147,6 +160,7 @@ return {
 		},
 		["wand"] = {
 				type = "SoulCore",
+				limit = 1,
 				"50% chance when you gain a Power Charge to gain an additional Power Charge",
 				statOrder = { 5521 },
 				tradeHashes = { [3537994888] = { "50% chance when you gain a Power Charge to gain an additional Power Charge" },  },
@@ -155,6 +169,7 @@ return {
 		},
 		["staff"] = {
 				type = "SoulCore",
+				limit = 1,
 				"50% chance when you gain a Power Charge to gain an additional Power Charge",
 				statOrder = { 5521 },
 				tradeHashes = { [3537994888] = { "50% chance when you gain a Power Charge to gain an additional Power Charge" },  },
@@ -165,17 +180,19 @@ return {
 	["Estazunti's Soul Core of Convalescence"] = {
 		["boots"] = {
 				type = "SoulCore",
-				"12% increased speed of Recoup Effects",
+				limit = 1,
+				"15% increased speed of Recoup Effects",
 				statOrder = { 9663 },
-				tradeHashes = { [2363593824] = { "12% increased speed of Recoup Effects" },  },
+				tradeHashes = { [2363593824] = { "15% increased speed of Recoup Effects" },  },
 				isSocketBound = false,
 				rank = { 50 },
 		},
 		["helmet"] = {
 				type = "SoulCore",
-				"8% of Damage taken Recouped as Life",
+				limit = 1,
+				"10% of Damage taken Recouped as Life",
 				statOrder = { 1037 },
-				tradeHashes = { [1444556985] = { "8% of Damage taken Recouped as Life" },  },
+				tradeHashes = { [1444556985] = { "10% of Damage taken Recouped as Life" },  },
 				isSocketBound = false,
 				rank = { 50 },
 		},
@@ -183,6 +200,7 @@ return {
 	["Tacati's Soul Core of Affliction"] = {
 		["helmet"] = {
 				type = "SoulCore",
+				limit = 1,
 				"Enemies you Curse have -5% to Chaos Resistance",
 				statOrder = { 3716 },
 				tradeHashes = { [1772929282] = { "Enemies you Curse have -5% to Chaos Resistance" },  },
@@ -193,9 +211,10 @@ return {
 	["Cholotl's Soul Core of War"] = {
 		["bow"] = {
 				type = "SoulCore",
-				"20% increased Projectile Speed",
-				statOrder = { 897 },
-				tradeHashes = { [3759663284] = { "20% increased Projectile Speed" },  },
+				limit = 1,
+				"Projectiles have 20% chance to Chain an additional time from terrain",
+				statOrder = { 10760 },
+				tradeHashes = { [4081947835] = { "Projectiles have 20% chance to Chain an additional time from terrain" },  },
 				isSocketBound = false,
 				rank = { 50 },
 		},
@@ -203,6 +222,7 @@ return {
 	["Citaqualotl's Soul Core of Foulness"] = {
 		["weapon"] = {
 				type = "SoulCore",
+				limit = 1,
 				"Adds 19 to 29 Chaos damage",
 				statOrder = { 1291 },
 				tradeHashes = { [2223678961] = { "Adds 19 to 29 Chaos damage" },  },
@@ -213,6 +233,7 @@ return {
 	["Xipocado's Soul Core of Dominion"] = {
 		["wand"] = {
 				type = "SoulCore",
+				limit = 1,
 				"Minions deal 40% increased Damage with Command Skills",
 				statOrder = { 9027 },
 				tradeHashes = { [3742865955] = { "Minions deal 40% increased Damage with Command Skills" },  },
@@ -221,6 +242,7 @@ return {
 		},
 		["staff"] = {
 				type = "SoulCore",
+				limit = 1,
 				"Minions deal 40% increased Damage with Command Skills",
 				statOrder = { 9027 },
 				tradeHashes = { [3742865955] = { "Minions deal 40% increased Damage with Command Skills" },  },
@@ -229,6 +251,7 @@ return {
 		},
 		["sceptre"] = {
 				type = "SoulCore",
+				limit = 1,
 				"Minions deal 40% increased Damage with Command Skills",
 				statOrder = { 9027 },
 				tradeHashes = { [3742865955] = { "Minions deal 40% increased Damage with Command Skills" },  },
@@ -239,17 +262,17 @@ return {
 	["Soul Core of Tacati"] = {
 		["weapon"] = {
 				type = "SoulCore",
-				"15% chance to Poison on Hit with this weapon",
-				statOrder = { 7813 },
-				tradeHashes = { [3885634897] = { "15% chance to Poison on Hit with this weapon" },  },
+				"25% increased Magnitude of Poison you inflict",
+				statOrder = { 10768 },
+				tradeHashes = { [2487305362] = { "25% increased Magnitude of Poison you inflict" },  },
 				isSocketBound = false,
 				rank = { 0 },
 		},
 		["armour"] = {
 				type = "SoulCore",
-				"+11% to Chaos Resistance",
+				"+13% to Chaos Resistance",
 				statOrder = { 1024 },
-				tradeHashes = { [2923486259] = { "+11% to Chaos Resistance" },  },
+				tradeHashes = { [2923486259] = { "+13% to Chaos Resistance" },  },
 				isSocketBound = false,
 				rank = { 0 },
 		},
@@ -257,17 +280,19 @@ return {
 	["Soul Core of Opiloti"] = {
 		["weapon"] = {
 				type = "SoulCore",
-				"15% chance to cause Bleeding on Hit",
-				statOrder = { 2264 },
-				tradeHashes = { [1519615863] = { "15% chance to cause Bleeding on Hit" },  },
+				limit = 1,
+				"40% increased Magnitude of Bleeding you inflict",
+				statOrder = { 4809 },
+				tradeHashes = { [3166958180] = { "40% increased Magnitude of Bleeding you inflict" },  },
 				isSocketBound = false,
 				rank = { 0 },
 		},
 		["helmet"] = {
 				type = "SoulCore",
-				"20% increased Charm Charges gained",
-				statOrder = { 5605 },
-				tradeHashes = { [3585532255] = { "20% increased Charm Charges gained" },  },
+				limit = 1,
+				"25% increased Pin duration",
+				statOrder = { 10766 },
+				tradeHashes = { [3985867204] = { "25% increased Pin duration" },  },
 				isSocketBound = false,
 				rank = { 0 },
 		},
@@ -275,17 +300,19 @@ return {
 	["Soul Core of Jiquani"] = {
 		["weapon"] = {
 				type = "SoulCore",
-				"Recover 2% of maximum Life on Kill",
+				limit = 1,
+				"Recover 5% of maximum Life on Kill",
 				statOrder = { 1511 },
-				tradeHashes = { [2023107756] = { "Recover 2% of maximum Life on Kill" },  },
+				tradeHashes = { [2023107756] = { "Recover 5% of maximum Life on Kill" },  },
 				isSocketBound = false,
 				rank = { 0 },
 		},
 		["body armour"] = {
 				type = "SoulCore",
-				"3% increased maximum Life",
+				limit = 1,
+				"5% increased maximum Life",
 				statOrder = { 889 },
-				tradeHashes = { [983749596] = { "3% increased maximum Life" },  },
+				tradeHashes = { [983749596] = { "5% increased maximum Life" },  },
 				isSocketBound = false,
 				rank = { 0 },
 		},
@@ -293,17 +320,19 @@ return {
 	["Soul Core of Zalatl"] = {
 		["weapon"] = {
 				type = "SoulCore",
-				"Recover 2% of maximum Mana on Kill",
+				limit = 1,
+				"Recover 4% of maximum Mana on Kill",
 				statOrder = { 1513 },
-				tradeHashes = { [1030153674] = { "Recover 2% of maximum Mana on Kill" },  },
+				tradeHashes = { [1030153674] = { "Recover 4% of maximum Mana on Kill" },  },
 				isSocketBound = false,
 				rank = { 0 },
 		},
 		["helmet"] = {
 				type = "SoulCore",
-				"3% increased maximum Mana",
+				limit = 1,
+				"5% increased maximum Mana",
 				statOrder = { 894 },
-				tradeHashes = { [2748665614] = { "3% increased maximum Mana" },  },
+				tradeHashes = { [2748665614] = { "5% increased maximum Mana" },  },
 				isSocketBound = false,
 				rank = { 0 },
 		},
@@ -311,17 +340,17 @@ return {
 	["Soul Core of Citaqualotl"] = {
 		["weapon"] = {
 				type = "SoulCore",
-				"30% increased Elemental Damage with Attacks",
+				"40% increased Elemental Damage with Attacks",
 				statOrder = { 877 },
-				tradeHashes = { [387439868] = { "30% increased Elemental Damage with Attacks" },  },
+				tradeHashes = { [387439868] = { "40% increased Elemental Damage with Attacks" },  },
 				isSocketBound = false,
 				rank = { 0 },
 		},
 		["armour"] = {
 				type = "SoulCore",
-				"+5% to all Elemental Resistances",
+				"+6% to all Elemental Resistances",
 				statOrder = { 1013 },
-				tradeHashes = { [2901986750] = { "+5% to all Elemental Resistances" },  },
+				tradeHashes = { [2901986750] = { "+6% to all Elemental Resistances" },  },
 				isSocketBound = false,
 				rank = { 0 },
 		},
@@ -329,17 +358,19 @@ return {
 	["Soul Core of Puhuarte"] = {
 		["weapon"] = {
 				type = "SoulCore",
-				"30% increased Flammability Magnitude",
-				statOrder = { 1055 },
-				tradeHashes = { [2968503605] = { "30% increased Flammability Magnitude" },  },
+				limit = 1,
+				"40% increased Ignite Magnitude",
+				statOrder = { 10767 },
+				tradeHashes = { [3791899485] = { "40% increased Ignite Magnitude" },  },
 				isSocketBound = false,
 				rank = { 0 },
 		},
 		["gloves"] = {
 				type = "SoulCore",
-				"+1% to Maximum Fire Resistance",
+				limit = 1,
+				"+2% to Maximum Fire Resistance",
 				statOrder = { 1009 },
-				tradeHashes = { [4095671657] = { "+1% to Maximum Fire Resistance" },  },
+				tradeHashes = { [4095671657] = { "+2% to Maximum Fire Resistance" },  },
 				isSocketBound = false,
 				rank = { 0 },
 		},
@@ -347,17 +378,19 @@ return {
 	["Soul Core of Tzamoto"] = {
 		["weapon"] = {
 				type = "SoulCore",
-				"30% increased Freeze Buildup",
+				limit = 1,
+				"60% increased Freeze Buildup",
 				statOrder = { 1057 },
-				tradeHashes = { [473429811] = { "30% increased Freeze Buildup" },  },
+				tradeHashes = { [473429811] = { "60% increased Freeze Buildup" },  },
 				isSocketBound = false,
 				rank = { 0 },
 		},
 		["helmet"] = {
 				type = "SoulCore",
-				"+1% to Maximum Cold Resistance",
+				limit = 1,
+				"+2% to Maximum Cold Resistance",
 				statOrder = { 1010 },
-				tradeHashes = { [3676141501] = { "+1% to Maximum Cold Resistance" },  },
+				tradeHashes = { [3676141501] = { "+2% to Maximum Cold Resistance" },  },
 				isSocketBound = false,
 				rank = { 0 },
 		},
@@ -365,6 +398,7 @@ return {
 	["Soul Core of Xopec"] = {
 		["weapon"] = {
 				type = "SoulCore",
+				limit = 1,
 				"25% increased Magnitude of Shock you inflict",
 				statOrder = { 9845 },
 				tradeHashes = { [2527686725] = { "25% increased Magnitude of Shock you inflict" },  },
@@ -373,9 +407,10 @@ return {
 		},
 		["boots"] = {
 				type = "SoulCore",
-				"+1% to Maximum Lightning Resistance",
+				limit = 1,
+				"+2% to Maximum Lightning Resistance",
 				statOrder = { 1011 },
-				tradeHashes = { [1011760251] = { "+1% to Maximum Lightning Resistance" },  },
+				tradeHashes = { [1011760251] = { "+2% to Maximum Lightning Resistance" },  },
 				isSocketBound = false,
 				rank = { 0 },
 		},
@@ -401,17 +436,19 @@ return {
 	["Soul Core of Topotante"] = {
 		["weapon"] = {
 				type = "SoulCore",
-				"Attacks with this Weapon Penetrate 15% Elemental Resistances",
+				limit = 1,
+				"Attacks with this Weapon Penetrate 25% Elemental Resistances",
 				statOrder = { 3436 },
-				tradeHashes = { [4064396395] = { "Attacks with this Weapon Penetrate 15% Elemental Resistances" },  },
+				tradeHashes = { [4064396395] = { "Attacks with this Weapon Penetrate 25% Elemental Resistances" },  },
 				isSocketBound = false,
 				rank = { 0 },
 		},
 		["boots"] = {
 				type = "SoulCore",
-				"25% increased Elemental Ailment Threshold",
-				statOrder = { 4266 },
-				tradeHashes = { [3544800472] = { "25% increased Elemental Ailment Threshold" },  },
+				limit = 1,
+				"25% reduced Effect of Non-Damaging Ailments on you",
+				statOrder = { 10769 },
+				tradeHashes = { [1519474779] = { "25% reduced Effect of Non-Damaging Ailments on you" },  },
 				isSocketBound = false,
 				rank = { 0 },
 		},
@@ -437,6 +474,7 @@ return {
 	["Soul Core of Ticaba"] = {
 		["weapon"] = {
 				type = "SoulCore",
+				limit = 1,
 				"+5% to Critical Damage Bonus",
 				statOrder = { 945 },
 				tradeHashes = { [2694482655] = { "+5% to Critical Damage Bonus" },  },
@@ -445,25 +483,28 @@ return {
 		},
 		["body armour"] = {
 				type = "SoulCore",
-				"Hits against you have 20% reduced Critical Damage Bonus",
+				limit = 1,
+				"Hits against you have 50% reduced Critical Damage Bonus",
 				statOrder = { 1005 },
-				tradeHashes = { [3855016469] = { "Hits against you have 20% reduced Critical Damage Bonus" },  },
+				tradeHashes = { [3855016469] = { "Hits against you have 50% reduced Critical Damage Bonus" },  },
 				isSocketBound = false,
 				rank = { 0 },
 		},
 		["shield"] = {
 				type = "SoulCore",
-				"Hits against you have 20% reduced Critical Damage Bonus",
+				limit = 1,
+				"Hits against you have 50% reduced Critical Damage Bonus",
 				statOrder = { 1005 },
-				tradeHashes = { [3855016469] = { "Hits against you have 20% reduced Critical Damage Bonus" },  },
+				tradeHashes = { [3855016469] = { "Hits against you have 50% reduced Critical Damage Bonus" },  },
 				isSocketBound = false,
 				rank = { 0 },
 		},
 		["buckler"] = {
 				type = "SoulCore",
-				"Hits against you have 20% reduced Critical Damage Bonus",
+				limit = 1,
+				"Hits against you have 50% reduced Critical Damage Bonus",
 				statOrder = { 1005 },
-				tradeHashes = { [3855016469] = { "Hits against you have 20% reduced Critical Damage Bonus" },  },
+				tradeHashes = { [3855016469] = { "Hits against you have 50% reduced Critical Damage Bonus" },  },
 				isSocketBound = false,
 				rank = { 0 },
 		},
@@ -471,17 +512,17 @@ return {
 	["Soul Core of Atmohua"] = {
 		["weapon"] = {
 				type = "SoulCore",
-				"Convert 20% of Requirements to Strength",
+				"Convert 40% of Requirements to Strength",
 				statOrder = { 7818 },
-				tradeHashes = { [1556124492] = { "Convert 20% of Requirements to Strength" },  },
+				tradeHashes = { [1556124492] = { "Convert 40% of Requirements to Strength" },  },
 				isSocketBound = false,
 				rank = { 0 },
 		},
 		["armour"] = {
 				type = "SoulCore",
-				"Convert 20% of Requirements to Strength",
+				"Convert 40% of Requirements to Strength",
 				statOrder = { 7818 },
-				tradeHashes = { [1556124492] = { "Convert 20% of Requirements to Strength" },  },
+				tradeHashes = { [1556124492] = { "Convert 40% of Requirements to Strength" },  },
 				isSocketBound = false,
 				rank = { 0 },
 		},
@@ -489,17 +530,17 @@ return {
 	["Soul Core of Cholotl"] = {
 		["weapon"] = {
 				type = "SoulCore",
-				"Convert 20% of Requirements to Dexterity",
+				"Convert 40% of Requirements to Dexterity",
 				statOrder = { 7816 },
-				tradeHashes = { [1496740334] = { "Convert 20% of Requirements to Dexterity" },  },
+				tradeHashes = { [1496740334] = { "Convert 40% of Requirements to Dexterity" },  },
 				isSocketBound = false,
 				rank = { 0 },
 		},
 		["armour"] = {
 				type = "SoulCore",
-				"Convert 20% of Requirements to Dexterity",
+				"Convert 40% of Requirements to Dexterity",
 				statOrder = { 7816 },
-				tradeHashes = { [1496740334] = { "Convert 20% of Requirements to Dexterity" },  },
+				tradeHashes = { [1496740334] = { "Convert 40% of Requirements to Dexterity" },  },
 				isSocketBound = false,
 				rank = { 0 },
 		},
@@ -507,17 +548,17 @@ return {
 	["Soul Core of Zantipi"] = {
 		["weapon"] = {
 				type = "SoulCore",
-				"Convert 20% of Requirements to Intelligence",
+				"Convert 40% of Requirements to Intelligence",
 				statOrder = { 7817 },
-				tradeHashes = { [2913012734] = { "Convert 20% of Requirements to Intelligence" },  },
+				tradeHashes = { [2913012734] = { "Convert 40% of Requirements to Intelligence" },  },
 				isSocketBound = false,
 				rank = { 0 },
 		},
 		["armour"] = {
 				type = "SoulCore",
-				"Convert 20% of Requirements to Intelligence",
+				"Convert 40% of Requirements to Intelligence",
 				statOrder = { 7817 },
-				tradeHashes = { [2913012734] = { "Convert 20% of Requirements to Intelligence" },  },
+				tradeHashes = { [2913012734] = { "Convert 40% of Requirements to Intelligence" },  },
 				isSocketBound = false,
 				rank = { 0 },
 		},
@@ -525,6 +566,8 @@ return {
 	["Guatelitzi's Thesis"] = {
 		["helmet"] = {
 				type = "SoulCore",
+				limit = 1,
+				limitId = "AncientAugment",
 				"Gain Armour equal to 35% of Life Lost from Hits in the past 8 seconds",
 				statOrder = { 6765 },
 				tradeHashes = { [3903510399] = { "Gain Armour equal to 35% of Life Lost from Hits in the past 8 seconds" },  },
@@ -533,6 +576,8 @@ return {
 		},
 		["body armour"] = {
 				type = "SoulCore",
+				limit = 1,
+				limitId = "AncientAugment",
 				"10% of Physical Damage prevented Recouped as Life",
 				statOrder = { 9451 },
 				tradeHashes = { [1374654984] = { "10% of Physical Damage prevented Recouped as Life" },  },
@@ -541,6 +586,8 @@ return {
 		},
 		["boots"] = {
 				type = "SoulCore",
+				limit = 1,
+				limitId = "AncientAugment",
 				"Lose 5% of maximum Life per second while Sprinting",
 				"25% increased Movement Speed while Sprinting",
 				statOrder = { 7464, 10069 },
@@ -552,6 +599,8 @@ return {
 	["Citaqualotl's Thesis"] = {
 		["body armour"] = {
 				type = "SoulCore",
+				limit = 1,
+				limitId = "AncientAugment",
 				"You Recoup 50% of Damage taken by your Offerings as Life",
 				statOrder = { 9687 },
 				tradeHashes = { [1937310173] = { "You Recoup 50% of Damage taken by your Offerings as Life" },  },
@@ -560,6 +609,8 @@ return {
 		},
 		["gloves"] = {
 				type = "SoulCore",
+				limit = 1,
+				limitId = "AncientAugment",
 				"One of your Persistent Minions revives when an Offering expires",
 				statOrder = { 9781 },
 				tradeHashes = { [1480688478] = { "One of your Persistent Minions revives when an Offering expires" },  },
@@ -568,6 +619,8 @@ return {
 		},
 		["boots"] = {
 				type = "SoulCore",
+				limit = 1,
+				limitId = "AncientAugment",
 				"Sacrifice 10% of maximum Life to gain that much Guard when you Dodge Roll",
 				statOrder = { 9788 },
 				tradeHashes = { [1585886916] = { "Sacrifice 10% of maximum Life to gain that much Guard when you Dodge Roll" },  },
@@ -578,26 +631,32 @@ return {
 	["Jiquani's Thesis"] = {
 		["helmet"] = {
 				type = "SoulCore",
-				"+1 to maximum Mana per 2 Item Energy Shield on Equipped Helmet",
-				statOrder = { 6723 },
-				tradeHashes = { [280497929] = { "+1 to maximum Mana per 2 Item Energy Shield on Equipped Helmet" },  },
+				limit = 1,
+				limitId = "AncientAugment",
+				"+1 to maximum Mana per 3 Item Armour on Equipped Helmet",
+				statOrder = { 10761 },
+				tradeHashes = { [995044379] = { "+1 to maximum Mana per 3 Item Armour on Equipped Helmet" },  },
 				isSocketBound = false,
 				rank = { 60 },
 		},
 		["gloves"] = {
 				type = "SoulCore",
+				limit = 1,
+				limitId = "AncientAugment",
 				"Energy Shield Recharge starts after spending a total of",
 				" 2000 Mana, no more than once every 2 seconds",
-				statOrder = { 6448, 6448.1 },
+				statOrder = { 6445, 6445.1 },
 				tradeHashes = { [2241849004] = { "Energy Shield Recharge starts after spending a total of", " 2000 Mana, no more than once every 2 seconds" },  },
 				isSocketBound = false,
 				rank = { 60 },
 		},
 		["boots"] = {
 				type = "SoulCore",
+				limit = 1,
+				limitId = "AncientAugment",
 				"Increases and Reductions to Movement Speed also",
 				" apply to Energy Shield Recharge Rate",
-				statOrder = { 7327, 7327.1 },
+				statOrder = { 7328, 7328.1 },
 				tradeHashes = { [4282982513] = { "Increases and Reductions to Movement Speed also", " apply to Energy Shield Recharge Rate" },  },
 				isSocketBound = false,
 				rank = { 60 },
@@ -606,6 +665,8 @@ return {
 	["Quipolatl's Thesis"] = {
 		["helmet"] = {
 				type = "SoulCore",
+				limit = 1,
+				limitId = "AncientAugment",
 				"A random Skill that requires Glory generates 50% of its maximum Glory when your Marks Activate",
 				statOrder = { 8821 },
 				tradeHashes = { [2231410646] = { "A random Skill that requires Glory generates 50% of its maximum Glory when your Marks Activate" },  },
@@ -614,6 +675,8 @@ return {
 		},
 		["gloves"] = {
 				type = "SoulCore",
+				limit = 1,
+				limitId = "AncientAugment",
 				"Your Energy Shield Recharge starts when your Minions are Reformed",
 				statOrder = { 6446 },
 				tradeHashes = { [1919509054] = { "Your Energy Shield Recharge starts when your Minions are Reformed" },  },
@@ -622,6 +685,8 @@ return {
 		},
 		["body armour"] = {
 				type = "SoulCore",
+				limit = 1,
+				limitId = "AncientAugment",
 				"+75% of Armour also applies to Chaos Damage while on full Energy Shield",
 				statOrder = { 4384 },
 				tradeHashes = { [2191621386] = { "+75% of Armour also applies to Chaos Damage while on full Energy Shield" },  },
@@ -5680,6 +5745,331 @@ return {
 				tradeHashes = { [3198163869] = { "Raven-Touched" },  },
 				isSocketBound = true,
 				rank = { 60 },
+		},
+	},
+
+	["Jiquani's Soul Core of Automation"] = {
+		["weapon"] = {
+				type = "SoulCore",
+				limit = 1,
+				"+1 to Level of all Totem Skill Gems",
+				statOrder = { 10770 },
+				tradeHashes = { [2336703514] = { "+1 to Level of all Totem Skill Gems" },  },
+				isSocketBound = false,
+				rank = { 50 },
+		},
+		["caster"] = {
+				type = "SoulCore",
+				limit = 1,
+				"+1 to Level of all Totem Skill Gems",
+				statOrder = { 10770 },
+				tradeHashes = { [2336703514] = { "+1 to Level of all Totem Skill Gems" },  },
+				isSocketBound = false,
+				rank = { 50 },
+		},
+	},
+
+	["Jiquani's Soul Core of Malediction"] = {
+		["weapon"] = {
+				type = "SoulCore",
+				limit = 1,
+				"+1 to Level of all Curse Skills",
+				statOrder = { 971 },
+				tradeHashes = { [805298720] = { "+1 to Level of all Curse Skills" },  },
+				isSocketBound = false,
+				rank = { 50 },
+		},
+		["caster"] = {
+				type = "SoulCore",
+				limit = 1,
+				"+1 to Level of all Curse Skills",
+				statOrder = { 971 },
+				tradeHashes = { [805298720] = { "+1 to Level of all Curse Skills" },  },
+				isSocketBound = false,
+				rank = { 50 },
+		},
+	},
+
+	["Jiquani's Soul Core of Targeting"] = {
+		["weapon"] = {
+				type = "SoulCore",
+				limit = 1,
+				"+1 to Level of all Mark Skills",
+				statOrder = { 10771 },
+				tradeHashes = { [1992191903] = { "+1 to Level of all Mark Skills" },  },
+				isSocketBound = false,
+				rank = { 50 },
+		},
+		["caster"] = {
+				type = "SoulCore",
+				limit = 1,
+				"+1 to Level of all Mark Skills",
+				statOrder = { 10771 },
+				tradeHashes = { [1992191903] = { "+1 to Level of all Mark Skills" },  },
+				isSocketBound = false,
+				rank = { 50 },
+		},
+	},
+
+	["Jiquani's Soul Core of Rallying"] = {
+		["weapon"] = {
+				type = "SoulCore",
+				limit = 1,
+				"+1 to Level of all Warcry Skill Gems",
+				statOrder = { 10772 },
+				tradeHashes = { [2148999925] = { "+1 to Level of all Warcry Skill Gems" },  },
+				isSocketBound = false,
+				rank = { 50 },
+		},
+		["caster"] = {
+				type = "SoulCore",
+				limit = 1,
+				"+1 to Level of all Warcry Skill Gems",
+				statOrder = { 10772 },
+				tradeHashes = { [2148999925] = { "+1 to Level of all Warcry Skill Gems" },  },
+				isSocketBound = false,
+				rank = { 50 },
+		},
+	},
+
+	["Jiquani's Soul Core of Radiance"] = {
+		["weapon"] = {
+				type = "SoulCore",
+				limit = 1,
+				"+1 to Level of all Herald Skill Gems",
+				statOrder = { 10773 },
+				tradeHashes = { [776287420] = { "+1 to Level of all Herald Skill Gems" },  },
+				isSocketBound = false,
+				rank = { 50 },
+		},
+		["caster"] = {
+				type = "SoulCore",
+				limit = 1,
+				"+1 to Level of all Herald Skill Gems",
+				statOrder = { 10773 },
+				tradeHashes = { [776287420] = { "+1 to Level of all Herald Skill Gems" },  },
+				isSocketBound = false,
+				rank = { 50 },
+		},
+	},
+
+	["Jiquani's Soul Core of Severing"] = {
+		["weapon"] = {
+				type = "SoulCore",
+				limit = 1,
+				"+1 to Level of all Strike Skill Gems",
+				statOrder = { 10774 },
+				tradeHashes = { [2305301734] = { "+1 to Level of all Strike Skill Gems" },  },
+				isSocketBound = false,
+				rank = { 50 },
+		},
+		["caster"] = {
+				type = "SoulCore",
+				limit = 1,
+				"+1 to Level of all Strike Skill Gems",
+				statOrder = { 10774 },
+				tradeHashes = { [2305301734] = { "+1 to Level of all Strike Skill Gems" },  },
+				isSocketBound = false,
+				rank = { 50 },
+		},
+	},
+
+	["Jiquani's Soul Core of Rippling"] = {
+		["weapon"] = {
+				type = "SoulCore",
+				limit = 1,
+				"+1 to Level of all Nova Skill Gems",
+				statOrder = { 10775 },
+				tradeHashes = { [3148103963] = { "+1 to Level of all Nova Skill Gems" },  },
+				isSocketBound = false,
+				rank = { 50 },
+		},
+		["caster"] = {
+				type = "SoulCore",
+				limit = 1,
+				"+1 to Level of all Nova Skill Gems",
+				statOrder = { 10775 },
+				tradeHashes = { [3148103963] = { "+1 to Level of all Nova Skill Gems" },  },
+				isSocketBound = false,
+				rank = { 50 },
+		},
+	},
+
+	["Jiquani's Soul Core of Quaking"] = {
+		["weapon"] = {
+				type = "SoulCore",
+				limit = 1,
+				"+1 to Level of all Slam Skill Gems",
+				statOrder = { 10776 },
+				tradeHashes = { [1839315243] = { "+1 to Level of all Slam Skill Gems" },  },
+				isSocketBound = false,
+				rank = { 50 },
+		},
+		["caster"] = {
+				type = "SoulCore",
+				limit = 1,
+				"+1 to Level of all Slam Skill Gems",
+				statOrder = { 10776 },
+				tradeHashes = { [1839315243] = { "+1 to Level of all Slam Skill Gems" },  },
+				isSocketBound = false,
+				rank = { 50 },
+		},
+	},
+
+	["Jiquani's Soul Core of Munitions"] = {
+		["weapon"] = {
+				type = "SoulCore",
+				limit = 1,
+				"+1 to Level of all Grenade Skill Gems",
+				statOrder = { 10777 },
+				tradeHashes = { [3268281424] = { "+1 to Level of all Grenade Skill Gems" },  },
+				isSocketBound = false,
+				rank = { 50 },
+		},
+		["caster"] = {
+				type = "SoulCore",
+				limit = 1,
+				"+1 to Level of all Grenade Skill Gems",
+				statOrder = { 10777 },
+				tradeHashes = { [3268281424] = { "+1 to Level of all Grenade Skill Gems" },  },
+				isSocketBound = false,
+				rank = { 50 },
+		},
+	},
+
+	["Jiquani's Soul Core of Snares"] = {
+		["weapon"] = {
+				type = "SoulCore",
+				limit = 1,
+				"+1 to Level of all Hazard Skill Gems",
+				statOrder = { 10778 },
+				tradeHashes = { [1078570138] = { "+1 to Level of all Hazard Skill Gems" },  },
+				isSocketBound = false,
+				rank = { 50 },
+		},
+		["caster"] = {
+				type = "SoulCore",
+				limit = 1,
+				"+1 to Level of all Hazard Skill Gems",
+				statOrder = { 10778 },
+				tradeHashes = { [1078570138] = { "+1 to Level of all Hazard Skill Gems" },  },
+				isSocketBound = false,
+				rank = { 50 },
+		},
+	},
+
+	["Jiquani's Soul Core of Abundance"] = {
+		["weapon"] = {
+				type = "SoulCore",
+				limit = 1,
+				"+1 to Level of all Plant Skill Gems",
+				statOrder = { 10779 },
+				tradeHashes = { [2296009672] = { "+1 to Level of all Plant Skill Gems" },  },
+				isSocketBound = false,
+				rank = { 50 },
+		},
+		["caster"] = {
+				type = "SoulCore",
+				limit = 1,
+				"+1 to Level of all Plant Skill Gems",
+				statOrder = { 10779 },
+				tradeHashes = { [2296009672] = { "+1 to Level of all Plant Skill Gems" },  },
+				isSocketBound = false,
+				rank = { 50 },
+		},
+	},
+
+	["Jiquani's Soul Core of Squalls"] = {
+		["weapon"] = {
+				type = "SoulCore",
+				limit = 1,
+				"+1 to Level of all Wind Skill Gems",
+				statOrder = { 10780 },
+				tradeHashes = { [653358410] = { "+1 to Level of all Wind Skill Gems" },  },
+				isSocketBound = false,
+				rank = { 50 },
+		},
+		["caster"] = {
+				type = "SoulCore",
+				limit = 1,
+				"+1 to Level of all Wind Skill Gems",
+				statOrder = { 10780 },
+				tradeHashes = { [653358410] = { "+1 to Level of all Wind Skill Gems" },  },
+				isSocketBound = false,
+				rank = { 50 },
+		},
+	},
+
+	["Jiquani's Soul Core of Thundering"] = {
+		["weapon"] = {
+				type = "SoulCore",
+				limit = 1,
+				"+1 to Level of all Storm Skill Gems",
+				statOrder = { 10781 },
+				tradeHashes = { [1062190843] = { "+1 to Level of all Storm Skill Gems" },  },
+				isSocketBound = false,
+				rank = { 50 },
+		},
+		["caster"] = {
+				type = "SoulCore",
+				limit = 1,
+				"+1 to Level of all Storm Skill Gems",
+				statOrder = { 10781 },
+				tradeHashes = { [1062190843] = { "+1 to Level of all Storm Skill Gems" },  },
+				isSocketBound = false,
+				rank = { 50 },
+		},
+	},
+
+	["Atziri's Soul Core of Devotion"] = {
+		["helmet"] = {
+				type = "SoulCore",
+				limit = 1,
+				"1% increased Spirit for each Corrupted Item Equipped",
+				"Corrupting will always result in change",
+				statOrder = { 10782, 10783 },
+				tradeHashes = { [2247017114] = { "1% increased Spirit for each Corrupted Item Equipped" }, [2139847597] = { "Corrupting will always result in change" },  },
+				isSocketBound = true,
+				rank = { 50 },
+		},
+	},
+
+	["Atziri's Soul Core of Vitality"] = {
+		["body armour"] = {
+				type = "SoulCore",
+				limit = 1,
+				"1% increased Maximum Life for each Corrupted Item Equipped",
+				"Corrupting will always result in change",
+				statOrder = { 10784, 10783 },
+				tradeHashes = { [4169430079] = { "1% increased Maximum Life for each Corrupted Item Equipped" }, [2139847597] = { "Corrupting will always result in change" },  },
+				isSocketBound = true,
+				rank = { 50 },
+		},
+	},
+
+	["Atziri's Soul Core of Alacrity"] = {
+		["gloves"] = {
+				type = "SoulCore",
+				limit = 1,
+				"1% increased Skill Speed for each Corrupted Item Equipped",
+				"Corrupting will always result in change",
+				statOrder = { 10785, 10783 },
+				tradeHashes = { [2203195791] = { "1% increased Skill Speed for each Corrupted Item Equipped" }, [2139847597] = { "Corrupting will always result in change" },  },
+				isSocketBound = true,
+				rank = { 50 },
+		},
+	},
+
+	["Atziri's Soul Core of Inoculation"] = {
+		["boots"] = {
+				type = "SoulCore",
+				limit = 1,
+				"+2% to Chaos Resistance for each Corrupted Item Equipped",
+				"Corrupting will always result in change",
+				statOrder = { 10786, 10783 },
+				tradeHashes = { [138373935] = { "+2% to Chaos Resistance for each Corrupted Item Equipped" }, [2139847597] = { "Corrupting will always result in change" },  },
+				isSocketBound = true,
+				rank = { 50 },
 		},
 	},
 }

@@ -2202,6 +2202,11 @@ function buildMode:AddDisplayStatList(statList, actor)
 end
 
 function buildMode:InsertItemWarnings()
+	if self.calcsTab.mainEnv.itemWarnings.augmentLimitWarning then
+		for _, warning in ipairs(self.calcsTab.mainEnv.itemWarnings.augmentLimitWarning) do
+			InsertIfNew(self.controls.warnings.lines, "You are exceeding augment limit with: "..warning)
+		end
+	end
 	if self.calcsTab.mainEnv.itemWarnings.jewelLimitWarning then
 		for _, warning in ipairs(self.calcsTab.mainEnv.itemWarnings.jewelLimitWarning) do
 			InsertIfNew(self.controls.warnings.lines, "You are exceeding jewel limit with the jewel "..warning)

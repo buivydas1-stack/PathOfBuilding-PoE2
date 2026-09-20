@@ -1399,6 +1399,34 @@ function calcs.initEnv(build, mode, override, specEnv)
 		end
 	end
 
+	-- Limits apply across equipped augments in the active weapon set. Keep warnings
+	-- on this calculation environment so hypothetical item comparisons stay isolated.
+	if not accelerate.requirementsItems then
+		local limits = {}
+		for _, item in pairs(env.player.itemList) do
+			for i = 1, item.itemSocketCount or 0 do
+				local name = item.runes[i]
+				local _, mod = next(data.itemMods.Runes[name] or {})
+				if mod and mod.limit then
+					local key = mod.limitId or name
+					local limit = limits[key] or { count = 0, max = mod.limit, names = {} }
+					limits[key] = limit
+					limit.count = limit.count + 1
+					limit.names[name] = true
+				end
+			end
+		end
+		for _, limit in pairs(limits) do
+			if limit.count > limit.max then
+				local names = {}
+				for name in pairs(limit.names) do t_insert(names, name) end
+				table.sort(names)
+				env.itemWarnings.augmentLimitWarning = env.itemWarnings.augmentLimitWarning or {}
+				t_insert(env.itemWarnings.augmentLimitWarning, table.concat(names, ", "))
+			end
+		end
+	end
+
 	-- Merge env.itemModDB with env.ModDB
 	mergeDB(env.modDB, env.itemModDB)
 

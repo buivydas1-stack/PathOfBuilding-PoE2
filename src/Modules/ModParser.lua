@@ -804,6 +804,9 @@ local modNameList = {
 	["magnitude of damaging ailments you inflict"] = { "AilmentMagnitude", keywordFlags = bor(KeywordFlag.Poison, KeywordFlag.Bleed, KeywordFlag.Ignite) },
 	["effect of lightning ailments"] = "EnemyShockMagnitude",
 	["effect of chill and shock on you"] = { "SelfChillEffect", "SelfShockEffect" },
+	["effect of non-damaging ailments on you"] = { "SelfChillEffect", "SelfFreezeEffect", "SelfShockEffect" },
+	["speed of recoup effects"] = "RecoupSpeed",
+	["pin duration"] = "EnemyPinDuration",
 	["chill effect"] = "EnemyChillMagnitude",
 	["effect of cold ailments"] = "EnemyChillMagnitude",
 	["effect of chill on you"] = "SelfChillEffect",
@@ -6229,7 +6232,8 @@ local specialModList = {
 	} end,
 	["you can socket an additional copy of each lineage support gem, in different skills"] = { mod("MaxLineageCount", "BASE", 1) },
 	["you can socket (%d+) additional copies of each lineage support gem, in different skills"] = function(num) return { mod("MaxLineageCount", "BASE", num) } end,
-	["can be modified while corrupted"] = {}
+	["can be modified while corrupted"] = {},
+	["corrupting will always result in change"] = {},
 }
 for _, name in pairs(data.keystones) do
 	specialModList[name:lower()] = { mod("Keystone", "LIST", name) }

@@ -5415,6 +5415,7 @@ function calcs.offence(env, actor, activeSkill)
 		skillFlags["inflictElectrocute"] = false
 		
 		-- Calculate poise-related debuffs
+		globalOutput.PinDurationMod = calcLib.mod(skillModList, cfg, "EnemyPinDuration")
 		for _, ailment in ipairs({"Freeze", "Electrocute", "HeavyStun", "Pin"}) do 
 			local enemyPoiseThreshold = m_floor(data.monsterPoiseThresholdTable[env.enemyLevel] * calcLib.mod(enemyDB, nil, "PoiseThreshold", ailment.."Threshold", ailment == "HeavyStun" and "EnemyStunThreshold", (ailment == "Freeze" or ailment == "Electrocute") and "EnemyAilmentThreshold"))
 			local hitMin, hitMax, hitAvg, critMin, critMax, critAvg, poiseAvg = calcMinMaxPoiseSourceDamage(ailment, data.buildupTypes[ailment].ScalesFrom)
