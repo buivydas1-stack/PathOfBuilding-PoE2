@@ -2,6 +2,8 @@
 
 Based on the official Path of Building 2 **v0.23.1** release.
 
+- **Soul Core of Xopec on martial weapons:** backports the 0.5.5 weapon modifier from upstream [#2505](https://github.com/PathOfBuildingCommunity/PathOfBuilding-PoE2/pull/2505), adapted to this release's `ModRunes` schema. Clipboard imports and the augment editor recognize **25% increased Magnitude of Shock you inflict**, using the existing Shock calculation. Enable **Is the enemy Shocked?** and leave the numeric Shock effect blank to compare automatic magnitude changes. Existing stronger manual Shock values retain precedence. Re-import an item if an earlier editor save discarded its unrecognized augment. This backport covers Xopec's weapon effect only; its boot value and 0.5.5 socket limits remain outside this change.
+
 - Equipping **Lavianga's Spirits** exposes **Do you have a Flask active?** in Configuration, without requiring an allocated flask-dependent passive. The checkbox remains manual and is not marked invalid while Lavianga is equipped.
 - Configuration also exposes supported manual scenarios for equipped charms, mana leech, recent shocks/critical hits/non-critical hits/kills, Mark use, Charged Mark's shocked ground, and skills with increased heavy-stun buildup. Hover for the source. These visibility rules preserve checkbox values and do not add automatic assumptions; already supplied backend conditions do not gain extra controls. Mark use does not expose Cast a Spell Recently.
 

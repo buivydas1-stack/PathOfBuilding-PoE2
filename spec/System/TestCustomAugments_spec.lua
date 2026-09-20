@@ -1,0 +1,5 @@
+describe("Custom augment backports", function()
+	it("recognizes Xopec and applies its magnitude through the normal item and Shock pipeline", function()
+		dofile("../tests/custom_augments.lua")
+	end)
+end)

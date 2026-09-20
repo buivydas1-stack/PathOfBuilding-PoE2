@@ -1,11 +1,12 @@
 param(
     [string]$RuntimePath = (Join-Path $PSScriptRoot '..\runtime'),
-    [string]$SourcePath = (Join-Path $PSScriptRoot '..\src')
+    [string]$SourcePath = (Join-Path $PSScriptRoot '..\src'),
+    [string]$TestPath = (Join-Path $PSScriptRoot '..\tests\custom_power_report.lua')
 )
 $ErrorActionPreference = 'Stop'
 $RuntimePath = (Resolve-Path -LiteralPath $RuntimePath).Path
 $SourcePath = (Resolve-Path -LiteralPath $SourcePath).Path
-$testPath = (Resolve-Path (Join-Path $PSScriptRoot '..\tests\custom_power_report.lua')).Path
+$testPath = (Resolve-Path -LiteralPath $TestPath).Path
 
 # Run the functional checks inside the shipped LuaJIT DLL, without installing a second interpreter.
 Add-Type -TypeDefinition @'
@@ -36,7 +37,7 @@ try {
     $result = [PoBTestLua]::luaL_loadstring($state, $code)
     if ($result -eq 0) { $result = [PoBTestLua]::lua_pcall($state, 0, 0, 0) }
     if ($result -ne 0) { throw [Runtime.InteropServices.Marshal]::PtrToStringAnsi([PoBTestLua]::lua_tolstring($state, -1, [IntPtr]::Zero)) }
-    Write-Output 'Custom Power Report functional checks passed.'
+    Write-Output "Headless functional checks passed: $([IO.Path]::GetFileName($testPath))"
 } finally {
     if ($state -ne [IntPtr]::Zero) { [PoBTestLua]::lua_close($state) }
     [PoBTestLua]::SetDllDirectory($null) | Out-Null

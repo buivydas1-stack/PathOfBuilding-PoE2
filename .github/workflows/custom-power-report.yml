@@ -16,3 +16,6 @@ jobs:
       - name: Test with the upstream Windows LuaJIT runtime
         shell: powershell
         run: ./tools/Test-CustomPowerReport.ps1
+      - name: Test custom augment imports and calculations
+        shell: powershell
+        run: ./tools/Test-CustomPowerReport.ps1 -TestPath ./tests/custom_augments.lua

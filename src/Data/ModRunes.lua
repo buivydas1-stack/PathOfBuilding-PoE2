@@ -365,9 +365,9 @@ return {
 	["Soul Core of Xopec"] = {
 		["weapon"] = {
 				type = "SoulCore",
-				"30% increased chance to Shock",
-				statOrder = { 1059 },
-				tradeHashes = { [293638271] = { "30% increased chance to Shock" },  },
+				"25% increased Magnitude of Shock you inflict",
+				statOrder = { 9845 },
+				tradeHashes = { [2527686725] = { "25% increased Magnitude of Shock you inflict" },  },
 				isSocketBound = false,
 				rank = { 0 },
 		},
