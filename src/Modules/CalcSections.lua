@@ -77,6 +77,9 @@ local function hitModifierRows()
 					cell = {}
 				elseif metric[2] == "ResistanceReduction" then
 					cell[1] = { label = "Resistance modifiers (reductions subtotal excludes positive values)", modName = {element.."Resist", "ElementalResist"}, enemy = true, cfg = "skill" }
+				elseif metric[2] == "ResistancePenetration" then
+					cell[1] = { breakdown = hand[2]..element.."EffMult" }
+					cell[2] = { label = "Penetration sources", modName = element == "Chaos" and {"ChaosPenetration"} or {element.."Penetration", "ElementalPenetration"}, modType = "BASE", cfg = hand[2] == "MainHand." and "weapon1" or hand[2] == "OffHand." and "weapon2" or "skill" }
 				else
 					cell[1] = { breakdown = hand[2]..element.."EffMult" }
 				end

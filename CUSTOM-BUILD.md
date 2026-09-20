@@ -2,7 +2,7 @@
 
 Based on the official Path of Building 2 **v0.23.1** release.
 
-- Resistance breakdowns name elemental Exposure and explain its base value, extra reduction, effect scaling, enemy effectiveness and rounding when hovering its source name. `Config` and `EnemyConfig` display as Configuration and Enemy settings; base resistance identifies presets/overrides. Internal modifier identities and calculation values are unchanged.
+- Resistance breakdowns name elemental Exposure and explain its base value, extra reduction, effect scaling, enemy effectiveness and rounding when hovering its source name. `Config` stays abbreviated; `EnemyConfig` displays as Enemy settings; base resistance identifies presets/overrides. Penetration tooltips also list contributing modifier sources with spell/main-hand/off-hand filtering. Internal modifier identities and calculation values are unchanged.
 
 - **Electrocuting Arrow:** Configuration exposes **Is an Electrocuting Rod attached?** when the skill is active. This manual, initially unchecked condition enables lightning Electrocution buildup and gates the gem's existing quality effects. Standard quality uses the existing hit-only `DamageGainAsLightning` calculation and gem-stat rounding (10/20/23/28 quality gives 5/10/11/14% gain). Full DPS inclusion is independent. The rod is assumed attached, not automatically maintained after Electrocution. Verified with `tests/custom_electrocuting_arrow.lua`.
 

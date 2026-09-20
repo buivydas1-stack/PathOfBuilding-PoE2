@@ -384,9 +384,7 @@ function CalcBreakdownClass:AddModSection(sectionData, modList)
 		end
 		local sourceType = row.mod.source:match("[^:]+") or ""
 		row.source = sourceType
-		if sourceType == "Config" then
-			row.source = "Configuration"
-		elseif sourceType == "EnemyConfig" then
+		if sourceType == "EnemyConfig" then
 			row.source = "Enemy settings"
 		end
 		if not modList and not sectionData.modSource then
