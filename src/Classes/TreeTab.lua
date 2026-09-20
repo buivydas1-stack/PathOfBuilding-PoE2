@@ -1120,8 +1120,11 @@ function TreeTabClass:BuildPowerReportList(currentStat)
 			else
 				pathDist = node.power.distance or #(node.path or {}) == 0 and 1 or #node.path
 			end
-			local nodePower = (node.power.singleStat or 0) * ((displayStat.pc or displayStat.mod) and 100 or 1)
-			local pathPower = (singleNotables and node.power.singleStat or node.power.pathPower or 0) / pathDist * ((displayStat.pc or displayStat.mod) and 100 or 1)
+			-- The total, points and per-point columns must describe the same comparison.
+			-- Notables ignore travel; range mode includes the added path or removed dependants.
+			local totalPower = singleNotables and node.power.singleStat or node.power.pathPower or node.power.singleStat or 0
+			local nodePower = totalPower * ((displayStat.pc or displayStat.mod) and 100 or 1)
+			local pathPower = nodePower / pathDist
 			local nodePowerStr = s_format("%"..displayStat.fmt, nodePower)
 			local pathPowerStr = s_format("%"..displayStat.fmt, pathPower)
 

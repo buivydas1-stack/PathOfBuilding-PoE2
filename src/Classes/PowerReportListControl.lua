@@ -188,6 +188,8 @@ function PowerReportListClass:AddValueTooltip(tooltip, _, node)
 		if self.percentReport or self.combinedReport then
 			tooltip:AddLine(14, "Changes relative to the current build. N/A means the percentage is undefined. Single-node comparison; no travel points.")
 			tooltip:AddLine(14, node.allocated and "Removal: effects of this notable alone are removed; dependent nodes are retained. Item-granted notables do not refund a skill point." or "Addition: effects of this notable alone are added.")
+		elseif not self.singleNotables then
+			tooltip:AddLine(14, node.allocated and "Total change from removing this node and its dependent nodes. Points counts the removed nodes; Per Point is the total divided by Points." or "Total change from adding this node and its travel path. Per Point is the total divided by Points. Anoint and Cluster entries compare the node alone.")
 		end
 		for _, line in ipairs(node.sd) do
 			tooltip:AddLine(16, line)
