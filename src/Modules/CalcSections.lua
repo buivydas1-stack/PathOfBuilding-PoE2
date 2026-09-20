@@ -48,14 +48,14 @@ local chaosConvert = fillConvert("Chaos")
 
 local function hitModifierRows()
 	local rows = { flag = "hit", colWidth = 95,
-		{ {}, { format = "Physical:" }, { format = colorCodes.LIGHTNING.."Lightning:" },
-			{ format = colorCodes.COLD.."Cold:" }, { format = colorCodes.FIRE.."Fire:" }, { format = colorCodes.CHAOS.."Chaos:" } },
+		{ {}, { format = "Physical:" }, { format = "Lightning:" },
+			{ format = "Cold:" }, { format = "Fire:" }, { format = "Chaos:" } },
 	}
 	for _, hand in ipairs({ {"", "", "notFlag", "attack"}, {"MH ", "MainHand.", "flag", "weapon1Attack"}, {"OH ", "OffHand.", "flag", "weapon2Attack"} }) do
 		for _, metric in ipairs({
 			{"Lucky non-crit", "HitLuckyChance"}, {"Lucky crit", "CritLuckyChance"},
 			{"Res. reductions", "ResistanceReduction"}, {"Enemy res.", "EnemyResistance"},
-			{"Penetration", "ResistancePenetration"}, {"Penetration floor", "PenetrationFloor"},
+			{"Penetration", "ResistancePenetration"}, {"Pen. floor", "PenetrationFloor"},
 			{"Effective res.", "EffectiveResistance"},
 		}) do
 			local lucky = metric[2] == "HitLuckyChance" or metric[2] == "CritLuckyChance"
