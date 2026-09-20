@@ -20,6 +20,7 @@
     "Modules/Build.lua",
     "Modules/BuildDisplayStats.lua",
     "Data/ModRunes.lua",
+    "Data/Skills/act_dex.lua",
     "Launch.lua",
     "Modules/Main.lua"
   ]

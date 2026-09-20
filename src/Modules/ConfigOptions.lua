@@ -356,6 +356,10 @@ local configSettings = {
 	{ var = "embraceMadnessActive", type = "check", label = "Is Embrace Madness active?", ifSkill = "Embrace Madness", apply = function(val, modList, enemyModList)
 		modList:NewMod("Condition:AffectedByGloriousMadness", "FLAG", true, "Config")
 	end },
+	{ label = "Electrocuting Arrow:", ifSkill = "Electrocuting Arrow" },
+	{ var = "electrocutingArrowApplied", type = "check", label = "Is an Electrocuting Rod attached?", ifSkill = "Electrocuting Arrow", tooltip = "Enables Electrocution buildup from Lightning damage and Electrocuting Arrow's quality effects against the target.\nThe rod is removed when the enemy is next Electrocuted; this assumes it is currently attached.", apply = function(val, modList, enemyModList)
+		modList:NewMod("Condition:ElectrocutingArrowApplied", "FLAG", true, "Config")
+	end },
 	{ label = "Eye of Winter:", ifSkill = "Eye of Winter" },
 	{ var = "eyeOfWinterCold", type = "check", label = "Eye of Winter gained ^x3F6DB3Cold^7 Damage:", ifSkill = "Eye of Winter", tooltip = "Eye of Winter has passed over ^x3F6DB3Cold^7 Ground Effect or Orb.", apply = function(val, modList, enemyModList)
 		modList:NewMod("Condition:EyeOfWinterCold", "FLAG", true, "Config")

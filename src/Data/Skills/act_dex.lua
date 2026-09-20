@@ -1567,12 +1567,15 @@ skills["ElectrocutingArrowPlayer"] = {
 			label = "Electrocuting Arrow",
 			incrementalEffectiveness = 0.054999999701977,
 			statDescriptionScope = "electrocuting_arrow",
+			baseMods = {
+				flag("LightningCanElectrocute", { type = "GlobalEffect", effectType = "Buff", effectCond = "ElectrocutingArrowApplied" }),
+			},
 			statMap = {
 				["electrocuting_arrow_%_damage_gained_as_extra_lightning_on_debuffed_target"] = {
-					mod("DamageGainAsLightning", "BASE", nil, 0, 0, { type = "GlobalEffect", effectType = "Buff" }),
+					mod("DamageGainAsLightning", "BASE", nil, ModFlag.Hit, 0, { type = "GlobalEffect", effectType = "Buff", effectCond = "ElectrocutingArrowApplied" }),
 				},
 				["electrocuting_arrow_damage_taken_+%"] = {
-					mod("DamageTaken", "INC", nil, 0, 0, { type = "GlobalEffect", effectType = "Debuff" }),
+					mod("DamageTaken", "INC", nil, 0, 0, { type = "GlobalEffect", effectType = "Debuff", effectCond = "ElectrocutingArrowApplied" }),
 				},
 				["quality_display_base_skill_effect_duration_is_gem"] = {
 					-- Display only
