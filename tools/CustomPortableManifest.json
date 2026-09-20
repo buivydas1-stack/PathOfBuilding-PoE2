@@ -1,0 +1,26 @@
+{
+  "upstreamVersion": "v0.23.1",
+  "upstreamPortableSHA256": "7E190D3B66191B09416A9CD4D12394D37DF374D6D6E59AB4F2366F3D9E81BAF7",
+  "executableSHA256": "AE3A82B69815C2DBE4517FACA1CB7A3474B556A1B63546FB23A909DD302CD2AD",
+  "portableDirectory": "PathOfBuilding-PoE2-v0.23.1-custom.2-Portable",
+  "files": [
+    "Classes/PowerReportListControl.lua",
+    "Classes/TreeTab.lua",
+    "Classes/PassiveTreeView.lua",
+    "Classes/ConfigTab.lua",
+    "Classes/CalcsTab.lua",
+    "Classes/ItemsTab.lua",
+    "Modules/ConfigOptions.lua",
+    "Modules/Calcs.lua",
+    "Modules/CalcOffence.lua",
+    "Modules/CalcSections.lua",
+    "Modules/CalcDefence.lua",
+    "Modules/CalcSetup.lua",
+    "Modules/ModParser.lua",
+    "Modules/Build.lua",
+    "Modules/BuildDisplayStats.lua",
+    "Data/ModRunes.lua",
+    "Launch.lua",
+    "Modules/Main.lua"
+  ]
+}

@@ -42,7 +42,9 @@ Keep upstream branches clean. Review new upstream releases on a temporary integr
 
 Run `tools/Test-CustomPowerReport.ps1` from Windows PowerShell or PowerShell 7. It uses the upstream LuaJIT DLL and headless wrapper for functional checks, including actual mouse handlers, XML round-trips, popup bounds/actions, stale node IDs, and update protection. Calculation checks compare player/minion node and path results with complete calculations, switch between report metrics, verify complete tooltips and Full DPS fallback, and exercise cooperative scheduling with a simulated clock.
 
-Run `tools/Build-CustomPortable.ps1 -UpstreamZip <official-v0.23.1-portable.zip> -OutputDirectory <new-empty-output-directory>`. The script validates the pinned upstream ZIP checksum, overlays the custom Lua files, verifies all other upstream files byte-for-byte, and creates a ZIP with SHA-256 and provenance metadata. When upgrading upstream, update the pinned release and checksum after review.
+For routine local updates run `tools/Build-CustomPortable.ps1 -Lightweight -OutputDirectory <new-staging-directory>`. This stages only custom Lua files, documentation and metadata, without extracting or creating a ZIP. It is an overlay for the matching installed runtime, not a standalone application. Both modes use `tools/CustomPortableManifest.json` for file selection and upstream archive/executable hashes.
+
+For standalone distribution or preparing an upstream upgrade, run `tools/Build-CustomPortable.ps1 -UpstreamZip <official-v0.23.1-portable.zip> -OutputDirectory <new-empty-output-directory>`. The script validates the pinned upstream ZIP checksum, overlays the custom Lua files, verifies all other upstream files byte-for-byte, and creates a ZIP with SHA-256 and provenance metadata. When upgrading upstream, update the pinned release and checksum after review.
 
 ## Calcs hit details
 
