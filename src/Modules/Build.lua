@@ -2302,6 +2302,12 @@ function buildMode:CompareStatList(tooltip, statList, actor, baseOutput, compare
 						pcPerPt = s_format(" (%+.1f%%)", pc / nodeCount)
 					end
 				end
+				if statData.compareBeforeAfter then
+					local function percent(value)
+						return s_format("%.2f", value):gsub("0+$", ""):gsub("%.$", "").."%"
+					end
+					line = line .. " ("..percent(statVal2).." > "..percent(statVal1)..")"
+				end
 				if nodeCount then
 					line = line .. s_format(" ^8[%+"..statData.fmt.."%s per point]", diff * ((statData.pc or statData.mod) and 100 or 1) / nodeCount, pcPerPt)
 				end

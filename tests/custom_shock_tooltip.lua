@@ -11,6 +11,9 @@ assert(compare(22.34634,25.99770):find("+3.65%% Shock Chance"), "Gain must show 
 assert(compare(25.99770,22.34634):find("-3.65%% Shock Chance"), "Removal must show negative delta")
 assert(compare(0,5):find("+5.00%% Shock Chance"), "Zero baseline must work")
 assert(compare(100,100) == "", "Unchanged capped chance must not show a change")
+assert(compare(10,11):find("(10% > 11%)",1,true), "Show before and after without unnecessary zeroes")
+assert(compare(25.99770,22.34634):find("(26% > 22.35%)",1,true), "Removal endpoints stay in before/after order")
+assert(compare(0,5):find("(0% > 5%)",1,true), "Zero baseline must appear")
 print("PASS: Shock chance tooltip gains, removals, zero baseline and unchanged cap")
 
 local tooltip = { lines = {}, AddLine = function(self, size, line) table.insert(self.lines, {size=size,text=line}) end }
@@ -27,9 +30,21 @@ assert(table.concat(headings,"|") == "^8Damage|^8Ailments|^8Survivability|^8Util
 local text = table.concat(lines,"\n")
 assert(text:find("+2.50%% Electrocute Buildup %(%+25.0%%%)"), "Buildup shows absolute and relative gain")
 assert(text:find("per point",1,true), "Path comparison retains per-point values")
+assert(text:find("(10% > 12.5%)",1,true), "Buildup includes actual endpoints")
 assert(text:find(colorCodes.NEGATIVE.."-100 Effective Hit Pool",1,true), "Loss colour and value retained")
 assert(not compare(20,25):find("^8Ailments",1,true), "Single-category comparison has no heading")
 local before = #tooltip.lines
 build:CompareStatList(tooltip, build.displayStats, actor, {ShockChance=20}, {ShockChance=25}, "Node alone")
 assert(tooltip.lines[before+1].text == "Node alone", "Node and path sections remain separate")
 print("PASS: compact category headings, Electrocute buildup, losses and separate path comparisons")
+
+for _, stat in ipairs(build.displayStats) do
+	if stat.compareBeforeAfter then
+		local row = copyTable(stat)
+		row.flag, row.condFunc = nil, nil
+		local tip = { lines = {}, AddLine = function(self, _, line) table.insert(self.lines, line) end }
+		build:CompareStatList(tip, {row}, actor, {[row.stat]=60}, {[row.stat]=65}, "Change", 2)
+		assert(table.concat(tip.lines,"\n"):find("(60% > 65%)",1,true), row.label.." endpoints missing")
+	end
+end
+print("PASS: all displayed chance/buildup rows include before/after values")
