@@ -239,7 +239,7 @@ local TreeTabClass = newClass("TreeTab", "ControlHost", function(self, build)
 		end
 	end)
 	self.controls.nodePowerMaxDepthSelect:SelByValue("All")
-	self.controls.nodePowerMaxDepthSelect.tooltipText = "Notables: compare unallocated non-ascendancy notables individually, without travel nodes.\nEach counts as one point. Choose Full DPS and Show Power Report to rank allocations.\nOther options limit the distance searched on the tree."
+	self.controls.nodePowerMaxDepthSelect.tooltipText = "Notables: compare adding or removing non-ascendancy notables individually, without travel nodes.\nEach comparison counts as one point, including item-granted nodes.\nShow Power Report lists gains from additions and changes from removals.\nOther options limit the distance searched on the tree."
 
 	-- Control for setting max node depth by custom value
 	self.controls.nodePowerMaxDepthCustom = new("EditControl", { "LEFT", self.controls.nodePowerMaxDepthSelect, "RIGHT" }, { 8, 0, 70, 20 }, "0", nil, "%D", nil, function(value)
@@ -1111,7 +1111,7 @@ function TreeTabClass:BuildPowerReportList(currentStat)
 	for nodeId, node in pairs(self.build.spec.nodes) do
 		local isAlloc = node.alloc or self.build.calcsTab.mainEnv.grantedPassives[nodeId]
 		if (node.type == "Normal" or node.type == "Keystone" or node.type == "Notable") and not node.ascendancyName
-			and (not singleNotables or node.type == "Notable" and not isAlloc and node.power.singleStat ~= nil) then
+			and (not singleNotables or node.type == "Notable" and node.power.singleStat ~= nil) then
 			local pathDist
 			if singleNotables then
 				pathDist = 1
@@ -1147,6 +1147,7 @@ function TreeTabClass:BuildPowerReportList(currentStat)
 				pathPower = pathPower,
 				pathPowerStr = pathPowerStr,
 				allocated = isAlloc,
+				action = isAlloc and (self.build.calcsTab.mainEnv.grantedPassives[nodeId] and "Remove (item)" or "Remove") or "Add",
 				id = node.id,
 				x = node.x,
 				y = node.y,

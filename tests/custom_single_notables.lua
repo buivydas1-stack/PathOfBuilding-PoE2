@@ -155,3 +155,61 @@ assert(r == 1 and g == 1 and b == 0)
 r, g, b = color(100, 100, "GREEN/BLUE")
 assert(r == 0 and g == 1 and b == 1)
 print("PASS: combined tree colours, mixed gains, negative trade-offs, zero maxima, and alternative themes")
+
+-- Allocated and item-granted notables use the same single-removal overrides as tooltips.
+newBuild()
+build.skillsTab:PasteSocketGroup("Spark 20/0 1")
+build.skillsTab.socketGroupList[1].includeInFullDPS = true
+local granted, allocated
+for _, node in pairs(build.spec.nodes) do
+	if node.dn == "Pure Power" then granted = node end
+	if node.type == "Notable" and not node.ascendancyName and node.dn ~= "Pure Power" and node.modKey ~= "" then allocated = allocated or node end
+end
+assert(granted and allocated)
+build.spec:AllocNode(allocated)
+local amulet = new("Item", "Rarity: RARE\nReport Test\nAmber Amulet\nAllocates Pure Power")
+build.itemsTab:AddItem(amulet, true)
+build.itemsTab.slots.Amulet.selItemId = amulet.id
+build.buildFlag = true
+runCallback("OnFrame")
+local calcs, tree = build.calcsTab, build.treeTab
+assert(calcs.mainEnv.grantedPassives[granted.id], "Test anoint must be granted")
+local calcFunc, base = calcs:GetMiscCalculator()
+local candidates = {[granted.id]=granted, [allocated.id]=allocated}
+local removals = setmetatable({build={spec={nodes=candidates, tree={clusterNodeMap={}}}}, mainEnv=calcs.mainEnv,
+	powerStat={stat="FullDPSAndEHP", combinedReport=true}, nodePowerSingleNotables=true,
+	miscCalculator={function(override, fullDPS, options)
+		assert(not override.addNodes and override.removeNodes, "Expected removal only")
+		local count = 0
+		for key in pairs(override.removeNodes) do if type(key) == "table" then count = count + 1 end end
+		assert(count == 1, "Removal must not include dependent nodes")
+		return calcFunc(override, fullDPS, options)
+	end, base}}, {__index=calcs})
+removals:PowerBuilder()
+for _, node in pairs(candidates) do
+	local key = node == granted and node.id or node
+	local output = calcFunc({removeNodes={[key]=true}}, true, {noEnvReuse=true})
+	assert(math.abs(node.power.singleStat - calcs:CalculatePowerStat({stat="FullDPS"},output,base)) < 1e-7)
+	assert(math.abs(node.power.ehpStat - calcs:CalculatePowerStat({stat="TotalEHP"},output,base)) < 1e-7)
+end
+assert(granted.power.singleStat < 0, "Removing Pure Power should lose DPS")
+local reportTree = setmetatable({build={spec=removals.build.spec, calcsTab=removals, displayStats=build.displayStats}}, {__index=tree})
+local rows = reportTree:BuildPowerReportList(removals.powerStat)
+assert(#rows == 2)
+for _, row in ipairs(rows) do
+	assert(row.allocated and row.pathDist == 1)
+	assert(row.action == (row.id == granted.id and "Remove (item)" or "Remove"))
+	if row.id == granted.id then assert(row.powerStr:find("-",1,true)) end
+end
+local list = tree.controls.powerReportList
+list:SetReport(removals.powerStat, rows, true)
+assert(list.showAll and list.colList[1].label == "Action")
+assert(#list.list > 0)
+list.controls.filterSelect:SetSel(1)
+assert(#list.list == 0, "Unallocated filter leaked removal rows")
+list.controls.filterSelect:SetSel(3)
+assert(#list.list == 2, "Allocated filter lost removal rows")
+list.controls.filterSelect:SetSel(4)
+list:ReSort(5)
+assert(list:GetRowValue(1, 1, rows[1]) == rows[1].action)
+print("PASS: allocated and item-granted removal parity, signed percentages, no dependent removal, action labels and filters")

@@ -551,8 +551,8 @@ function CalcsTabClass:PowerBuilder()
 
 	for nodeId, node in pairs(self.build.spec.nodes) do
 		wipeTable(node.power)
-		if node.modKey ~= "" and not self.mainEnv.grantedPassives[nodeId]
-			and (not singleNotables or node.type == "Notable" and not node.alloc and not node.ascendancyName) then
+		if node.modKey ~= "" and (singleNotables or not self.mainEnv.grantedPassives[nodeId])
+			and (not singleNotables or node.type == "Notable" and not node.ascendancyName) then
 			local hiddenByLockedAscendancyNode = false
 			if node.unlockConstraint then
 				for _, unlockNodeId in ipairs(node.unlockConstraint.nodes) do
@@ -629,23 +629,26 @@ function CalcsTabClass:PowerBuilder()
 						newPowerMax.defencePerPoint = m_max(newPowerMax.defencePerPoint, node.power.defence / distance)
 					end
 				end
-			elseif node.alloc and node.modKey ~= "" and not self.mainEnv.grantedPassives[nodeId] then
-				if not cache[node.modKey.."_remove"] then
-					cache[node.modKey.."_remove"] = calcFunc({ removeNodes = { [node] = true } }, useFullDPS, calcOptions)
+			elseif (node.alloc or singleNotables and self.mainEnv.grantedPassives[nodeId]) and node.modKey ~= "" then
+				local removeKey = nodeId.."_remove"
+				if not cache[removeKey] then
+					local removeNodes = { [node] = true }
+					if self.mainEnv.grantedPassives[nodeId] then removeNodes[nodeId] = true end
+					cache[removeKey] = calcFunc({ removeNodes = removeNodes }, useFullDPS, calcOptions)
 				end
-				local output = cache[node.modKey.."_remove"]
+				local output = cache[removeKey]
 				if self.powerStat and self.powerStat.stat and not self.powerStat.ignoreForNodes then
 					node.power.singleStat = self:CalculatePowerStat(self.powerStat, output, calcBase)
 					if self.powerStat.combinedReport then
 						node.power.ehpStat = self:CalculatePowerStat({ stat = "TotalEHP" }, output, calcBase)
 					end
-					if node.depends and not node.ascendancyName then
+					if (singleNotables or node.depends) and not node.ascendancyName then
 						node.power.pathPower = node.power.singleStat
 						local pathNodes = { }
-						for _, node in pairs(node.depends) do
+						for _, node in pairs(not singleNotables and node.depends or {}) do
 							pathNodes[node] = true
 						end
-						if #node.depends > 1 then
+						if not singleNotables and #node.depends > 1 then
 							node.power.pathPower = self:CalculatePowerStat(self.powerStat, calcFunc({ removeNodes = pathNodes }, useFullDPS, calcOptions), calcBase)
 						end
 					end

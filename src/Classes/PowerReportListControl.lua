@@ -29,16 +29,21 @@ local PowerReportListClass = newClass("PowerReportListControl", "ListControl", f
 	self.label = "Building Tree..."
 	
 	self.controls.filterSelect = new("DropDownControl", {"BOTTOMRIGHT", self, "TOPRIGHT"}, {0, -2, 200, 20},
-		{ "Show Unallocated", "Show Unallocated & Clusters", "Show Allocated" },
+		{ "Show Unallocated", "Show Unallocated & Clusters", "Show Allocated", "Show All" },
 		function(index, value)
 			self.showClusters = index == 2
 			self.allocated = index == 3
+			self.showAll = index == 4
 			self:ReList()
 			self:ReSort(3) -- Sort by power
 		end)
 end)
 
 function PowerReportListClass:SetReport(stat, report, singleNotables)
+	local enteringNotables = singleNotables and not self.singleNotables
+	self.singleNotables = singleNotables
+	self.colList[1].label = singleNotables and "Action" or "Type"
+	if enteringNotables then self.controls.filterSelect:SetSel(4) end
 	self.combinedReport = stat and stat.combinedReport or false
 	self.percentReport = singleNotables and stat and (stat.stat == "FullDPS" or stat.stat == "TotalEHP" or stat.combinedReport)
 	self.powerColumn.label = self.combinedReport and "Full DPS %" or self.percentReport and (stat.stat == "TotalEHP" and "EHP %" or "Full DPS %") or stat and stat.label or ""
@@ -66,6 +71,9 @@ function PowerReportListClass:ReSort(colIndex)
 
 	if colIndex == 1 then
 		t_sort(self.list, function (a,b)
+			if self.singleNotables and a.action ~= b.action then
+				return (a.action or "Add") < (b.action or "Add")
+			end
 			if a.type == b.type then
 				return compare(a.power, b.power)
 			end
@@ -116,6 +124,8 @@ function PowerReportListClass:ReList()
 		end
 		if self.allocated then
 			insert = item.allocated
+		elseif not self.showAll and item.allocated then
+			insert = false
 		end
 
 		if insert and not self.ignoredNodes[item.id] then
@@ -161,7 +171,7 @@ function PowerReportListClass:OnSelClick(index, report, doubleClick)
 end
 
 function PowerReportListClass:GetRowValue(column, index, report)
-	return column == 1 and report.type
+	return column == 1 and (self.singleNotables and report.action or report.type)
 		or column == 2 and report.name
 		or column == 3 and report.powerStr
 		or column == 4 and (report.pathDist == 1000 and "Anoint" or report.pathDist)
@@ -177,6 +187,7 @@ function PowerReportListClass:AddValueTooltip(tooltip, _, node)
 	if tooltip:CheckForUpdate(node) and node.sd then
 		if self.percentReport or self.combinedReport then
 			tooltip:AddLine(14, "Changes relative to the current build. N/A means the percentage is undefined. Single-node comparison; no travel points.")
+			tooltip:AddLine(14, node.allocated and "Removal: effects of this notable alone are removed; dependent nodes are retained. Item-granted notables do not refund a skill point." or "Addition: effects of this notable alone are added.")
 		end
 		for _, line in ipairs(node.sd) do
 			tooltip:AddLine(16, line)
