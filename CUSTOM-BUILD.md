@@ -59,3 +59,5 @@ Additional parser/calculation support covers Topotante's reduced incoming non-da
 Run `tools/Test-CustomPowerReport.ps1 -TestPath tests/custom_augments_055.lua` for 67 slot/import fixtures, all thirteen effective gem-level comparisons, corrupted-item scalars, save/load, equipped limits, and representative numeric calculations. Run `tests/custom_augments.lua` through the same harness for automatic Shock and passive comparisons. No in-game mechanics measurement or performance benchmark is implied.
 
 Shock Chance now appears in the sidebar and node/item comparisons for hit skills. Comparisons show the signed percentage-point change using the existing calculated value; unchanged values are omitted. Damage and Shock formulas are unchanged.
+
+Node/item comparison tooltips group changed stats under small muted Damage, Ailments, Survivability and Utility headings. Empty categories and single-category headings are omitted; node-only/path and player/minion comparisons remain separate. Electrocute Buildup uses the existing average buildup per hit, showing percentage-point and relative changes.

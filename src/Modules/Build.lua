@@ -2275,7 +2275,10 @@ end
 
 function buildMode:CompareStatList(tooltip, statList, actor, baseOutput, compareOutput, header, nodeCount)
 	local count = 0
+	local category = "Other"
+	local groups, groupOrder = {}, {}
 	for _, statData in ipairs(statList) do
+		category = statData.compareSection or category
 		if statData.stat and (not statData.flag or actor.mainSkill.activeEffect.statSet.skillFlags[statData.flag]) and not statData.childStat and statData.stat ~= "SkillDPS" then
 			local statVal1 = compareOutput[statData.stat] or 0
 			local statVal2 = baseOutput[statData.stat] or 0
@@ -2284,9 +2287,6 @@ function buildMode:CompareStatList(tooltip, statList, actor, baseOutput, compare
 				diff = 0
 			end
 			if (diff > 0.001 or diff < -0.001) and (not statData.condFunc or statData.condFunc(statVal1,compareOutput) or statData.condFunc(statVal2,baseOutput)) then
-				if count == 0 then
-					tooltip:AddLine(14, header)
-				end
 				local color = ((statData.lowerIsBetter and diff < 0) or (not statData.lowerIsBetter and diff > 0)) and colorCodes.POSITIVE or colorCodes.NEGATIVE
 				local val = diff * ((statData.pc or statData.mod) and 100 or 1)
 				local valStr = s_format("%+"..statData.fmt, val) -- Can't use self:FormatStat, because it doesn't have %+. Adding that would have complicated a simple function
@@ -2305,9 +2305,24 @@ function buildMode:CompareStatList(tooltip, statList, actor, baseOutput, compare
 				if nodeCount then
 					line = line .. s_format(" ^8[%+"..statData.fmt.."%s per point]", diff * ((statData.pc or statData.mod) and 100 or 1) / nodeCount, pcPerPt)
 				end
-				tooltip:AddLine(14, line)
+				local group = statData.compareCategory or category
+				if not groups[group] then
+					groups[group] = {}
+					t_insert(groupOrder, group)
+				end
+				t_insert(groups[group], line)
 				count = count + 1
 			end
+		end
+	end
+	if count > 0 then
+		tooltip:AddLine(14, header)
+		-- Keep category order consistent even when Full DPS is the only damage row.
+		local rank = { Damage = 1, Ailments = 2, Survivability = 3, Utility = 4, Other = 5 }
+		table.sort(groupOrder, function(a, b) return (rank[a] or 5) < (rank[b] or 5) end)
+		for _, group in ipairs(groupOrder) do
+			if #groupOrder > 1 then tooltip:AddLine(12, "^8"..group) end
+			for _, line in ipairs(groups[group]) do tooltip:AddLine(14, line) end
 		end
 	end
 	return count
