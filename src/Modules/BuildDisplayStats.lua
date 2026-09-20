@@ -35,6 +35,7 @@ local displayStats = {
 	{ stat = "CritBifurcates", label = "Crit Bifurcate Chance", fmt = ".2f%%", flag = "hit", condFunc = function(v,o) return (o.CritForks or 0) > 0 end },
 	{ stat = "CritMultiplier", label = "Crit Multiplier", fmt = "d%%", pc = true, condFunc = function(v,o) return (o.CritChance or 0) > 0 end },
 	{ stat = "HitChance", label = "Hit Chance", fmt = ".0f%%", flag = "attack" },
+	{ stat = "ShockChance", label = "Shock Chance", fmt = ".2f%%", flag = "hit" },
 	{ stat = "HitChance", label = "Hit Chance", fmt = ".0f%%", condFunc = function(v,o) return o.enemyHasSpellBlock end },
 	{ stat = "AccuracyHitChanceUncapped", label = "Uncap. Hit Chance", fmt = ".0f%%", flag = "attack", condFunc = function(v,o) if o.AccuracyHitChanceUncapped then return o.AccuracyHitChanceUncapped > 100 end end },
 	{ stat = "TotalDPS", label = "Hit DPS", fmt = ".1f", compPercent = true, flag = "notAverage" },
