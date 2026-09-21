@@ -2327,7 +2327,7 @@ function buildMode:CompareStatList(tooltip, statList, actor, baseOutput, compare
 		local rank = { Damage = 1, Ailments = 2, Survivability = 3, Utility = 4, Other = 5 }
 		table.sort(groupOrder, function(a, b) return (rank[a] or 5) < (rank[b] or 5) end)
 		for _, group in ipairs(groupOrder) do
-			if #groupOrder > 1 then tooltip:AddLine(12, "^8"..group) end
+			-- Display comparison rows without category headings.
 			for _, line in ipairs(groups[group]) do tooltip:AddLine(14, line) end
 		end
 	end

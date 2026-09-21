@@ -66,7 +66,7 @@ Run `tools/Test-CustomPowerReport.ps1 -TestPath tests/custom_augments_055.lua` f
 
 Shock Chance now appears in the sidebar and node/item comparisons for hit skills. Comparisons show the signed percentage-point change using the existing calculated value; unchanged values are omitted. Damage and Shock formulas are unchanged.
 
-Node/item comparison tooltips group changed stats under small muted Damage, Ailments, Survivability and Utility headings. Empty categories and single-category headings are omitted; node-only/path and player/minion comparisons remain separate. Electrocute Buildup uses the existing average buildup per hit, showing percentage-point and relative changes.
+Node/item comparison tooltips display changed stats without category headings; node-only/path and player/minion comparisons remain separate. Electrocute Buildup uses the existing average buildup per hit, showing percentage-point and relative changes.
 
 Chance and ailment-buildup comparison rows include before/after percentages, for example (10% > 11%), alongside the existing delta. This applies to node and item comparisons; calculations are unchanged.
 
