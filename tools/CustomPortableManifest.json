@@ -11,6 +11,7 @@
     "Classes/CalcsTab.lua",
     "Classes/CalcBreakdownControl.lua",
     "Classes/ItemsTab.lua",
+    "Classes/Item.lua",
     "Classes/ItemSlotControl.lua",
     "Classes/ItemListControl.lua",
     "Classes/ItemDBControl.lua",

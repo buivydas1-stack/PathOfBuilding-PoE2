@@ -1706,6 +1706,24 @@ function ItemClass:Craft()
 	self.nameSuffix = ""
 	self.requirements.level = m_max(self.base.req.level or 0, self.requirements.runeLevel)
 	local statOrder = { }
+	-- Crafting starts from unscaled affix rolls. Imported jewels already contain the
+	-- increased prefix/suffix values in their item text, so only scale here.
+	local prefixEffect, suffixEffect = 0, 0
+	if self.type == "Jewel" then
+		for _, list in ipairs({self.prefixes, self.suffixes}) do
+			for _, affix in ipairs(list) do
+				if affix.modId == "CraftedJewelPrefixEffect" or affix.modId == "CraftedJewelSuffixEffect" then
+					local effectLine = itemLib.applyRange(self.affixes[affix.modId][1], affix.range or 0.5)
+					local effect = tonumber(effectLine:match("^(%d+)%%")) or 0
+					if affix.modId == "CraftedJewelPrefixEffect" then
+						prefixEffect = prefixEffect + effect
+					else
+						suffixEffect = suffixEffect + effect
+					end
+				end
+			end
+		end
+	end
 	for _, list in ipairs({self.prefixes,self.suffixes}) do
 		for i = 1, (list.limit or (self.affixLimit / 2)) do
 			local affix = list[i]
@@ -1721,6 +1739,11 @@ function ItemClass:Craft()
 				end
 				self.requirements.level = m_max(self.requirements.level, m_floor(mod.level * 0.8))
 				local rangeScalar = getCatalystScalar(self.catalyst, mod, self.catalystQuality)
+				if mod.type == "Prefix" then
+					rangeScalar = rangeScalar + prefixEffect / 100
+				elseif mod.type == "Suffix" then
+					rangeScalar = rangeScalar + suffixEffect / 100
+				end
 				for i, line in ipairs(mod) do
 					line = itemLib.applyRange(line, affix.range or 0.5, rangeScalar)
 					local order = mod.statOrder[i]
@@ -1887,6 +1910,12 @@ function ItemClass:BuildModListForSlotNum(baseList, slotNum)
 			mod.sourceSlot = slotName
 			modList:AddMod(mod)
 		end
+	end
+	-- These local effects are already reflected in imported jewel values. Crafted
+	-- jewels apply them while generating their explicit lines in Craft().
+	if self.type == "Jewel" then
+		calcLocal(modList, "LocalJewelPrefixEffect", "INC", 0)
+		calcLocal(modList, "LocalJewelSuffixEffect", "INC", 0)
 	end
 	local craftedQuality = calcLocal(modList,"Quality","BASE",0) or 0
 	if craftedQuality ~= self.craftedQuality then
