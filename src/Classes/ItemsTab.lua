@@ -1286,6 +1286,12 @@ function ItemsTabClass:Save(xml)
 end
 
 function ItemsTabClass:Draw(viewPort, inputEvents)
+	local comparisonRevealHeld = main:IsComparisonRevealHeld()
+	if self.displayItem and (self.comparisonRevealHeld ~= comparisonRevealHeld or self.comparisonRevealKey ~= main.comparisonRevealKey) then
+		self:UpdateDisplayItemTooltip()
+	end
+	self.comparisonRevealHeld = comparisonRevealHeld
+	self.comparisonRevealKey = main.comparisonRevealKey
 	self.x = viewPort.x
 	self.y = viewPort.y
 	self.width = viewPort.width

@@ -1,6 +1,7 @@
 -- Presentation-only checks: use already calculated values in the normal tooltip.
 if not build then arg = {}; dofile("HeadlessWrapper.lua") end
 newBuild()
+build.viewMode = "CALCS" -- Verify complete comparison formatting independently of the focused Tree/Items view.
 local actor = { mainSkill = { activeEffect = { statSet = { skillFlags = {hit=true} } } } }
 local function compare(before, after)
 	local tooltip = { lines = {}, AddLine = function(self, _, line) table.insert(self.lines, line) end }
@@ -26,7 +27,7 @@ for _, line in ipairs(tooltip.lines) do
 	if line.size == 12 then table.insert(headings,line.text) end
 	table.insert(lines,line.text)
 end
-assert(table.concat(headings,"|") == "^8Damage|^8Ailments|^8Survivability|^8Utility", "Only changed categories, in consistent order")
+assert(#headings == 0, "Comparison rows have no category headings")
 local text = table.concat(lines,"\n")
 assert(text:find("+2.50%% Electrocute Buildup %(%+25.0%%%)"), "Buildup shows absolute and relative gain")
 assert(text:find("per point",1,true), "Path comparison retains per-point values")
@@ -36,7 +37,7 @@ assert(not compare(20,25):find("^8Ailments",1,true), "Single-category comparison
 local before = #tooltip.lines
 build:CompareStatList(tooltip, build.displayStats, actor, {ShockChance=20}, {ShockChance=25}, "Node alone")
 assert(tooltip.lines[before+1].text == "Node alone", "Node and path sections remain separate")
-print("PASS: compact category headings, Electrocute buildup, losses and separate path comparisons")
+print("PASS: comparison ordering, Electrocute buildup, losses and separate path comparisons")
 
 for _, stat in ipairs(build.displayStats) do
 	if stat.compareBeforeAfter and stat.compareUnit ~= "" then

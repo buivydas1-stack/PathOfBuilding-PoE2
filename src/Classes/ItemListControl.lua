@@ -135,7 +135,7 @@ function ItemListClass:AddValueTooltip(tooltip, index, itemId)
 		return
 	end
 	local item = self.itemsTab.items[itemId]
-	if tooltip:CheckForUpdate(item, IsKeyDown("SHIFT"), launch.devModeAlt, self.itemsTab.build.outputRevision) then
+	if tooltip:CheckForUpdate(item, IsKeyDown("SHIFT"), launch.devModeAlt, self.itemsTab.build.outputRevision, main.comparisonRevealKey, main:IsComparisonRevealHeld()) then
 		self.itemsTab:AddItemTooltip(tooltip, item)
 	end
 end

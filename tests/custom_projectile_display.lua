@@ -1,5 +1,6 @@
 arg={};dofile("HeadlessWrapper.lua")
 newBuild()
+build.viewMode = "CALCS" -- This test checks the complete comparison, not the focused Items view.
 build.skillsTab:PasteSocketGroup("Lightning Arrow 20/0 1")
 local bow=new("Item","Rarity: Rare\nTest Bow\nCrude Bow\nAdds 10 to 100 Lightning Damage")
 build.itemsTab:AddItem(bow,true);build.itemsTab.slots["Weapon 1"].selItemId=bow.id

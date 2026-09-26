@@ -32,7 +32,7 @@ function SharedItemListClass:AddValueTooltip(tooltip, index, item)
 		tooltip:Clear()
 		return
 	end
-	if tooltip:CheckForUpdate(item, IsKeyDown("SHIFT"), launch.devModeAlt, self.itemsTab.build.outputRevision) then
+	if tooltip:CheckForUpdate(item, IsKeyDown("SHIFT"), launch.devModeAlt, self.itemsTab.build.outputRevision, main.comparisonRevealKey, main:IsComparisonRevealHeld()) then
 		self.itemsTab:AddItemTooltip(tooltip, item)
 	end
 end

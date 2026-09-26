@@ -68,6 +68,8 @@ Shock Chance now appears in the sidebar and node/item comparisons for hit skills
 
 Node/item comparison tooltips display changed stats without category headings; node-only/path and player/minion comparisons remain separate. Electrocute Buildup uses the existing average buildup per hit, showing percentage-point and relative changes.
 
+Tree and Items comparison tooltips now put changed **Full DPS** and **Effective Hit Pool** first and show only those two changes by default. If other calculated stats change, a hint shows the selected hold key. Hold the key to reveal all other comparison rows; release it to hide them again. Choose **Options → Build-related options → Hold to show all comparison stats** to select Alt (default), F3, or F4. This is an application setting, not a build setting. Calculations and the full comparison rows in other views are unchanged.
+
 Chance and ailment-buildup comparison rows include before/after percentages, for example (10% > 11%), alongside the existing delta. This applies to node and item comparisons; calculations are unchanged.
 
 - Projectile comparisons now show Average Projectile Count with fractional before/after values and total Surpassing Projectile Chance. Calcs exposes both totals and modifier sources. Existing projectile and DPS formulas are unchanged.

@@ -2277,6 +2277,9 @@ function buildMode:CompareStatList(tooltip, statList, actor, baseOutput, compare
 	local count = 0
 	local category = "Other"
 	local groups, groupOrder = {}, {}
+	local priority = {}
+	local focusComparison = self.viewMode == "TREE" or self.viewMode == "ITEMS"
+	local showAll = not focusComparison or main:IsComparisonRevealHeld()
 	for _, statData in ipairs(statList) do
 		category = statData.compareSection or category
 		if statData.stat and (not statData.flag or actor.mainSkill.activeEffect.statSet.skillFlags[statData.flag]) and not statData.childStat and statData.stat ~= "SkillDPS" then
@@ -2311,24 +2314,33 @@ function buildMode:CompareStatList(tooltip, statList, actor, baseOutput, compare
 				if nodeCount then
 					line = line .. s_format(" ^8[%+"..statData.fmt.."%s per point]", diff * ((statData.pc or statData.mod) and 100 or 1) / nodeCount, pcPerPt)
 				end
-				local group = statData.compareCategory or category
-				if not groups[group] then
-					groups[group] = {}
-					t_insert(groupOrder, group)
+				if focusComparison and (statData.stat == "FullDPS" or statData.stat == "TotalEHP") then
+					priority[statData.stat] = line
+				else
+					local group = statData.compareCategory or category
+					if not groups[group] then
+						groups[group] = {}
+						t_insert(groupOrder, group)
+					end
+					t_insert(groups[group], line)
 				end
-				t_insert(groups[group], line)
 				count = count + 1
 			end
 		end
 	end
 	if count > 0 then
 		tooltip:AddLine(14, header)
-		-- Keep category order consistent even when Full DPS is the only damage row.
-		local rank = { Damage = 1, Ailments = 2, Survivability = 3, Utility = 4, Other = 5 }
-		table.sort(groupOrder, function(a, b) return (rank[a] or 5) < (rank[b] or 5) end)
-		for _, group in ipairs(groupOrder) do
-			-- Display comparison rows without category headings.
-			for _, line in ipairs(groups[group]) do tooltip:AddLine(14, line) end
+		for _, stat in ipairs({ "FullDPS", "TotalEHP" }) do
+			if priority[stat] then tooltip:AddLine(14, priority[stat]) end
+		end
+		if showAll then
+			local rank = { Damage = 1, Ailments = 2, Survivability = 3, Utility = 4, Other = 5 }
+			table.sort(groupOrder, function(a, b) return (rank[a] or 5) < (rank[b] or 5) end)
+			for _, group in ipairs(groupOrder) do
+				for _, line in ipairs(groups[group]) do tooltip:AddLine(14, line) end
+			end
+		elseif count > (priority.FullDPS and 1 or 0) + (priority.TotalEHP and 1 or 0) then
+			tooltip:AddLine(14, colorCodes.TIP .. "Hold " .. main.comparisonRevealKey .. " to show other stat changes.")
 		end
 	end
 	return count

@@ -95,6 +95,7 @@ function main:Init()
 	self.buildSortMode = "NAME"
 	self.connectionProtocol = 0
 	self.nodePowerTheme = "RED/BLUE"
+	self.comparisonRevealKey = "ALT"
 	self.colorPositive = defaultColorCodes.POSITIVE
 	self.colorNegative = defaultColorCodes.NEGATIVE
 	self.colorHighlight = defaultColorCodes.HIGHLIGHT
@@ -497,6 +498,10 @@ function main:OnKeyUp(key)
 	t_insert(self.inputEvents, { type = "KeyUp", key = key })
 end
 
+function main:IsComparisonRevealHeld()
+	return IsKeyDown(self.comparisonRevealKey)
+end
+
 function main:OnChar(key)
 	t_insert(self.inputEvents, { type = "Char", key = key })
 end
@@ -579,6 +584,9 @@ function main:LoadSettings(ignoreBuild)
 				end
 				if node.attrib.nodePowerTheme then
 					self.nodePowerTheme = node.attrib.nodePowerTheme
+				end
+				if node.attrib.comparisonRevealKey and (node.attrib.comparisonRevealKey == "ALT" or node.attrib.comparisonRevealKey == "F3" or node.attrib.comparisonRevealKey == "F4") then
+					self.comparisonRevealKey = node.attrib.comparisonRevealKey
 				end
 				if node.attrib.colorPositive then
 					updateColorCode("POSITIVE", node.attrib.colorPositive)
@@ -777,6 +785,7 @@ function main:SaveSettings()
 		proxyURL = launch.proxyURL,
 		buildPath = (self.buildPath ~= self.defaultBuildPath and self.buildPath or nil),
 		nodePowerTheme = self.nodePowerTheme,
+		comparisonRevealKey = self.comparisonRevealKey,
 		colorPositive = self.colorPositive,
 		colorNegative = self.colorNegative,
 		colorHighlight = self.colorHighlight,
@@ -864,6 +873,7 @@ function main:OpenOptionsPopup(savedState)
 	-- NOTE: update both this and the `controls.cancel` section below, when adding new options
 	savedState = savedState or {
 		nodePowerTheme = self.nodePowerTheme,
+		comparisonRevealKey = self.comparisonRevealKey,
 		colorPositive = self.colorPositive,
 		colorNegative = self.colorNegative,
 		colorHighlight = self.colorHighlight,
@@ -1145,6 +1155,18 @@ function main:OpenOptionsPopup(savedState)
 	controls.slotOnlyTooltips.state = self.slotOnlyTooltips
 
 	nextRow()
+	controls.comparisonRevealKey = new("DropDownControl", { "TOPLEFT", controls.sectionAnchor, "TOPLEFT" }, { currentX + defaultLabelPlacementX, currentY, 100, 18 }, {
+		{ label = "Alt", key = "ALT" },
+		{ label = "F3", key = "F3" },
+		{ label = "F4", key = "F4" },
+	}, function(index, value)
+		self.comparisonRevealKey = value.key
+	end)
+	controls.comparisonRevealKeyLabel = new("LabelControl", { "RIGHT", controls.comparisonRevealKey, "LEFT" }, { defaultLabelSpacingPx, 0, 0, 16 }, "^7Hold to show all comparison stats:")
+	controls.comparisonRevealKey.tooltipText = "In Tree and Items tooltips, show only Full DPS and Effective Hit Pool changes by default. Hold this key to reveal the other stat changes."
+	controls.comparisonRevealKey:SelByValue(self.comparisonRevealKey, "key")
+
+	nextRow()
 	controls.migrateAugments = new("CheckBoxControl", { "TOPLEFT", controls.sectionAnchor, "TOPLEFT" }, { currentX + defaultLabelPlacementX, currentY, 20 }, "^7Copy augments onto display item:", function(state)
 		self.migrateAugments = state
 	end)
@@ -1217,6 +1239,7 @@ function main:OpenOptionsPopup(savedState)
 	end)
 	controls.cancel = new("ButtonControl", { "BOTTOM", nil, "BOTTOM" }, {45, -10, 80, 20}, "Cancel", function()
 		self.nodePowerTheme = savedState.nodePowerTheme
+		self.comparisonRevealKey = savedState.comparisonRevealKey
 		self.colorPositive = savedState.colorPositive
 		updateColorCode("POSITIVE", self.colorPositive)
 		self.colorNegative = savedState.colorNegative
