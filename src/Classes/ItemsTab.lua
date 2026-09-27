@@ -621,6 +621,7 @@ holding Shift will put it in the second.]])
 		"Necrotic (Minion)",
 		},
 		function(index, value)
+			if (self.displayItem.catalyst or 0) == index - 1 then return end
 			self.displayItem.catalyst = index - 1
 			if not self.displayItem.catalystQuality then
 				if string.match(self.displayItem.name, "Breach Ring") then
@@ -644,6 +645,7 @@ holding Shift will put it in the second.]])
 		return self.displayItem and (self.displayItem.crafted or self.displayItem.hasModTags) and (self.displayItem.base.type == "Amulet" or self.displayItem.base.type == "Ring")
 	end
 	self.controls.displayItemCatalystQualityEdit = new("EditControl", {"LEFT",self.controls.displayItemCatalyst,"RIGHT"}, {2, 0, 60, 20}, nil, nil, "%D", 2, function(buf)
+		if self.displayItem.catalystQuality == tonumber(buf) then return end
 		self.displayItem.catalystQuality = tonumber(buf)
 		if self.displayItem.crafted then
 			for i = 1, self.displayItem.affixLimit do
@@ -1816,6 +1818,24 @@ end
 function ItemsTabClass:CreateDisplayItemFromRaw(itemRaw, normalise)
 	local newItem = new("Item", itemRaw)
 	if newItem.base then
+		if newItem.type == "Jewel" and newItem.crafted and itemRaw:find("{ ", 1, true)
+			and #newItem.prefixes + #newItem.suffixes == #newItem.explicitModLines then
+			local hasAffixEffect = false
+			for _, list in ipairs({ newItem.prefixes, newItem.suffixes }) do
+				for _, affix in ipairs(list) do
+					if affix.modId == "CraftedJewelPrefixEffect" or affix.modId == "CraftedJewelSuffixEffect" then
+						hasAffixEffect = true
+						break
+					end
+				end
+				if hasAffixEffect then break end
+			end
+			if hasAffixEffect then
+				-- Advanced game copies contain base rolls; build their displayed
+				-- values with quality and the crafted affix effect together.
+				newItem:Craft()
+			end
+		end
 		self:CopyAnointsAndAugments(newItem, main.migrateAugments, false)
 		if normalise then
 			newItem:NormaliseQuality()
@@ -2073,8 +2093,9 @@ function ItemsTabClass:UpdateAffixControl(control, item, type, outputTable, outp
 		end
 	end
 	local affixList = { }
+	local selectedAffix = item[outputTable][outputIndex].modId
 	for modId, mod in pairs(item.affixes) do
-		if mod.type == type and not excludeGroups[mod.group] and item:GetModSpawnWeight(mod, extraTags) > 0 then
+		if mod.type == type and (modId == selectedAffix or (not excludeGroups[mod.group] and item:GetModSpawnWeight(mod, extraTags) > 0)) then
 			t_insert(affixList, modId)
 		end
 	end

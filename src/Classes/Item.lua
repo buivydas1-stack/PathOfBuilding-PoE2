@@ -665,18 +665,32 @@ function ItemClass:ParseRaw(raw, rarity, highQuality)
 				elseif specName == "Implicit" then
 					self.implicit = true
 				elseif specName == "Prefix" then
+					local desecrated = specVal:find("{desecrated}", 1, true)
+					local crafted = specVal:find("{crafted}", 1, true)
+					local unscalable = specVal:find("{unscalable}", 1, true)
+					specVal = specVal:gsub("{desecrated}", ""):gsub("{crafted}", ""):gsub("{unscalable}", "")
 					local range, affix = specVal:match("{range:([%d.]+)}(.+)")
 					range = range or ((affix or specVal) ~= "None" and main.defaultItemAffixQuality)
 					t_insert(self.prefixes, {
 						modId = affix or specVal,
 						range = tonumber(range),
+						desecrated = desecrated and true or nil,
+						crafted = crafted and true or nil,
+						unscalable = unscalable and true or nil,
 					})
 				elseif specName == "Suffix" then
+					local desecrated = specVal:find("{desecrated}", 1, true)
+					local crafted = specVal:find("{crafted}", 1, true)
+					local unscalable = specVal:find("{unscalable}", 1, true)
+					specVal = specVal:gsub("{desecrated}", ""):gsub("{crafted}", ""):gsub("{unscalable}", "")
 					local range, affix = specVal:match("{range:([%d.]+)}(.+)")
 					range = range or ((affix or specVal) ~= "None" and main.defaultItemAffixQuality)
 					t_insert(self.suffixes, {
 						modId = affix or specVal,
 						range = tonumber(range),
+						desecrated = desecrated and true or nil,
+						crafted = crafted and true or nil,
+						unscalable = unscalable and true or nil,
 					})
 				elseif specName == "Implicits" then
 					implicitLines = specToNumber(specVal) or 0
@@ -877,6 +891,19 @@ function ItemClass:ParseRaw(raw, rarity, highQuality)
 				else
 					catalystScalar = getCatalystScalar(self.catalyst, modLine, self.catalystQuality)
 				end
+				-- In advanced item text this crafted jewel affix has an empty name and
+				-- zero spawn weight, so the usual name lookup cannot identify it.
+				if raw:find("{ ", 1, true) and self.crafted and self.type == "Jewel" and modLine.crafted then
+					local effectId, affixTable
+					if line:find("increased Effect of Prefixes", 1, true) then
+						effectId, affixTable = "CraftedJewelPrefixEffect", self.suffixes
+					elseif line:find("increased Effect of Suffixes", 1, true) then
+						effectId, affixTable = "CraftedJewelSuffixEffect", self.prefixes
+					end
+					if effectId and self.affixes[effectId] then
+						self.pendingAffixList = { { modId = effectId, table = affixTable } }
+					end
+				end
 				if self.pendingAffixList and #self.pendingAffixList > 0 then
 					if #self.pendingAffixList > 1 then
 						-- Probably a conqueror or Essence mod since the mod name is the same for all of them
@@ -913,6 +940,9 @@ function ItemClass:ParseRaw(raw, rarity, highQuality)
 					t_insert(self.pendingAffixList[1].table, {
 						modId = self.pendingAffixList[1].modId,
 						range = bestPrecisionRange >= 0 and bestPrecisionRange <= 1 and bestPrecisionRange or 0.5,
+						desecrated = modLine.desecrated,
+						crafted = modLine.crafted,
+						unscalable = modLine.unscalable,
 					})
 					self.pendingAffixList = {}
 				else
@@ -1300,10 +1330,18 @@ function ItemClass:ParseRaw(raw, rarity, highQuality)
 				self.affixLimit = 2
 			end
 		elseif self.rarity == "RARE" then
-			self.affixLimit = ((self.type == "Jewel" and not (self.base.subType == "Abyss" and self.corrupted)) and 4 or 6)
+			local isFourAffixJewel = self.type == "Jewel" and not (self.base.subType == "Abyss" and self.corrupted)
+			self.affixLimit = isFourAffixJewel and 4 or 6
 			if self.prefixes.limit or self.suffixes.limit then
 				self.prefixes.limit = m_max(m_min((self.prefixes.limit or 0) + self.affixLimit / 2, self.affixLimit), 0)
 				self.suffixes.limit = m_max(m_min((self.suffixes.limit or 0) + self.affixLimit / 2, self.affixLimit), 0)
+				self.affixLimit = self.prefixes.limit + self.suffixes.limit
+			end
+			-- Desecrated jewels can have a third affix on one side. Keep every
+			-- imported affix available in the editor instead of truncating it.
+			if isFourAffixJewel and (#self.prefixes > 2 or #self.suffixes > 2) then
+				self.prefixes.limit = m_min(3, m_max(self.prefixes.limit or 2, #self.prefixes))
+				self.suffixes.limit = m_min(3, m_max(self.suffixes.limit or 2, #self.suffixes))
 				self.affixLimit = self.prefixes.limit + self.suffixes.limit
 			end
 		else
@@ -1430,10 +1468,10 @@ function ItemClass:BuildRaw()
 	if self.crafted then
 		t_insert(rawLines, "Crafted: true")
 		for i, affix in ipairs(self.prefixes or { }) do
-			t_insert(rawLines, "Prefix: " .. (affix.range and ("{range:" .. round(affix.range,3) .. "}") or "") .. affix.modId)
+			t_insert(rawLines, "Prefix: " .. (affix.range and ("{range:" .. round(affix.range,3) .. "}") or "") .. (affix.desecrated and "{desecrated}" or "") .. (affix.crafted and "{crafted}" or "") .. (affix.unscalable and "{unscalable}" or "") .. affix.modId)
 		end
 		for i, affix in ipairs(self.suffixes or { }) do
-			t_insert(rawLines, "Suffix: " .. (affix.range and ("{range:" .. round(affix.range,3) .. "}") or "") .. affix.modId)
+			t_insert(rawLines, "Suffix: " .. (affix.range and ("{range:" .. round(affix.range,3) .. "}") or "") .. (affix.desecrated and "{desecrated}" or "") .. (affix.crafted and "{crafted}" or "") .. (affix.unscalable and "{unscalable}" or "") .. affix.modId)
 		end
 	end
 	if self.catalyst and self.catalyst > 0 then
@@ -1756,7 +1794,7 @@ function ItemClass:Craft()
 							return tonumber(num) + tonumber(other)
 						end)
 					else
-						local modLine = { line = line, order = order }
+						local modLine = { line = line, order = order, desecrated = affix.desecrated, crafted = affix.crafted, unscalable = affix.unscalable }
 						for l = 1, #self.explicitModLines + 1 do
 							if not self.explicitModLines[l] or self.explicitModLines[l].order > order then
 								t_insert(self.explicitModLines, l, modLine)
