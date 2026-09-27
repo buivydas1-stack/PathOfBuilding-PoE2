@@ -717,6 +717,9 @@ return {
 	{ label = "ES Cost", color = colorCodes.ES, haveOutput = "ESHasCost", { format = "{0:output:ESCost}", { breakdown = "ESCost" }, { modName = { "ESCost", "Cost", "ESCostNoMult" }, cfg = "skill" }, }, },
 	{ label = "ES per second", color = colorCodes.ES, haveOutput = "ESPerSecondHasCost", { format = "{2:output:ESPerSecondCost}", { breakdown = "ESPerSecondCost" }, { modName = { "ESCost", "Cost", "ESCostNoMult" }, cfg = "skill" }, }, },
 	{ label = "ES % per second", color = colorCodes.ES, haveOutput = "ESPercentPerSecondHasCost", { format = "{2:output:ESPercentPerSecondCost}", { breakdown = "ESPercentPerSecondCost" }, { modName = { "ESCost", "Cost", "ESCostNoMult" }, cfg = "skill" }, }, },
+	{ label = "Runic Ward Cost", color = colorCodes.WARD, haveOutput = "WardHasCost", { format = "{0:output:WardCost}", { breakdown = "WardCost" }, { modName = { "WardCost", "Cost", "WardCostNoMult" }, cfg = "skill" }, }, },
+	{ label = "Runic Ward % Cost", color = colorCodes.WARD, haveOutput = "WardPercentHasCost", { format = "{0:output:WardPercentCost}", { breakdown = "WardPercentCost" }, { modName = { "WardCost", "Cost", "WardCostNoMult" }, cfg = "skill" }, }, },
+	{ label = "Runic Ward / s", color = colorCodes.WARD, haveOutput = "WardPerSecondHasCost", { format = "{2:output:WardPerSecondCost}", { breakdown = "WardPerSecondCost" }, { modName = { "WardCost", "Cost", "WardCostNoMult" }, cfg = "skill" }, }, },
 	{ label = "Rage Cost", color = colorCodes.RAGE, haveOutput = "RageHasCost", { format = "{0:output:RageCost}", { breakdown = "RageCost" }, { modName = { "RageCost", "Cost", "RageNoMult" }, cfg = "skill" }, }, },
 	{ label = "Rage per second", color = colorCodes.RAGE, haveOutput = "RagePerSecondHasCost", { format = "{2:output:RagePerSecondCost}", { breakdown = "RagePerSecondCost" }, { modName = { "RageCost", "Cost", "RageNoMult" }, cfg = "skill" }, }, },
 	{ label = "Armour Break / hit", haveOutput = "ArmourBreakPerHit", { format = "{0:output:ArmourBreakPerHit}", { modName = "ArmourBreakPerHit", modType = "BASE"} }, },
@@ -1765,6 +1768,22 @@ return {
 	}, },
 } }
 } },
+{ 1, "Ward", 2, colorCodes.WARD, {{ defaultCollapsed = false, label = "Runic Ward", data = {
+	extra = "{0:output:Ward}",
+	{ label = "Base from Armours", { format = "{0:output:Gear:Ward}", { breakdown = "Ward", gearOnly = true }, }, },
+	{ label = "Global Base", { format = "{0:mod:1}", { modName = "Ward", modType = "BASE" }, }, },
+	{ label = "Inc. from Tree", { format = "{0:mod:1}%", { modName = "Ward", modType = "INC", modSource = "Tree" }, }, },
+	{ label = "Total Increased", { format = "{0:mod:1}%", { modName = { "Ward", "Defences" }, modType = "INC" }, }, },
+	{ label = "Total More", { format = "{0:mod:1}%", { modName = { "Ward", "Defences" }, modType = "MORE" }, }, },
+	{ label = "Total", { format = "{0:output:Ward}", { breakdown = "Ward" }, }, },
+	{ label = "Recovery", { format = "{1:output:WardRegenRecovery} ({1:output:WardRegenPercent}%)",
+		{ breakdown = "WardRegenRecovery" },
+		{ label = "Sources", modName = { "WardRegen", "WardRegenPercent", "WardDegen", "WardDegenPercent", "WardRecovery" }, modType = "BASE" },
+		{ label = "Increased Runic Ward Recovery", modName = { "WardRegen", "WardRecoveryRate" }, modType = "INC" },
+		{ label = "More Runic Ward Recovery", modName = { "WardRegen", "WardRecoveryRate" }, modType = "MORE" },
+	}, },
+} }
+} },
 -- secondary defenses
 { 1, "Resist", 3, colorCodes.DEFENCE, {{ defaultCollapsed = false, label = "Resists", data = {
 	extra = colorCodes.FIRE.."{0:output:FireResist}+{0:output:FireResistOverCap}^7/"..colorCodes.COLD.."{0:output:ColdResist}+{0:output:ColdResistOverCap}^7/"..colorCodes.LIGHTNING.."{0:output:LightningResist}+{0:output:LightningResistOverCap}",
@@ -1873,6 +1892,7 @@ return {
 	}, },
 	{ label = "Life on Block", haveOutput = "LifeOnBlock", { format = "{0:output:LifeOnBlock}", { modName = "LifeOnBlock" }, }, },
 	{ label = "Mana on Block", haveOutput = "ManaOnBlock", { format = "{0:output:ManaOnBlock}", { modName = "ManaOnBlock" }, }, },
+	{ label = "Runic Ward on Block", haveOutput = "WardOnBlock", { format = "{0:output:WardOnBlock}", { modName = "WardOnBlock" }, }, },
 	{ label = "ES on Block", haveOutput = "EnergyShieldOnBlock", { format = "{0:output:EnergyShieldOnBlock}", { modName = "EnergyShieldOnBlock" }, }, },
 	{ label = "ES on Spell Block", haveOutput = "EnergyShieldOnSpellBlock", { format = "{0:output:EnergyShieldOnSpellBlock}", { modName = "EnergyShieldOnSpellBlock" }, }, },
 } }, { defaultCollapsed = false, label = "Dodge", data = {

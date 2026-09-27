@@ -2,6 +2,8 @@
 
 Based on the official Path of Building 2 **v0.23.1** release.
 
+- **Runic Ward:** backports upstream [#2146](https://github.com/PathOfBuildingCommunity/PathOfBuilding-PoE2/pull/2146) to the stable-based custom branch. Item import recognizes the Runic Ward property and local modifiers; the calculator includes its pool, recovery, on-block recovery, bypass, related conditions, and skill costs. The copied Sorrow Road boots and focused defence/cost checks pass in `tests/custom_runic_ward.lua`. This is a selective fix, not a full upstream update.
+
 - Basic jewels now recognize **increased Effect of Prefixes** and **increased Effect of Suffixes**. Imported jewel modifier values already include these local effects and are not scaled again. Jewels created in PoB's item editor apply the effect to the corresponding affix lines, adding it to matching quality scaling before in-game rounding. The local effect does not become a global character modifier. Verified with `tests/custom_jewel_affix_effect.lua`.
 - Pasting an advanced-copy jewel with a crafted affix effect now keeps its empty-name effect affix and any desecrated fifth affix. The Items editor shows all five affixes and reconstructs the displayed values from base rolls, quality, and affix effect. Desecrated/crafted markers survive saving. Verified with the exact Loath Eye clipboard text in `tests/custom_jewel_import.lua`.
 - Editable jewels with catalyst quality show a quality slider above their affix controls. It adjusts quality in whole percentage points (normally 0–20%, retaining higher imported values), immediately recalculates the jewel, and leaves affix rolls and markers unchanged. Verified with `tests/custom_jewel_import.lua`.
