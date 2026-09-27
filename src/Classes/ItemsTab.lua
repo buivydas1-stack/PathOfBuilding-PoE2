@@ -602,7 +602,7 @@ holding Shift will put it in the second.]])
 
 	-- Section: Catalysts
 	self.controls.displayItemSectionCatalyst = new("Control", {"TOPLEFT",self.controls.displayItemSectionQuality,"BOTTOMLEFT"}, {0, 0, 0, function()
-		return (self.controls.displayItemCatalyst:IsShown() or self.controls.displayItemCatalystQualityEdit:IsShown()) and 28 or 0
+		return (self.controls.displayItemCatalyst:IsShown() or self.controls.displayItemCatalystQualityEdit:IsShown() or self.controls.displayItemJewelQualitySlider:IsShown()) and 28 or 0
 	end})
 	self.controls.displayItemCatalyst = new("DropDownControl", {"TOPLEFT",self.controls.displayItemSectionCatalyst,"TOPRIGHT"}, {0, 0, 250, 20},
 		{"Catalyst",
@@ -659,7 +659,31 @@ holding Shift will put it in the second.]])
 	end)
 	self.controls.displayItemCatalystQualityEdit.shown = function()
 		return self.displayItem and (self.displayItem.crafted or self.displayItem.hasModTags) and self.displayItem.catalyst and self.displayItem.catalyst > 0
+			and (self.displayItem.base.type == "Amulet" or self.displayItem.base.type == "Ring")
 	end
+	self.controls.displayItemJewelQualityLabel = new("LabelControl", {"TOPLEFT",self.controls.displayItemSectionCatalyst,"TOPLEFT"}, {0, 0, 140, 20}, function()
+		local catalyst = self.controls.displayItemCatalyst.list[(self.displayItem.catalyst or 0) + 1]
+		return "^7" .. (catalyst and catalyst:match("%((.-)%)") or "Modifier") .. " quality:"
+	end)
+	self.controls.displayItemJewelQualityLabel.shown = function()
+		return self.displayItem and self.displayItem.type == "Jewel" and self.displayItem.crafted
+			and self.displayItem.catalyst and self.displayItem.catalyst > 0 and self.displayItem.catalystQuality
+	end
+	self.controls.displayItemJewelQualitySlider = new("SliderControl", {"LEFT",self.controls.displayItemJewelQualityLabel,"RIGHT"}, {6, 0, 210, 16}, function(val)
+		local slider = self.controls.displayItemJewelQualitySlider
+		local quality = m_floor(val * slider.maxQuality + 0.5)
+		slider.val = quality / slider.maxQuality
+		if quality ~= self.displayItem.catalystQuality then
+			self.displayItem.catalystQuality = quality
+			self.displayItem:Craft()
+			self:UpdateDisplayItemTooltip()
+		end
+	end)
+	self.controls.displayItemJewelQualitySlider.shown = self.controls.displayItemJewelQualityLabel.shown
+	self.controls.displayItemJewelQualityValue = new("LabelControl", {"LEFT",self.controls.displayItemJewelQualitySlider,"RIGHT"}, {6, 0, 45, 16}, function()
+		return "+" .. self.displayItem.catalystQuality .. "%"
+	end)
+	self.controls.displayItemJewelQualityValue.shown = self.controls.displayItemJewelQualityLabel.shown
 
 	-- Section: Cluster Jewel
 	self.controls.displayItemSectionClusterJewel = new("Control", {"TOPLEFT",self.controls.displayItemSectionCatalyst,"BOTTOMLEFT"}, {0, 0, 0, function()
@@ -1893,6 +1917,10 @@ function ItemsTabClass:SetDisplayItem(item)
 		else
 			self.controls.displayItemCatalystQualityEdit:SetText(0)
 		end
+		local jewelQualitySlider = self.controls.displayItemJewelQualitySlider
+		jewelQualitySlider.maxQuality = m_max(20, item.catalystQuality or 0)
+		jewelQualitySlider.divCount = jewelQualitySlider.maxQuality
+		jewelQualitySlider.val = (item.catalystQuality or 0) / jewelQualitySlider.maxQuality
 		self:UpdateCustomControls()
 		self:UpdateRuneControls()
 		self:UpdateDisplayItemRangeLines()

@@ -41,6 +41,20 @@ local thirdPrefix = build.itemsTab.controls.displayItemAffix3
 local craftedSuffix = build.itemsTab.controls.displayItemAffix5
 assert(thirdPrefix.list[thirdPrefix.selIndex].modId == "JewelElementalDamage", "Editor must select the desecrated third prefix")
 assert(craftedSuffix.list[craftedSuffix.selIndex].modId == "CraftedJewelPrefixEffect", "Editor must select the crafted effect suffix")
+local qualitySlider = build.itemsTab.controls.displayItemJewelQualitySlider
+assert(qualitySlider:IsShown() and qualitySlider.maxQuality == 20 and qualitySlider.val == 0.5, "Editable jewel quality must have a 0-20% slider")
+local affixRanges = { pasted.prefixes[1].range, pasted.prefixes[2].range, pasted.prefixes[3].range, pasted.suffixes[1].range, pasted.suffixes[2].range }
+qualitySlider:SetVal(1)
+assert(pasted.catalystQuality == 20, "Quality slider must set jewel quality to 20%")
+local higherQualityLines = {}
+for _, modLine in ipairs(pasted.explicitModLines) do higherQualityLines[modLine.line] = true end
+assert(higherQualityLines["18% increased Damage with Bows"] and higherQualityLines["15% increased Attack Damage"], "Higher attack quality must recalculate attack prefixes")
+assert(higherQualityLines["22% increased Elemental Damage"] and higherQualityLines["51% increased Effect of Prefixes"], "Quality must not change unrelated or unscalable modifiers")
+assert(pasted.prefixes[3].desecrated and pasted.suffixes[2].crafted, "Quality changes must retain affix markers")
+qualitySlider:SetVal(0.5)
+assert(pasted.catalystQuality == 10 and qualitySlider.val == 0.5, "Quality slider must restore the original value")
+assert(pasted.prefixes[1].range == affixRanges[1] and pasted.prefixes[2].range == affixRanges[2] and pasted.prefixes[3].range == affixRanges[3]
+	and pasted.suffixes[1].range == affixRanges[4] and pasted.suffixes[2].range == affixRanges[5], "Quality changes must leave affix rolls intact")
 adv:Craft()
 local expected = {
 	["13% increased Critical Damage Bonus for Attack Damage"] = true,
