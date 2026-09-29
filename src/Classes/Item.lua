@@ -74,6 +74,79 @@ local ItemClass = newClass("Item", function(self, raw, rarity, highQuality)
 	end
 end)
 
+-- A normal game copy has printed modifier values but no advanced modifier tags.
+-- Match its printed lines to the item's own affix data before simulating catalyst quality.
+local function catalystLineKey(line)
+	return line:lower():gsub("%b()", function(value)
+		return value:find("%d") and "#" or value
+	end):gsub("[%+%-]?%d+%.?%d*", "#"):gsub("[%+%-]#", "#"):gsub("%s+", " ")
+end
+
+function ItemClass:InferCatalystTags()
+	if not self.base or (self.base.type ~= "Ring" and self.base.type ~= "Amulet") then
+		return
+	end
+	local relevantTags = {}
+	for _, tags in ipairs(catalystTags) do
+		for _, tag in ipairs(tags) do
+			relevantTags[tag] = true
+		end
+	end
+	local affixTags = {}
+	for _, affix in pairs(self.affixes or {}) do
+		if type(affix) == "table" and affix.modTags and self:GetModSpawnWeight(affix) > 0 then
+			local tags = {}
+			for _, tag in ipairs(affix.modTags) do
+				if relevantTags[tag] then tags[tag] = true end
+			end
+			for _, line in ipairs(affix) do
+				local key = catalystLineKey(line)
+				if not affixTags[key] then
+					affixTags[key] = tags
+				else
+					-- Keep only tags shared by every affix with the same printed text.
+					for tag in pairs(affixTags[key]) do
+						if not tags[tag] then affixTags[key][tag] = nil end
+					end
+				end
+			end
+		end
+	end
+	local implicitTags = {}
+	if self.base.implicit and self.base.implicitModTypes then
+		local index = 0
+		for line in self.base.implicit:gmatch("[^\n]+") do
+			index = index + 1
+			implicitTags[catalystLineKey(line)] = self.base.implicitModTypes[index]
+		end
+	end
+	for _, lines in ipairs({ self.implicitModLines, self.explicitModLines }) do
+		for _, modLine in ipairs(lines) do
+			if not modLine.unscalable and (not modLine.modTags or #modLine.modTags == 0) then
+				local key = catalystLineKey(modLine.line)
+				local tags = lines == self.implicitModLines and implicitTags[key] or affixTags[key]
+				if tags then
+					local inferred = {}
+					local tagLookup = {}
+					for key, value in pairs(tags) do
+						if type(key) == "number" then tagLookup[value] = true else tagLookup[key] = value end
+					end
+					local seen = {}
+					for _, catalystTagList in ipairs(catalystTags) do
+						for _, tag in ipairs(catalystTagList) do
+							if tagLookup[tag] and not seen[tag] then
+								t_insert(inferred, tag)
+								seen[tag] = true
+							end
+						end
+					end
+					if #inferred > 0 then modLine.modTags = inferred end
+				end
+			end
+		end
+	end
+end
+
 local lineFlags = {
 	["custom"] = true, ["crafted"] = true, ["fractured"] = true, ["desecrated"] = true, ["mutated"] = true, ["enchant"] = true, ["implicit"] = true, ["rune"] = true, ["unscalable"] = true
 }

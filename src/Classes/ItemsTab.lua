@@ -602,10 +602,12 @@ holding Shift will put it in the second.]])
 
 	-- Section: Catalysts
 	self.controls.displayItemSectionCatalyst = new("Control", {"TOPLEFT",self.controls.displayItemSectionQuality,"BOTTOMLEFT"}, {0, 0, 0, function()
-		return (self.controls.displayItemCatalyst:IsShown() or self.controls.displayItemCatalystQualityEdit:IsShown() or self.controls.displayItemJewelQualitySlider:IsShown()) and 28 or 0
+		return (self.controls.displayItemCatalyst:IsShown() and 28 or 0)
+			+ (self.controls.displayItemCatalystQualitySlider:IsShown() and 28 or 0)
+			+ (self.controls.displayItemJewelQualitySlider:IsShown() and 28 or 0)
 	end})
 	self.controls.displayItemCatalyst = new("DropDownControl", {"TOPLEFT",self.controls.displayItemSectionCatalyst,"TOPRIGHT"}, {0, 0, 250, 20},
-		{"Catalyst",
+		{"Add Catalyst...",
 		"Flesh (Life)",
 		"Neural (Mana)",
 		"Carapace (Defense)",
@@ -622,44 +624,54 @@ holding Shift will put it in the second.]])
 		},
 		function(index, value)
 			if (self.displayItem.catalyst or 0) == index - 1 then return end
+			self.displayItem:InferCatalystTags()
 			self.displayItem.catalyst = index - 1
-			if not self.displayItem.catalystQuality then
-				if string.match(self.displayItem.name, "Breach Ring") then
-					self.displayItem.catalystQuality = 50
-				else
-					self.displayItem.catalystQuality = 20
-				end
-				self.controls.displayItemCatalystQualityEdit:SetText(self.displayItem.catalystQuality)
-			end
-			if self.displayItem.crafted then
-				for i = 1, self.displayItem.affixLimit do
-					-- Force affix selectors to update
-					local drop = self.controls["displayItemAffix"..i]
-					drop.selFunc(drop.selIndex, drop.list[drop.selIndex])
-				end
-			end
-			self.displayItem:BuildAndParseRaw()
-			self:UpdateDisplayItemTooltip()
+			self:SetDisplayItemCatalystQuality(index > 1 and 20 or nil)
 		end)
 	self.controls.displayItemCatalyst.shown = function()
-		return self.displayItem and (self.displayItem.crafted or self.displayItem.hasModTags) and (self.displayItem.base.type == "Amulet" or self.displayItem.base.type == "Ring")
+		return self.displayItem and self.displayItem.base and (self.displayItem.base.type == "Amulet" or self.displayItem.base.type == "Ring")
 	end
-	self.controls.displayItemCatalystQualityEdit = new("EditControl", {"LEFT",self.controls.displayItemCatalyst,"RIGHT"}, {2, 0, 60, 20}, nil, nil, "%D", 2, function(buf)
-		if self.displayItem.catalystQuality == tonumber(buf) then return end
-		self.displayItem.catalystQuality = tonumber(buf)
-		if self.displayItem.crafted then
-			for i = 1, self.displayItem.affixLimit do
-				-- Force affix selectors to update
-				local drop = self.controls["displayItemAffix"..i]
-				drop.selFunc(drop.selIndex, drop.list[drop.selIndex])
-			end
+	self.controls.displayItemCatalyst.tooltipFunc = function(tooltip, mode, index, value)
+		tooltip:Clear()
+		if mode ~= "HOVER" or index <= 1 or not self.displayItem then return end
+		tooltip:AddLine(14, "^7"..value.." at 20% quality")
+		if not self.showStatDifferences then return end
+		local item = self.displayItem
+		local raw = item:BuildRaw()
+		local key = raw..":"..index..":"..tostring(self.build.calcsTab.mainOutput)
+		if not self.catalystPreview or self.catalystPreview.key ~= key then
+			local preview = new("Item", raw)
+			preview.id = item.id
+			preview:InferCatalystTags()
+			preview.catalyst = index - 1
+			preview.catalystQuality = 20
+			preview:BuildAndParseRaw()
+			local slotName = self:GetComparisonSlotNameForItem(item)
+			local calcFunc = self.build.calcsTab:GetMiscCalculator()
+			self.catalystPreview = {
+				key = key,
+				before = calcFunc({ repSlotName = slotName, repItem = item }),
+				after = calcFunc({ repSlotName = slotName, repItem = preview }),
+			}
 		end
-		self.displayItem:BuildAndParseRaw()
-		self:UpdateDisplayItemTooltip()
+		self.build:AddStatComparesToTooltip(tooltip, self.catalystPreview.before, self.catalystPreview.after, "Catalyst alone changes:")
+	end
+	self.controls.displayItemCatalystQualityLabel = new("LabelControl", {"TOPLEFT",self.controls.displayItemCatalyst,"BOTTOMLEFT"}, {0, 4, 80, 16}, "^7Quality:")
+	self.controls.displayItemCatalystQualityLabel.shown = function()
+		return self.displayItem and self.displayItem.catalyst and self.displayItem.catalyst > 0
+			and self.controls.displayItemCatalyst:IsShown()
+	end
+	self.controls.displayItemCatalystQualitySlider = new("SliderControl", {"LEFT",self.controls.displayItemCatalystQualityLabel,"RIGHT"}, {4, 0, 185, 16}, function(val)
+		local slider = self.controls.displayItemCatalystQualitySlider
+		self:SetDisplayItemCatalystQuality(m_floor(val * slider.maxQuality + 0.5))
+	end)
+	self.controls.displayItemCatalystQualitySlider.shown = self.controls.displayItemCatalystQualityLabel.shown
+	self.controls.displayItemCatalystQualityEdit = new("EditControl", {"LEFT",self.controls.displayItemCatalystQualitySlider,"RIGHT"}, {6, 0, 50, 20}, nil, nil, "%D", 2, function(buf)
+		local quality = tonumber(buf)
+		if quality then self:SetDisplayItemCatalystQuality(quality) end
 	end)
 	self.controls.displayItemCatalystQualityEdit.shown = function()
-		return self.displayItem and (self.displayItem.crafted or self.displayItem.hasModTags) and self.displayItem.catalyst and self.displayItem.catalyst > 0
-			and (self.displayItem.base.type == "Amulet" or self.displayItem.base.type == "Ring")
+		return self.controls.displayItemCatalystQualityLabel:IsShown()
 	end
 	self.controls.displayItemJewelQualityLabel = new("LabelControl", {"TOPLEFT",self.controls.displayItemSectionCatalyst,"TOPLEFT"}, {0, 0, 140, 20}, function()
 		local catalyst = self.controls.displayItemCatalyst.list[(self.displayItem.catalyst or 0) + 1]
@@ -1911,7 +1923,11 @@ function ItemsTabClass:SetDisplayItem(item)
 		self.controls.displayItemSocketRuneEdit:SetText(item.itemSocketCount)
 		self.controls.displayItemSocketJewelEdit:SetText(item.jewelSocketCount)
 		self.controls.displayItemQualityEdit:SetText(item.quality)
-		self.controls.displayItemCatalyst:SetSel((item.catalyst or 0) + 1)
+		self.controls.displayItemCatalyst:SetSel((item.catalyst or 0) + 1, true)
+		local catalystQualitySlider = self.controls.displayItemCatalystQualitySlider
+		catalystQualitySlider.maxQuality = m_max(40, item.catalystQuality or 0)
+		catalystQualitySlider.divCount = catalystQualitySlider.maxQuality
+		catalystQualitySlider.val = (item.catalystQuality or 0) / catalystQualitySlider.maxQuality
 		if item.catalystQuality then
 			self.controls.displayItemCatalystQualityEdit:SetText(m_max(item.catalystQuality, 0))
 		else
@@ -1932,7 +1948,27 @@ function ItemsTabClass:SetDisplayItem(item)
 	end
 end
 
+function ItemsTabClass:SetDisplayItemCatalystQuality(quality)
+	local item = self.displayItem
+	local slider = self.controls.displayItemCatalystQualitySlider
+	if quality then
+		quality = m_min(m_max(quality, 0), slider.maxQuality or 40)
+	end
+	item.catalystQuality = quality
+	slider.val = (quality or 0) / (slider.maxQuality or 40)
+	self.controls.displayItemCatalystQualityEdit:SetText(quality or 0)
+	if item.crafted then
+		for i = 1, item.affixLimit do
+			local drop = self.controls["displayItemAffix"..i]
+			drop.selFunc(drop.selIndex, drop.list[drop.selIndex])
+		end
+	end
+	item:BuildAndParseRaw()
+	self:UpdateDisplayItemTooltip()
+end
+
 function ItemsTabClass:UpdateDisplayItemTooltip()
+	self.catalystPreview = nil
 	self.displayItemTooltip:Clear()
 	self:AddItemTooltip(self.displayItemTooltip, self.displayItem)
 	self.displayItemTooltip.center = true
