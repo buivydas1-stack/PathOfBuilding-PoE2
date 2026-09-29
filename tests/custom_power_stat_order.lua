@@ -89,6 +89,12 @@ cursorY = cursorY - (dragControl.height - 4)
 dragControl:OnKeyUp("LEFTBUTTON")
 assert(dragControl.list[1].stat == "TotalEHP" and dragControl.dropped,
 	"Dragging inside the open dropdown must move the row without selecting or closing it")
+local batchedStartY = cursorY + (dragControl.height - 4)
+dragControl:OnKeyDown("LEFTBUTTON", nil, cursorX, batchedStartY)
+assert(dragControl.reorderStartIndex == 2, "Mouse-down must use its captured event position")
+dragControl:OnKeyUp("LEFTBUTTON", cursorX, cursorY)
+assert(dragControl.list[1].stat == "FullDPS" and dragControl.dropped,
+	"Batched mouse input must reorder using captured press and release positions")
 dragControl.searchTerm = "ehp"
 dragControl:UpdateSearch()
 dragControl:OnKeyDown("LEFTBUTTON")

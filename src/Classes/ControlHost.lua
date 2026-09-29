@@ -46,7 +46,11 @@ function ControlHostClass:ProcessControlsInput(inputEvents, viewPort)
 	for id, event in ipairs(inputEvents) do
 		if event.type == "KeyDown" then
 			if self.selControl then
-				self:SelectControl(self.selControl:OnKeyDown(event.key, event.doubleClick))
+				if self.selControl.reorderFunc then
+					self:SelectControl(self.selControl:OnKeyDown(event.key, event.doubleClick, event.x, event.y))
+				else
+					self:SelectControl(self.selControl:OnKeyDown(event.key, event.doubleClick))
+				end
 				inputEvents[id] = nil
 			end
 			if not self.selControl and event.key:match("BUTTON") then
@@ -54,7 +58,11 @@ function ControlHostClass:ProcessControlsInput(inputEvents, viewPort)
 				if isMouseInRegion(viewPort) then
 					local mOverControl = self:GetMouseOverControl()
 					if mOverControl and mOverControl.OnKeyDown then
-						self:SelectControl(mOverControl:OnKeyDown(event.key, event.doubleClick))
+						if mOverControl.reorderFunc then
+							self:SelectControl(mOverControl:OnKeyDown(event.key, event.doubleClick, event.x, event.y))
+						else
+							self:SelectControl(mOverControl:OnKeyDown(event.key, event.doubleClick))
+						end
 						inputEvents[id] = nil
 					end
 				end
@@ -64,7 +72,11 @@ function ControlHostClass:ProcessControlsInput(inputEvents, viewPort)
 
 			if selControl then
 				if selControl.OnKeyUp then
-					self:SelectControl(selControl:OnKeyUp(event.key))
+					if selControl.reorderFunc then
+						self:SelectControl(selControl:OnKeyUp(event.key, event.x, event.y))
+					else
+						self:SelectControl(selControl:OnKeyUp(event.key))
+					end
 				end
 				
 				inputEvents[id] = nil

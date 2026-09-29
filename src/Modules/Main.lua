@@ -492,11 +492,15 @@ function main:OnFrame()
 end
 
 function main:OnKeyDown(key, doubleClick)
-	t_insert(self.inputEvents, { type = "KeyDown", key = key, doubleClick = doubleClick })
+	local x, y
+	if key:match("BUTTON") then x, y = GetCursorPos() end
+	t_insert(self.inputEvents, { type = "KeyDown", key = key, doubleClick = doubleClick, x = x, y = y })
 end
 
 function main:OnKeyUp(key)
-	t_insert(self.inputEvents, { type = "KeyUp", key = key })
+	local x, y
+	if key:match("BUTTON") then x, y = GetCursorPos() end
+	t_insert(self.inputEvents, { type = "KeyUp", key = key, x = x, y = y })
 end
 
 function main:IsComparisonRevealHeld()

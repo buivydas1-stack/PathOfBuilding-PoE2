@@ -206,10 +206,10 @@ function DropDownClass:IsMouseOver()
 end
 
 -- Return a visible row only when the pointer is inside the list, not its scrollbar.
-function DropDownClass:GetReorderRow()
+function DropDownClass:GetReorderRow(cursorX, cursorY)
 	if not self.dropped or self:IsSearchActive() or self.controls.scrollBar:IsMouseOver() then return nil end
 	local x, y = self:GetPos()
-	local cursorX, cursorY = GetCursorPos()
+	if not cursorX or not cursorY then cursorX, cursorY = GetCursorPos() end
 	local dropY = self.dropUp and y - self.dropHeight - 4 or y + self.height
 	local right = x + self.droppedWidth - (self.controls.scrollBar.enabled and 20 or 2)
 	if cursorX < x + 2 or cursorX >= right or cursorY < dropY + 2 or cursorY >= dropY + 2 + self.dropHeight then return nil end
@@ -448,7 +448,7 @@ function DropDownClass:OnChar(key)
 	return self:OnSearchChar(key)
 end
 
-function DropDownClass:OnKeyDown(key)
+function DropDownClass:OnKeyDown(key, doubleClick, eventX, eventY)
 	if not self:IsShown() or not self:IsEnabled() then
 		return
 	end
@@ -474,9 +474,10 @@ function DropDownClass:OnKeyDown(key)
 			self.dropped = true
 			self:ScrollSelIntoView()
 		elseif key == "LEFTBUTTON" and self.reorderFunc and not self:IsSearchActive() then
-			self.reorderStartIndex = self:GetReorderRow()
+			self.reorderStartIndex = self:GetReorderRow(eventX, eventY)
 			if self.reorderStartIndex then
-				self.reorderStartX, self.reorderStartY = GetCursorPos()
+				self.reorderStartX, self.reorderStartY = eventX, eventY
+				if not self.reorderStartX or not self.reorderStartY then self.reorderStartX, self.reorderStartY = GetCursorPos() end
 				self.reorderDragging = false
 			end
 		end
@@ -486,17 +487,18 @@ function DropDownClass:OnKeyDown(key)
 	return self.dropped and self
 end
 
-function DropDownClass:OnKeyUp(key)
+function DropDownClass:OnKeyUp(key, eventX, eventY)
 	if not self:IsShown() or not self:IsEnabled() then
 		return
 	end
 	if key == "LEFTBUTTON" and self.reorderStartIndex then
-		local cursorX, cursorY = GetCursorPos()
+		local cursorX, cursorY = eventX, eventY
+		if not cursorX or not cursorY then cursorX, cursorY = GetCursorPos() end
 		local source = self.reorderStartIndex
 		local dragged = self.reorderDragging or (cursorX - self.reorderStartX)^2 + (cursorY - self.reorderStartY)^2 > 100
 		self.reorderStartIndex, self.reorderDragging, self.reorderScrollTime = nil, nil, nil
 		if dragged then
-			local target = self:GetReorderRow()
+			local target = self:GetReorderRow(cursorX, cursorY)
 			if target then self:ReorderRow(source, target) end
 			return self
 		end
