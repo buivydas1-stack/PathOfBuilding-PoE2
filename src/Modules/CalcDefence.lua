@@ -1708,6 +1708,9 @@ function calcs.defence(env, actor)
 		output[resource.."Degen"] = degenRate
 		local recoveryRate = modDB:Sum("BASE", nil, resource.."Recovery") * recoveryRateMod
 		output[resource.."Recovery"] = recoveryRate
+		if resource == "Mana" then
+			output.ManaFlaskRecoveryPerSecond = modDB:Sum("BASE", nil, "ManaRecoveryFromFlasks") * recoveryRateMod
+		end
 		local overflowRecovery = modDB:Sum("BASE", nil, "Overflow"..resource.."Recovery")
 		output[resource.."RegenRecovery"] = (modDB:Flag(nil, "UnaffectedBy"..resource.."Regen") and 0 or regenRate) - degenRate + recoveryRate + overflowRecovery
 		if resource == "Life" and modDB:Flag(nil, "ZealotsOath") and output[resource.."RegenRecovery"] > 0 then

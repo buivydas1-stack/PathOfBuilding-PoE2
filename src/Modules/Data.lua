@@ -147,7 +147,7 @@ data.powerStatList = {
 	{ stat="EnergyShieldRegen", label="Energy Shield regen" },
 	{ stat="EnergyShieldLeechRate", label="Energy Shield leech" },
 	{ stat="Mana", label="Mana" },
-	{ stat="ManaRegen", label="Mana regen" },
+	{ stat="ManaRegenRecovery", label="Mana recovery" },
 	{ stat="ManaLeechRate", label="Mana leech" },
 	{ stat="Ward", label="Runic Ward" },
 	{ stat="Spirit", label="Spirit" },

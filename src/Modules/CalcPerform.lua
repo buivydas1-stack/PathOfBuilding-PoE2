@@ -1557,7 +1557,7 @@ function calcs.perform(env, skipEHP)
 		local out = {}
 		local lType = type:lower()
 
-		if not item.flaskData[lType.."EffectNotRemoved"] and not modDB:Flag(nil, type.."FlaskEffectNotRemoved") then
+		if not item.flaskData[lType.."EffectNotRemoved"] and not modDB:Flag(nil, type.."FlaskEffectNotRemoved") and item.title ~= "Lavianga's Spirits" then
 			return out
 		end
 
@@ -1581,6 +1581,9 @@ function calcs.perform(env, skipEHP)
 
 		if not (modDB:Flag(nil, type.."FlaskDoesNotApply")) then
 			t_insert(out, modLib.createMod(type.."Recovery", "BASE", flaskTotal / flaskDur, name))
+			if type == "Mana" then
+				t_insert(out, modLib.createMod("ManaRecoveryFromFlasks", "BASE", flaskTotal / flaskDur, name))
+			end
 		end
 
 		if (modDB:Flag(nil, type.."FlaskAppliesToEnergyShield")) then
@@ -1658,16 +1661,18 @@ function calcs.perform(env, skipEHP)
 			end
 		end
 
-		for item in pairs(flasks) do
+		for item, flaskMode in pairs(flasks) do
 			flaskBuffsPerBase[item.baseName] = flaskBuffsPerBase[item.baseName] or {}
 			flaskBuffsPerBaseNonPlayer[item.baseName] = flaskBuffsPerBaseNonPlayer[item.baseName] or {}
-			flaskConditions["UsingFlask"] = true
-			flaskConditions["Using"..item.baseName:gsub("%s+", "")] = true
-			if item.base.flask.life and not modDB:Flag(nil, "CannotRecoverLifeOutsideLeech") then
-				flaskConditions["UsingLifeFlask"] = true
-			end
-			if item.base.flask.mana then
-				flaskConditions["UsingManaFlask"] = true
+			if flaskMode ~= "recoveryOnly" then
+				flaskConditions["UsingFlask"] = true
+				flaskConditions["Using"..item.baseName:gsub("%s+", "")] = true
+				if item.base.flask.life and not modDB:Flag(nil, "CannotRecoverLifeOutsideLeech") then
+					flaskConditions["UsingLifeFlask"] = true
+				end
+				if item.base.flask.mana then
+					flaskConditions["UsingManaFlask"] = true
+				end
 			end
 
 			if onlyRecovery then
@@ -1677,10 +1682,10 @@ function calcs.perform(env, skipEHP)
 				if item.base.flask.mana then
 					calcFlaskMods(item, "ManaFlask", calcFlaskRecovery("Mana", item), {})
 				end
-				if checkNonRecoveryFlasksForMinions then
+				if checkNonRecoveryFlasksForMinions and flaskMode ~= "recoveryOnly" then
 					calcFlaskMods(item, item.baseName, item.buffModList, item.modList, true)
 				end
-			else
+			elseif flaskMode ~= "recoveryOnly" then
 				calcFlaskMods(item, item.baseName, item.buffModList, item.modList)
 			end
 		end
