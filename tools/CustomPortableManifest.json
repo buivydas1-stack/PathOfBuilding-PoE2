@@ -6,6 +6,7 @@
   "files": [
     "Classes/PowerReportListControl.lua",
     "Classes/TreeTab.lua",
+    "Classes/DropDownControl.lua",
     "Classes/PassiveTreeView.lua",
     "Classes/ConfigTab.lua",
     "Classes/CalcsTab.lua",

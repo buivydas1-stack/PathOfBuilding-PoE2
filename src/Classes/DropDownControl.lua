@@ -7,6 +7,8 @@ local ipairs = ipairs
 local m_min = math.min
 local m_max = math.max
 local m_floor = math.floor
+local t_insert = table.insert
+local t_remove = table.remove
 
 local DropDownClass = newClass("DropDownControl", "Control", "ControlHost", "TooltipHost", "SearchHost", function(self, anchor, rect, list, selFunc, tooltipText)
 	self.Control(anchor, rect)
@@ -203,6 +205,30 @@ function DropDownClass:IsMouseOver()
 	return mOver, mOverComp
 end
 
+-- Return a visible row only when the pointer is inside the list, not its scrollbar.
+function DropDownClass:GetReorderRow()
+	if not self.dropped or self:IsSearchActive() or self.controls.scrollBar:IsMouseOver() then return nil end
+	local x, y = self:GetPos()
+	local cursorX, cursorY = GetCursorPos()
+	local dropY = self.dropUp and y - self.dropHeight - 4 or y + self.height
+	local right = x + self.droppedWidth - (self.controls.scrollBar.enabled and 20 or 2)
+	if cursorX < x + 2 or cursorX >= right or cursorY < dropY + 2 or cursorY >= dropY + 2 + self.dropHeight then return nil end
+	local index = m_floor((cursorY - dropY - 2 + self.controls.scrollBar.offset) / (self.height - 4)) + 1
+	return index >= 1 and index <= #self.list and index or nil
+end
+
+function DropDownClass:ReorderRow(source, target)
+	if not self.reorderFunc or self:IsSearchActive() or not self.list[source] or not self.list[target] or source == target then return false end
+	local selected = self.list[self.selIndex]
+	local moved = t_remove(self.list, source)
+	t_insert(self.list, target, moved)
+	for index, value in ipairs(self.list) do
+		if value == selected then self.selIndex = index; break end
+	end
+	self.reorderFunc(source, target, moved)
+	return true
+end
+
 function DropDownClass:Draw(viewPort, noTooltip)
 	local x, y = self:GetPos()
 	local width, height = self:GetSize()
@@ -243,6 +269,24 @@ function DropDownClass:Draw(viewPort, noTooltip)
 	local dropExtra = self.dropHeight + 4
 	scrollBar:SetContentDimension(lineHeight * self:GetDropCount(), self.dropHeight)
 	local dropY = self.dropUp and y - dropExtra or y + height
+	if self.reorderStartIndex then
+		local cursorX, cursorY = GetCursorPos()
+		if not self.reorderDragging and (cursorX - self.reorderStartX)^2 + (cursorY - self.reorderStartY)^2 > 100 then
+			self.reorderDragging = true
+		end
+		if self.reorderDragging and scrollBar.enabled and cursorX >= x and cursorX < x + self.droppedWidth then
+			local now = GetTime()
+			if now >= (self.reorderScrollTime or 0) then
+				if cursorY >= dropY + 2 and cursorY < dropY + 14 then
+					scrollBar:SetOffset(scrollBar.offset - lineHeight)
+					self.reorderScrollTime = now + 100
+				elseif cursorY >= dropY + self.dropHeight - 10 and cursorY < dropY + self.dropHeight + 2 then
+					scrollBar:SetOffset(scrollBar.offset + lineHeight)
+					self.reorderScrollTime = now + 100
+				end
+			end
+		end
+	end
 	if not enabled then
 		SetDrawColor(0.33, 0.33, 0.33)
 	elseif mOver or self.dropped then
@@ -357,7 +401,11 @@ function DropDownClass:Draw(viewPort, noTooltip)
 				local y = (dropIndex - 1) * lineHeight - scrollBar.offset
 				-- highlight background if hovered
 				if index == self.hoverSel then
-					SetDrawColor(0.33, 0.33, 0.33)
+					if self.reorderDragging and self.reorderFunc then
+						SetDrawColor(0.18, 0.42, 0.18)
+					else
+						SetDrawColor(0.33, 0.33, 0.33)
+					end
 					DrawImage(nil, 0, y, width - 4, lineHeight)
 				end
 				-- highlight font color if hovered or selected
@@ -425,6 +473,12 @@ function DropDownClass:OnKeyDown(key)
 		if not self.dropped then
 			self.dropped = true
 			self:ScrollSelIntoView()
+		elseif key == "LEFTBUTTON" and self.reorderFunc and not self:IsSearchActive() then
+			self.reorderStartIndex = self:GetReorderRow()
+			if self.reorderStartIndex then
+				self.reorderStartX, self.reorderStartY = GetCursorPos()
+				self.reorderDragging = false
+			end
 		end
 	elseif key == "ESCAPE" then
 		self.dropped = false
@@ -435,6 +489,17 @@ end
 function DropDownClass:OnKeyUp(key)
 	if not self:IsShown() or not self:IsEnabled() then
 		return
+	end
+	if key == "LEFTBUTTON" and self.reorderStartIndex then
+		local cursorX, cursorY = GetCursorPos()
+		local source = self.reorderStartIndex
+		local dragged = self.reorderDragging or (cursorX - self.reorderStartX)^2 + (cursorY - self.reorderStartY)^2 > 100
+		self.reorderStartIndex, self.reorderDragging, self.reorderScrollTime = nil, nil, nil
+		if dragged then
+			local target = self:GetReorderRow()
+			if target then self:ReorderRow(source, target) end
+			return self
+		end
 	end
 	if self.selControl then
 		local newSel = self.selControl:OnKeyUp(key)

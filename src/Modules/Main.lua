@@ -95,6 +95,7 @@ function main:Init()
 	self.buildSortMode = "NAME"
 	self.connectionProtocol = 0
 	self.nodePowerTheme = "RED/BLUE"
+	self.powerStatOrder = { }
 	self.comparisonRevealKey = "ALT"
 	self.colorPositive = defaultColorCodes.POSITIVE
 	self.colorNegative = defaultColorCodes.NEGATIVE
@@ -573,6 +574,16 @@ function main:LoadSettings(ignoreBuild)
 						}
 					end
 				end
+			elseif node.elem == "PowerStatOrder" then
+				self.powerStatOrder = { }
+				local seen = { }
+				for _, child in ipairs(node) do
+					local id = type(child) == "table" and child.elem == "Stat" and child.attrib and child.attrib.id
+					if type(id) == "string" and not seen[id] then
+						t_insert(self.powerStatOrder, id)
+						seen[id] = true
+					end
+				end
 			elseif node.elem == "Misc" then
 				if node.attrib.buildSortMode then
 					self.buildSortMode = node.attrib.buildSortMode
@@ -779,6 +790,13 @@ function main:SaveSettings()
 		t_insert(sharedItemList, set)
 	end
 	t_insert(setXML, sharedItemList)
+	if self.powerStatOrder and #self.powerStatOrder > 0 then
+		local powerStatOrder = { elem = "PowerStatOrder" }
+		for _, id in ipairs(self.powerStatOrder) do
+			t_insert(powerStatOrder, { elem = "Stat", attrib = { id = id } })
+		end
+		t_insert(setXML, powerStatOrder)
+	end
 	t_insert(setXML, { elem = "Misc", attrib = {
 		buildSortMode = self.buildSortMode,
 		connectionProtocol = tostring(launch.connectionProtocol),

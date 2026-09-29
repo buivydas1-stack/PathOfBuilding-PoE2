@@ -20,6 +20,10 @@ local s_gsub = string.gsub
 local s_byte = string.byte
 local dkjson = require "dkjson"
 
+local function powerStatId(stat)
+	return stat.stat or (stat.combinedOffDef and "OffenceDefence")
+end
+
 -- Helper function to find toast index by content pattern
 -- TODO: remove this when when we can control toast notifications better
 local function findToastIndex(pattern)
@@ -276,6 +280,10 @@ local TreeTabClass = newClass("TreeTab", "ControlHost", function(self, build)
 	for _, stat in ipairs(self.normalPowerStatList) do t_insert(self.notablePowerStatList, stat) end
 	t_insert(self.notablePowerStatList, 3, { stat = "FullDPSAndEHP", label = "Full DPS / EHP", combinedReport = true })
 	self.powerStatList = self.normalPowerStatList
+	self:ApplyPowerStatOrder()
+	self.controls.treeHeatMapStatSelect.reorderFunc = function(_, target)
+		self:ReorderPowerStat(target)
+	end
 
 	-- Show/Hide Power Report Button
 	self.controls.powerReport = new("ButtonControl", { "LEFT", self.controls.treeHeatMapStatSelect, "RIGHT" }, { 8, 0, 150, 20 },
@@ -1063,6 +1071,56 @@ function TreeTabClass:OpenMasteryPopup(node, viewPort)
 		controls.effect = new("PassiveMasteryControl", {"TOPLEFT",nil,"TOPLEFT"}, {6, 25, 0, passiveMasteryControlHeight}, effects, self, node, controls.save)
 		main:OpenPopup(controls.effect.width + 12, controls.effect.height + 60, node.name, controls)
 	end
+end
+
+function TreeTabClass:ApplyPowerStatOrder()
+	local byId, ordered = { }, { }
+	for _, stat in ipairs(self.notablePowerStatList) do byId[powerStatId(stat)] = stat end
+	for _, id in ipairs(main.powerStatOrder or { }) do
+		if byId[id] then
+			t_insert(ordered, byId[id])
+			byId[id] = nil
+		end
+	end
+	for _, stat in ipairs(self.notablePowerStatList) do
+		local id = powerStatId(stat)
+		if byId[id] then
+			t_insert(ordered, stat)
+			byId[id] = nil
+		end
+	end
+	wipeTable(self.notablePowerStatList)
+	wipeTable(self.normalPowerStatList)
+	for _, stat in ipairs(ordered) do
+		t_insert(self.notablePowerStatList, stat)
+		if not stat.combinedReport then t_insert(self.normalPowerStatList, stat) end
+	end
+end
+
+function TreeTabClass:ReorderPowerStat(target)
+	local visible = self.controls.treeHeatMapStatSelect.list
+	local moved = visible[target]
+	if not moved then return end
+	local order = { }
+	for _, stat in ipairs(self.notablePowerStatList) do
+		if powerStatId(stat) ~= powerStatId(moved) then t_insert(order, stat) end
+	end
+	local neighbor = visible[target + 1]
+	local insertAt = #order + 1
+	if neighbor then
+		for index, stat in ipairs(order) do
+			if powerStatId(stat) == powerStatId(neighbor) then insertAt = index; break end
+		end
+	elseif visible[target - 1] then
+		for index, stat in ipairs(order) do
+			if powerStatId(stat) == powerStatId(visible[target - 1]) then insertAt = index + 1; break end
+		end
+	end
+	t_insert(order, insertAt, moved)
+	main.powerStatOrder = { }
+	for _, stat in ipairs(order) do t_insert(main.powerStatOrder, powerStatId(stat)) end
+	self:ApplyPowerStatOrder()
+	main:SaveSettings()
 end
 
 function TreeTabClass:SetPowerCalc(powerStat, keepHeatMap)

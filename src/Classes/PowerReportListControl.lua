@@ -118,7 +118,8 @@ function PowerReportListClass:ReList()
 	end
 
 	for _, item in ipairs(self.originalList) do
-		local insert = self.combinedReport and (item.power ~= 0 or (item.ehpPower or 0) ~= 0) or self.percentReport and item.power ~= 0 or item.power > 0
+		local insert = (self.combinedReport and (item.power ~= 0 or (item.ehpPower or 0) ~= 0))
+			or (self.singleNotables and item.power ~= 0) or item.power > 0
 		if not self.showClusters and (item.isCluster or item.pathDist == "Cluster") then
 			insert = false
 		end
