@@ -5,6 +5,11 @@ param(
 )
 $ErrorActionPreference = 'Stop'
 $repoPath = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
+$commit = & git -c "safe.directory=$($repoPath.Replace('\','/'))" -C $repoPath rev-parse HEAD
+if ($LASTEXITCODE -ne 0) { throw 'Cannot resolve source commit.' }
+$dirty = & git -c "safe.directory=$($repoPath.Replace('\','/'))" -C $repoPath status --porcelain
+if ($LASTEXITCODE -ne 0) { throw 'Cannot check source status.' }
+if ($dirty) { throw 'Commit the source changes before packaging; deployment requires a clean committed package.' }
 $manifest = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'CustomPortableManifest.json') -Raw | ConvertFrom-Json
 $expectedHash = $manifest.upstreamPortableSHA256
 $patches = @($manifest.files)
@@ -32,10 +37,6 @@ if (-not $Lightweight) {
     if ((Get-FileHash -LiteralPath (Join-Path $portablePath 'Path of Building-PoE2.exe')).Hash -ne $manifest.executableSHA256) { throw 'Executable does not match manifest.' }
     Set-Content -LiteralPath (Join-Path $portablePath 'custom.cfg') -Value 'PoB2 custom release; preserve this marker to prevent upstream overwrite.' -Encoding ascii
 }
-$commit = & git -c "safe.directory=$($repoPath.Replace('\','/'))" -C $repoPath rev-parse HEAD
-if ($LASTEXITCODE -ne 0) { throw 'Cannot resolve source commit.' }
-$dirty = & git -c "safe.directory=$($repoPath.Replace('\','/'))" -C $repoPath status --porcelain
-if ($LASTEXITCODE -ne 0) { throw 'Cannot check source status.' }
 $metadata = [ordered]@{
     repository = 'buivydas1-stack/PathOfBuilding-PoE2'
     branch = 'codex/pob2-customizations'

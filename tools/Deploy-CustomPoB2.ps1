@@ -3,9 +3,11 @@
 Back up and deploy a custom PoB2 Lua payload over the same portable upstream release.
 .DESCRIPTION
 Without -Apply, validates and returns a read-only plan, even while PoB is running.
-With -Apply, stops only the exact target PoB executable WITHOUT SAVING, per the
-user's deployment preference. Saved builds/settings are preserved without backup; unsaved edits are lost.
-Use -Restart to launch the same executable after a verified deployment.
+With -Apply and changed Lua files, stops the exact target executable WITHOUT SAVING, per the
+user's deployment preference. Saved builds and Settings.xml are excluded from the
+payload and are not read, scanned, backed up or restored; unsaved edits are lost.
+Use -Restart to show the same executable after a verified Lua deployment.
+Metadata/documentation-only updates leave the running application alone.
 No network access, Git writes, upstream upgrade, user-data replacement or deletion.
 .EXAMPLE
 ./Deploy-PoB2.ps1 -PackageRoot 'D:/staging/portable' -InstallRoot 'C:/Apps/PoB2'
@@ -113,8 +115,10 @@ $plan = @(foreach ($relative in $payload) {
     [pscustomobject]@{ Path=$relative; Before=$oldHash; After=$newHash; Changed=($newHash -ne $oldHash) }
 })
 $changed = @($plan | Where-Object Changed)
+$applicationChanged = @($changed | Where-Object { $_.Path -like '*.lua' })
+$metadataOnly = $changed.Count -eq 1 -and $changed[0].Path -eq 'custom-build.json'
 if (-not $Apply -or -not $changed.Count) {
-    [pscustomobject]@{ Status=$(if ($changed.Count) {'Planned'} else {'AlreadyInstalled'}); Commit=$metadata.commit; ChangedFiles=@($changed | ForEach-Object Path); InstallRoot=$install }
+	[pscustomobject]@{ Status=$(if ($changed.Count) {'Planned'} else {'AlreadyInstalled'}); Commit=$metadata.commit; InstalledCommit=$installedMetadata.commit; ChangedFiles=@($changed | ForEach-Object Path); ApplicationChangedFiles=@($applicationChanged | ForEach-Object Path); MetadataOnly=$metadataOnly; InstallRoot=$install }
     return
 }
 if (-not $BackupRoot) { throw '-BackupRoot is required with -Apply.' }
@@ -122,29 +126,13 @@ $backup = Get-CheckedPath $BackupRoot
 if ((Test-Overlap $backup $package) -or (Test-Overlap $backup $install) -or (Test-Path -LiteralPath $backup)) {
     throw 'Choose a new backup directory outside the package and installation.'
 }
-foreach ($process in @(Get-TargetProcesses)) {
-    Stop-Process -Id $process.Id -Force -ErrorAction Stop
-    if (-not $process.WaitForExit(10000)) { throw 'Target PoB did not exit; no files copied.' }
-}
-
-# Hash portable user data for preservation checks; do not back it up or replace it.
-$userData = @('Settings.xml', 'custom.cfg')
-$buildDir = Get-ChildPath $install 'Builds'
-if (Test-Path -LiteralPath $buildDir) {
-    $directories = [Collections.Generic.Queue[string]]::new()
-    $directories.Enqueue($buildDir)
-    while ($directories.Count) {
-        foreach ($entry in Get-ChildItem -LiteralPath $directories.Dequeue() -Force) {
-            if ($entry.Attributes -band [IO.FileAttributes]::ReparsePoint) { throw "Linked build data requires explicit handling: $($entry.FullName)" }
-            if ($entry.PSIsContainer) { $directories.Enqueue($entry.FullName) }
-            else { $userData += $entry.FullName.Substring($install.Length + 1) }
-        }
+if ($applicationChanged.Count) {
+    foreach ($process in @(Get-TargetProcesses)) {
+        Stop-Process -Id $process.Id -Force -ErrorAction Stop
+        if (-not $process.WaitForExit(10000)) { throw 'Target PoB did not exit; no files copied.' }
     }
 }
-$protected = @(foreach ($relative in $userData) {
-    $path = Get-ChildPath $install $relative
-    if (Test-Path -LiteralPath $path -PathType Leaf) { [pscustomobject]@{ Path=$relative; SHA256=(Get-Hash $path) } }
-})
+
 New-Item -ItemType Directory -Path $backup | Out-Null
 foreach ($relative in @($changed | Where-Object Before | ForEach-Object Path | Sort-Object -Unique)) {
     $destination = Get-ChildPath $backup $relative
@@ -152,11 +140,11 @@ foreach ($relative in @($changed | Where-Object Before | ForEach-Object Path | S
     Copy-Item -LiteralPath (Get-ChildPath $install $relative) -Destination $destination
     if ((Get-Hash $destination) -ne (Get-Hash (Get-ChildPath $install $relative))) { throw "Backup mismatch: $relative" }
 }
-$receipt = [ordered]@{ Status='BackedUp'; Commit=$metadata.commit; InstallRoot=$install; PackageRoot=$package; Files=$plan; Protected=$protected; UTC=[DateTime]::UtcNow.ToString('o') }
+$receipt = [ordered]@{ Status='BackedUp'; Commit=$metadata.commit; InstallRoot=$install; PackageRoot=$package; Files=$plan; UTC=[DateTime]::UtcNow.ToString('o') }
 $receiptPath = Join-Path $backup 'deployment.json'
 $receipt | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $receiptPath -Encoding utf8
 try {
-    if (@(Get-TargetProcesses).Count) { throw 'Target PoB reopened during backup; no deployment attempted.' }
+    if ($applicationChanged.Count -and @(Get-TargetProcesses).Count) { throw 'Target PoB reopened during backup; no deployment attempted.' }
     foreach ($file in $changed) {
         $destination = Get-ChildPath $install $file.Path
         $currentHash = if (Test-Path -LiteralPath $destination) { Get-Hash $destination } else { $null }
@@ -168,9 +156,6 @@ try {
     foreach ($file in $plan) {
         if ((Get-Hash (Get-ChildPath $install $file.Path)) -ne $file.After) { throw "Installed hash mismatch: $($file.Path)" }
     }
-    foreach ($file in $protected) {
-        if ((Get-Hash (Get-ChildPath $install $file.Path)) -ne $file.SHA256) { throw "User data changed: $($file.Path)" }
-    }
     $receipt.Status = 'Installed'
 } catch {
     $receipt.Status = 'Failed'
@@ -179,5 +164,5 @@ try {
 } finally {
     $receipt | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $receiptPath -Encoding utf8
 }
-if ($Restart) { Start-Process -FilePath $targetExe -WorkingDirectory $install -WindowStyle Hidden }
-[pscustomobject]@{ Status='Installed'; Commit=$metadata.commit; ChangedFiles=@($changed | ForEach-Object Path); BackupRoot=$backup; Receipt=$receiptPath }
+if ($Restart -and $applicationChanged.Count) { Start-Process -FilePath $targetExe -WorkingDirectory $install -WindowStyle Normal }
+[pscustomobject]@{ Status='Installed'; Commit=$metadata.commit; ChangedFiles=@($changed | ForEach-Object Path); ApplicationChangedFiles=@($applicationChanged | ForEach-Object Path); MetadataOnly=$metadataOnly; BackupRoot=$backup; Receipt=$receiptPath }
