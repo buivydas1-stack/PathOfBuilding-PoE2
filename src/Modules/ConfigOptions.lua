@@ -1014,8 +1014,15 @@ Huge sets the radius to 11.
 			end
 		end
 		return false
-	end, tooltip = "This is automatically enabled if you have a flask active,\nbut you can use this option to force it if necessary.\nShown when Lavianga's Spirits is equipped so you can evaluate Flask-effect passives.", apply = function(val, modList, enemyModList)
+	end, tooltip = "This is automatically enabled if you have a flask active,\nbut you can use this option to force it if necessary.\nShown when Lavianga's Spirits is equipped so you can evaluate Flask-effect passives.", apply = function(val, modList, enemyModList, build)
 		modList:NewMod("Condition:UsingFlask", "FLAG", true, "Config", { type = "Condition", var = "Combat" })
+		for _, slot in ipairs(build.itemsTab.orderedSlots) do
+			local item = build.itemsTab.items[slot.selItemId]
+			if item and item.type == "Flask" and item.title == "Lavianga's Spirits" then
+				modList:NewMod("Condition:UsingManaFlask", "FLAG", true, "Config", { type = "Condition", var = "Combat" })
+				break
+			end
+		end
 	end },
 	{ var = "conditionNoLifeFlaskUsesLeft", type = "check", label = "Are you out of Life Flask uses?", ifCond = "NoLifeFlaskUsesLeft", tooltip = "This is automatically enabled if you have a flask active,\nbut you can use this option to force it if necessary.", apply = function(val, modList, enemyModList)
 		modList:NewMod("Condition:NoLifeFlaskUsesLeft", "FLAG", true, "Config", { type = "Condition", var = "Combat" })

@@ -25,6 +25,24 @@ near(baseline.ManaFlaskRecoveryPerSecond, flask.flaskData.manaBase / 2, "Flask r
 near(baseline.ManaRecovery, baseline.ManaFlaskRecoveryPerSecond, "Mana recovery source")
 assert(build.calcsTab.mainEnv.flasks[flask] == "recoveryOnly", "Constant recovery must not imply manual flask activation")
 assert(not build.calcsTab.mainEnv.modDB.conditions.UsingFlask, "Constant recovery must not enable flask-use conditions")
+assert(not build.calcsTab.mainEnv.modDB.conditions.UsingManaFlask, "Constant recovery must not force mana flask conditions")
+
+build.configTab.configSets[build.configTab.activeConfigSetId].input.conditionUsingFlask = true
+recalc()
+assert(build.calcsTab.mainEnv.modDB:Flag(nil, "Condition:UsingManaFlask"), "Manually active Lavianga should enable mana flask effect conditions")
+local wellspring
+for _, node in pairs(build.spec.nodes) do
+	for _, line in ipairs(node.sd or {}) do
+		if line == "8% increased Attack and Cast Speed during Effect of any Mana Flask" then wellspring = node; break end
+	end
+	if wellspring then break end
+end
+assert(wellspring, "Need the current Wellspring Disgust passive")
+local flaskCalc, withoutWellspring = build.calcsTab:GetMiscCalculator()
+local withWellspring = flaskCalc({ addNodes = { [wellspring] = true } }, false, { noEnvReuse = true })
+assert(withWellspring.Speed > withoutWellspring.Speed, "Wellspring Disgust should increase speed during Lavianga's effect")
+build.configTab.configSets[build.configTab.activeConfigSetId].input.conditionUsingFlask = false
+recalc()
 
 for _, variant in ipairs({ {20,70,67}, {20,80,44}, {23,70,68}, {13,72,59}, {23,72,64} }) do
 	local item = new("Item", string.format("Rarity: UNIQUE\nLavianga's Spirits\nGargantuan Mana Flask\nQuality: %d\nImplicits: 0\nThis Flask cannot be Used but applies its Effect constantly\n%d%% reduced Amount Recovered\nCorrupted", variant[1], variant[2]))
