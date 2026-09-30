@@ -77,6 +77,12 @@ local sortGemTypeList = {
 	{ label = "Effective Hit Pool", type = "TotalEHP" },
 }
 
+local voltaicBarrierDpsList = {
+	{ label = "Wall and beams", value = "Both" },
+	{ label = "Wall only", value = "Wall" },
+	{ label = "Beams only", value = "Beam" },
+}
+
 local SkillsTabClass = newClass("SkillsTab", "UndoHandler", "ControlHost", "Control", function(self, build)
 	self.UndoHandler()
 	self.ControlHost()
@@ -215,6 +221,25 @@ local SkillsTabClass = newClass("SkillsTab", "UndoHandler", "ControlHost", "Cont
 		self:AddUndoState()
 		self.build.buildFlag = true
 	end)
+	self.controls.voltaicBarrierDpsLabel = new("LabelControl", { "LEFT", self.controls.includeInFullDPS, "RIGHT" }, { 16, 0, 0, 16 }, "Barrier DPS:")
+	self.controls.voltaicBarrierDps = new("DropDownControl", { "LEFT", self.controls.voltaicBarrierDpsLabel, "RIGHT" }, { 4, 0, 145, 20 }, voltaicBarrierDpsList, function(index, value)
+		self.displayGroup.voltaicBarrierDps = value.value
+		self:AddUndoState()
+		self.build.buildFlag = true
+	end)
+	local function showBarrierDps()
+		if self.displayGroup and not self.displayGroup.source then
+			for _, gem in ipairs(self.displayGroup.gemList) do
+				if gem.skillId == "VoltaicBarrierPlayer" then
+					return true
+				end
+			end
+		end
+		return false
+	end
+	self.controls.voltaicBarrierDpsLabel.shown = showBarrierDps
+	self.controls.voltaicBarrierDps.shown = showBarrierDps
+	self.controls.voltaicBarrierDps.tooltipText = "Select which Barrier components contribute to Full DPS.\nWall: assumes the enemy stays in the wall (4 hits per second).\nBeams: uses the selected projectile attack in the Build sidebar, with every shot passing through the wall.\nAssumes one projectile hit per attack; chains and extra targets do not multiply single-target DPS."
 	self.controls.groupCountLabel = new("LabelControl", { "LEFT", self.controls.includeInFullDPS, "RIGHT" }, { 16, 0, 0, 16 }, "Count:")
 	self.controls.groupCountLabel.shown = function()
 		return self.displayGroup.source ~= nil
@@ -305,6 +330,10 @@ function SkillsTabClass:LoadSkill(node, skillSetId)
 	socketGroup.enabled = node.attrib.active == "true" or node.attrib.enabled == "true"
 	socketGroup.includeInFullDPS = node.attrib.includeInFullDPS and node.attrib.includeInFullDPS == "true"
 	socketGroup.groupCount = tonumber(node.attrib.groupCount)
+	local barrierDps = node.attrib.voltaicBarrierDps
+	if barrierDps == "Wall" or barrierDps == "Beam" or barrierDps == "Both" then
+		socketGroup.voltaicBarrierDps = barrierDps
+	end
 	socketGroup.label = node.attrib.label
 	socketGroup.slot = node.attrib.slot
 	socketGroup.source = node.attrib.source
@@ -467,6 +496,7 @@ function SkillsTabClass:Save(xml)
 			local node = { elem = "Skill", attrib = {
 				enabled = tostring(socketGroup.enabled),
 				includeInFullDPS = tostring(socketGroup.includeInFullDPS),
+				voltaicBarrierDps = socketGroup.voltaicBarrierDps,
 				groupCount = socketGroup.groupCount ~= nil and tostring(socketGroup.groupCount),
 				label = socketGroup.label,
 				slot = socketGroup.slot,
@@ -1325,6 +1355,7 @@ function SkillsTabClass:SetDisplayGroup(socketGroup)
 		self.controls.groupSlot:SelByValue(socketGroup.slot, "slotName")
 		self.controls.groupEnabled.state = socketGroup.enabled
 		self.controls.includeInFullDPS.state = socketGroup.includeInFullDPS and socketGroup.enabled
+		self.controls.voltaicBarrierDps:SelByValue(socketGroup.voltaicBarrierDps or "Both", "value")
 		self.controls.groupCount:SetText(socketGroup.groupCount or 1)
 
 		-- Update the gem slot controls

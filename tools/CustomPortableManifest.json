@@ -11,6 +11,8 @@
     "Classes/PassiveTreeView.lua",
     "Classes/ConfigTab.lua",
     "Classes/CalcsTab.lua",
+    "Classes/SkillsTab.lua",
+    "Classes/GemSelectControl.lua",
     "Classes/CalcBreakdownControl.lua",
     "Classes/ItemsTab.lua",
     "Classes/Item.lua",

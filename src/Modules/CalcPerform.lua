@@ -37,6 +37,51 @@ local function getCachedOutputValue(env, activeSkill, ...)
 	return unpack(tempValues)
 end
 
+-- Energised projectiles trigger the Barrier's own attack on hit. Use the Build
+-- sidebar's selected attack, even when Full DPS or the Calcs tab selects the beam.
+local function calcVoltaicBarrierTrigger(env)
+	local beam = env.player.mainSkill
+	if beam.activeEffect.grantedEffect.id ~= "VoltaicBarrierTriggeredChainLightningPlayer" then
+		return
+	end
+	local sourceEnv = calcs.initEnv(env.build, "CALCULATOR", env.override)
+	local source = sourceEnv.player.mainSkill
+	local flags = source.activeEffect.statSet.skillFlags
+	local types = source.skillTypes or { }
+	local eligible = source.socketGroup and source.socketGroup.enabled and source.socketGroup.slotEnabled
+		and flags.attack and flags.projectile and not flags.disable
+		and not (flags.minion or flags.totem or flags.trap or flags.mine
+			or source.skillData.triggered or source.triggeredBy
+			or types[SkillType.Triggered] or types[SkillType.OtherThingUsesSkill]
+			or types[SkillType.ProjectileNoCollision])
+	local output = env.player.output
+	output.SkillTriggerRate = 0
+	beam.skillData.triggerRate = 0
+	if eligible then
+		calcs.perform(sourceEnv, true)
+		local sourceOutput = sourceEnv.player.output
+		local rate = sourceOutput.Speed or 0
+		local hitChance = sourceOutput.AccuracyHitChance or 100
+		output.SkillTriggerRate = rate * hitChance / 100
+		beam.skillData.triggerRate = output.SkillTriggerRate
+		beam.infoMessage = "Triggered by " .. calcs.getActiveSkillDisplayName(source)
+		if env.player.breakdown then
+			env.player.breakdown.SkillTriggerRate = {
+				s_format("%.3f ^8attacks per second (%s)", rate, calcs.getActiveSkillDisplayName(source)),
+				s_format("x %.2f%% ^8source chance to hit", hitChance),
+				s_format("= %.3f ^8beam triggers per second", output.SkillTriggerRate),
+				"Assumes every shot passes through the wall and one projectile hits the target per attack.",
+				"Chains and additional targets do not multiply single-target damage.",
+			}
+		end
+	end
+	if output.SkillTriggerRate <= 0 then
+		local beamFlags = env.mode == "CALCS" and beam.activeEffect.statSetCalcs.skillFlags or beam.activeEffect.statSet.skillFlags
+		beamFlags.disable = true
+		beam.infoMessage = "Select an enabled projectile attack in the Build sidebar to trigger beams."
+	end
+end
+
 -- Merge an instance of a buff, taking the highest value of each modifier
 local function mergeBuff(src, destTable, destKey)
 	if not destTable[destKey] then
@@ -3448,6 +3493,7 @@ function calcs.perform(env, skipEHP)
 	-- TURNING OFF CALC TRIGGERS AND MIRAGES FOR TIME BEING
 	--calcs.triggers(env, env.player)
 	--if not calcs.mirages(env) then
+		calcVoltaicBarrierTrigger(env)
 		calcs.offence(env, env.player, env.player.mainSkill)
 	--end
 

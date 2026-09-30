@@ -1442,14 +1442,20 @@ statMap = {
 
 #skill VoltaicBarrierPlayer
 #set VoltaicBarrierPlayer
-#flags attack
+#flags attack area duration
+statMap = {
+	["voltaic_barrier_damage_interval_ms"] = {
+		skill("hitTimeOverride", nil), div = 1000,
+	},
+},
 #mods
 #skillEnd
 
-#skill VoltaicBarrierTriggeredChainLightningPlayer
+#skill VoltaicBarrierTriggeredChainLightningPlayer Voltaic Barrier Beam
 #set VoltaicBarrierTriggeredChainLightningPlayer
-#flags attack area duration
+#flags attack
 #mods
+skill("triggered", true),
 #skillEnd
 
 #skill SupportVoranasSiege

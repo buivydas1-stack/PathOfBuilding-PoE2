@@ -20457,10 +20457,17 @@ skills["VoltaicBarrierPlayer"] = {
 	statSets = {
 		[1] = {
 			label = "Voltaic Barrier",
+			statMap = {
+				["voltaic_barrier_damage_interval_ms"] = {
+					skill("hitTimeOverride", nil), div = 1000,
+				},
+			},
 			incrementalEffectiveness = 0.054999999701977,
 			statDescriptionScope = "voltaic_barrier",
 			baseFlags = {
 				attack = true,
+				area = true,
+				duration = true,
 			},
 			constantStats = {
 				{ "active_skill_base_area_of_effect_radius", 60 },
@@ -20526,7 +20533,7 @@ skills["VoltaicBarrierPlayer"] = {
 	}
 }
 skills["VoltaicBarrierTriggeredChainLightningPlayer"] = {
-	name = "",
+	name = "Voltaic Barrier Beam",
 	hidden = true,
 	icon = "Art/2DArt/SkillIcons/ExpeditionCracklingBarrier.dds",
 	skillTypes = { [SkillType.InbuiltTrigger] = true, [SkillType.Triggerable] = true, [SkillType.Triggered] = true, [SkillType.Attack] = true, [SkillType.Lightning] = true, [SkillType.Chains] = true, },
@@ -20597,12 +20604,13 @@ skills["VoltaicBarrierTriggeredChainLightningPlayer"] = {
 	statSets = {
 		[1] = {
 			label = "Beam",
+			baseMods = {
+				skill("triggered", true),
+			},
 			incrementalEffectiveness = 0.054999999701977,
 			statDescriptionScope = "voltaic_barrier_triggered_chain_lightning",
 			baseFlags = {
 				attack = true,
-				area = true,
-				duration = true,
 			},
 			constantStats = {
 				{ "triggered_on_voltaic_barrier_boosted_projectile_collision", 100 },

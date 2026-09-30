@@ -473,7 +473,7 @@ function GemSelectClass:Draw(viewPort, noTooltip)
 						self.skillsTab.defaultGemLevel, self.skillsTab.defaultGemQuality, self.skillsTab.defaultCorruptionLevel, self.skillsTab.defaultCorruptionState) then
 					self.tooltip.maxWidth = 500
 					-- No fastCalcOptions here: the tooltip's stat compare shows defensive stats too, so it needs the full (unaccelerated) calc
-					local output = self:CalcOutputWithThisGem(calcFunc, gemData, self.skillsTab.sortGemsByDPSField == "FullDPS")
+					local output = self:CalcOutputWithThisGem(calcFunc, gemData, true)
 					local gemInstance = {
 							level = self.skillsTab:ProcessGemLevel(gemData),
 							quality = self.skillsTab.defaultGemQuality or 0,

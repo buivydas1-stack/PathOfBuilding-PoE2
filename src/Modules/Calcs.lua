@@ -330,7 +330,11 @@ function calcs.calcFullDPS(build, mode, override, specEnv)
 	end
 
 	for _, activeSkill in ipairs(fullEnv.player.activeSkillList) do
-		if activeSkill.socketGroup and activeSkill.socketGroup.includeInFullDPS then
+		local barrierPart = activeSkill.activeEffect.grantedEffect.id == "VoltaicBarrierPlayer" and "Wall"
+			or activeSkill.activeEffect.grantedEffect.id == "VoltaicBarrierTriggeredChainLightningPlayer" and "Beam"
+		local barrierSelection = activeSkill.socketGroup and activeSkill.socketGroup.voltaicBarrierDps or "Both"
+		if activeSkill.socketGroup and activeSkill.socketGroup.includeInFullDPS
+			and (not barrierPart or barrierSelection == "Both" or barrierSelection == barrierPart) then
 			local uuid = cacheStore and cacheSkillUUID(activeSkill, fullEnv)
 			local canCacheSkill = not (activeSkill.triggeredBy or activeSkill.skillData.triggered)
 			local cachedPasses
