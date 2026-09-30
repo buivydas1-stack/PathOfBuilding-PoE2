@@ -239,7 +239,7 @@ local SkillsTabClass = newClass("SkillsTab", "UndoHandler", "ControlHost", "Cont
 	end
 	self.controls.voltaicBarrierDpsLabel.shown = showBarrierDps
 	self.controls.voltaicBarrierDps.shown = showBarrierDps
-	self.controls.voltaicBarrierDps.tooltipText = "Select which Barrier components contribute to Full DPS.\nWall: assumes the enemy stays in the wall (4 hits per second).\nBeams: uses the selected projectile attack in the Build sidebar, with every shot passing through the wall.\nAssumes one projectile hit per attack; chains and extra targets do not multiply single-target DPS."
+	self.controls.voltaicBarrierDps.tooltipText = "Select which Barrier components contribute to Full DPS.\nWall: assumes the enemy stays in the wall (4 hits per second).\nBeams: uses the selected projectile attack, with every shot passing through the wall.\nWhen viewing Barrier, retains the last selected eligible attack; on loading, uses the sole eligible Full DPS attack or sole eligible attack.\nAssumes one projectile hit per attack; chains and extra targets do not multiply single-target DPS."
 	self.controls.groupCountLabel = new("LabelControl", { "LEFT", self.controls.includeInFullDPS, "RIGHT" }, { 16, 0, 0, 16 }, "Count:")
 	self.controls.groupCountLabel.shown = function()
 		return self.displayGroup.source ~= nil

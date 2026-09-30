@@ -2,6 +2,8 @@
 
 Based on the official Path of Building 2 **v0.23.1** release.
 
+- **Voltaic Barrier:** wall damage uses its 250 ms hit interval; beam damage uses the selected eligible projectile attack's rate and chance to hit. Selecting Barrier or its beam for viewing retains the last projectile source. On loading a Barrier selection, the sole eligible selected attack in a Full DPS group (or sole eligible selected attack overall) supplies the source; ambiguous sources require selecting the intended projectile first. The Skills selector includes wall damage, beam damage, or both in Full DPS. Beam and projectile supports remain separate. Base Culling Strike uses the configured enemy rarity; the recent-cull bonus is not assumed. Support-gem hover comparisons include Full DPS. Verified in `tests/custom_voltaic_barrier.lua`.
+
 - **Runic Ward:** backports upstream [#2146](https://github.com/PathOfBuildingCommunity/PathOfBuilding-PoE2/pull/2146) to the stable-based custom branch. Item import recognizes the Runic Ward property and local modifiers; the calculator includes its pool, recovery, on-block recovery, bypass, related conditions, and skill costs. The copied Sorrow Road boots and focused defence/cost checks pass in `tests/custom_runic_ward.lua`. This is a selective fix, not a full upstream update.
 
 - Basic jewels now recognize **increased Effect of Prefixes** and **increased Effect of Suffixes**. Imported jewel modifier values already include these local effects and are not scaled again. Jewels created in PoB's item editor apply the effect to the corresponding affix lines, adding it to matching quality scaling before in-game rounding. The local effect does not become a global character modifier. Verified with `tests/custom_jewel_affix_effect.lua`.

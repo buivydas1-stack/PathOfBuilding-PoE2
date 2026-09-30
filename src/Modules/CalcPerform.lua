@@ -37,27 +37,66 @@ local function getCachedOutputValue(env, activeSkill, ...)
 	return unpack(tempValues)
 end
 
--- Energised projectiles trigger the Barrier's own attack on hit. Use the Build
--- sidebar's selected attack, even when Full DPS or the Calcs tab selects the beam.
-local function calcVoltaicBarrierTrigger(env)
-	local beam = env.player.mainSkill
-	if beam.activeEffect.grantedEffect.id ~= "VoltaicBarrierTriggeredChainLightningPlayer" then
-		return
-	end
-	local sourceEnv = calcs.initEnv(env.build, "CALCULATOR", env.override)
-	local source = sourceEnv.player.mainSkill
+local function isVoltaicBarrierSource(source)
 	local flags = source.activeEffect.statSet.skillFlags
 	local types = source.skillTypes or { }
-	local eligible = source.socketGroup and source.socketGroup.enabled and source.socketGroup.slotEnabled
+	return source.socketGroup and source.socketGroup.enabled and source.socketGroup.slotEnabled
 		and flags.attack and flags.projectile and not flags.disable
 		and not (flags.minion or flags.totem or flags.trap or flags.mine
 			or source.skillData.triggered or source.triggeredBy
 			or types[SkillType.Triggered] or types[SkillType.OtherThingUsesSkill]
 			or types[SkillType.ProjectileNoCollision])
+end
+
+-- Viewing the Barrier must not replace its projectile source with the beam itself.
+-- Remember the last real main attack, never a temporary calculator/hover selection.
+local function calcVoltaicBarrierTrigger(env)
+	local beam = env.player.mainSkill
+	local selectedGroup = env.build.skillsTab.socketGroupList[env.build.mainSocketGroup]
+	local selectedSkill = selectedGroup and selectedGroup.displaySkillList and selectedGroup.displaySkillList[selectedGroup.mainActiveSkill or 1]
+	if env.mode == "MAIN" and beam.socketGroup == selectedGroup and selectedSkill
+		and beam.activeEffect.srcInstance == selectedSkill.activeEffect.srcInstance and isVoltaicBarrierSource(beam) then
+		env.build.voltaicBarrierTriggerSource = {
+			socketGroup = beam.socketGroup,
+			skillId = beam.activeEffect.grantedEffect.id,
+		}
+	end
+	if beam.activeEffect.grantedEffect.id ~= "VoltaicBarrierTriggeredChainLightningPlayer" then
+		return
+	end
+	local sourceEnv = calcs.initEnv(env.build, "CALCULATOR", env.override)
+	local source = sourceEnv.player.mainSkill
+	local selectedId = source.activeEffect.grantedEffect.id
+	if selectedId == "VoltaicBarrierPlayer" or selectedId == "VoltaicBarrierTriggeredChainLightningPlayer" then
+		local remembered = env.build.voltaicBarrierTriggerSource
+		local hasRememberedGroup = remembered and isValueInArray(env.build.skillsTab.socketGroupList, remembered.socketGroup)
+		local candidates, fullDpsCandidates = { }, { }
+		source = nil
+		for _, skill in ipairs(sourceEnv.player.activeSkillList) do
+			if isVoltaicBarrierSource(skill) then
+				local group = skill.socketGroup
+				local groupSelection = group.displaySkillList and group.displaySkillList[group.mainActiveSkill or 1]
+				if groupSelection and skill.activeEffect.srcInstance == groupSelection.activeEffect.srcInstance then
+					t_insert(candidates, skill)
+					if group.includeInFullDPS then
+						t_insert(fullDpsCandidates, skill)
+					end
+				end
+				if remembered and skill.socketGroup == remembered.socketGroup and skill.activeEffect.grantedEffect.id == remembered.skillId then
+					source = skill
+				end
+			end
+		end
+		-- Cold-loaded Barrier selection: only infer a source when it is unambiguous.
+		if not hasRememberedGroup then
+			source = (#fullDpsCandidates == 1 and fullDpsCandidates[1]) or (#candidates == 1 and candidates[1])
+		end
+	end
 	local output = env.player.output
 	output.SkillTriggerRate = 0
 	beam.skillData.triggerRate = 0
-	if eligible then
+	if source and isVoltaicBarrierSource(source) then
+		sourceEnv.player.mainSkill = source
 		calcs.perform(sourceEnv, true)
 		local sourceOutput = sourceEnv.player.output
 		local rate = sourceOutput.Speed or 0
@@ -78,7 +117,7 @@ local function calcVoltaicBarrierTrigger(env)
 	if output.SkillTriggerRate <= 0 then
 		local beamFlags = env.mode == "CALCS" and beam.activeEffect.statSetCalcs.skillFlags or beam.activeEffect.statSet.skillFlags
 		beamFlags.disable = true
-		beam.infoMessage = "Select an enabled projectile attack in the Build sidebar to trigger beams."
+		beam.infoMessage = "Select a projectile main skill to set the beam source."
 	end
 end
 

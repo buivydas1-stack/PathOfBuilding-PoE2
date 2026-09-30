@@ -6,11 +6,13 @@ build.characterLevel = 90
 build.skillsTab:PasteSocketGroup("Lightning Arrow 20/0 1\nRapid Attacks II 1/0 1")
 build.skillsTab:PasteSocketGroup("Voltaic Barrier 18/20 1\nCulling Strike II 1/0 1\nConcentrated Area 1/0 1")
 build.skillsTab:PasteSocketGroup("Lightning Arrow 20/0 1\nRapid Attacks III 1/0 1")
+build.skillsTab:PasteSocketGroup("Mirage Archer 18/0 1\nLightning Arrow 20/0 1")
 local bow = new("Item", "Rarity: Rare\nBarrier Test Bow\nCrude Bow\nAdds 20 to 100 Lightning Damage\n+1000 to Accuracy Rating")
 build.itemsTab:AddItem(bow, true)
 build.itemsTab.slots["Weapon 1"].selItemId = bow.id
 local arrow, barrier = build.skillsTab.socketGroupList[1], build.skillsTab.socketGroupList[2]
 arrow.includeInFullDPS, barrier.includeInFullDPS = true, true
+build.skillsTab.socketGroupList[4].includeInFullDPS = true
 build.mainSocketGroup = 1
 build.configTab.input.enemyIsBoss = "Boss"
 build.configTab:BuildModList()
@@ -93,14 +95,37 @@ close(skillOutput(beamId).SkillTriggerRate, 0, "Disabled source cannot trigger b
 assert(not fullDPS("Beam").cullingDPS, "Inactive beam must not provide phantom cull")
 arrow.enabled = true
 build.mainSocketGroup = 2
-local unsupportedBeam = skillOutput(beamId)
-close(unsupportedBeam.SkillTriggerRate, 0, "Wall cannot trigger beams")
-close(unsupportedBeam.TotalDPS or 0, 0, "No generic weapon speed fallback")
+build.voltaicBarrierTriggerSource = nil
+close(skillOutput(beamId).SkillTriggerRate, beam.SkillTriggerRate, "Viewing wall resolves sole Full DPS projectile source")
 barrier.mainActiveSkill = 2
-close(skillOutput(beamId).SkillTriggerRate, 0, "Selecting beam cannot recurse")
+close(skillOutput(beamId).TotalDPS, beam.TotalDPS, "Viewing beam must retain DPS without recursion")
+close(fullDPS("Both").combinedDPS, both.combinedDPS, "Selecting beam must not change Full DPS")
+build.buildFlag = true
+runCallback("OnFrame")
+close(build.calcsTab.mainOutput.SkillTriggerRate, beam.SkillTriggerRate, "Main sidebar must show beam rate")
+assert(build.calcsTab.mainEnv.player.mainSkill.activeEffect.grantedEffect.id == beamId, "Main sidebar must actually select beam")
+assert(not build.calcsTab.mainEnv.player.mainSkill.activeEffect.statSet.skillFlags.disable, "Beam sidebar must not be disabled")
+build.skillsTab.socketGroupList[3].includeInFullDPS = true
+build.voltaicBarrierTriggerSource = nil
+close(skillOutput(beamId).SkillTriggerRate, 0, "Ambiguous cold-load source must not select an arbitrary attack")
+build.mainSocketGroup = 1
+build.buildFlag = true
+runCallback("OnFrame")
+arrow.includeInFullDPS = false
+build.mainSocketGroup = 2
+close(skillOutput(beamId).SkillTriggerRate, beam.SkillTriggerRate, "Viewing beam retains last selected attack even outside Full DPS")
+arrow.enabled = false
+close(skillOutput(beamId).SkillTriggerRate, 0, "Disabled remembered source must not switch to another attack")
+build.skillsTab.socketGroupList[3].enabled = false
+close(skillOutput(beamId).SkillTriggerRate, 0, "No eligible source must not fall back to weapon speed")
+arrow.enabled = true
+build.skillsTab.socketGroupList[3].enabled = true
+arrow.includeInFullDPS = true
+build.skillsTab.socketGroupList[3].includeInFullDPS = false
 barrier.mainActiveSkill, build.mainSocketGroup = 1, 1
-print("PASS: base cull by rarity; disabled or ineligible source has no beam DPS or cull")
+print("PASS: boss cull; Barrier sidebar resolves/retains its source; disabled and ambiguous sources stay inactive")
 
+barrier.voltaicBarrierDps = "Beam"
 build.skillsTab:SetDisplayGroup(barrier)
 local control = build.skillsTab.controls.voltaicBarrierDps
 assert(control:IsShown(), "Barrier selector must be shown on Barrier group")

@@ -113,4 +113,3 @@ Expect-Failure { & $deploy -PackageRoot $package -InstallRoot $install -Apply } 
 Assert ($global:PoBDeployTestStopped.Count -eq 1) 'Invalid packages must be rejected before stopping PoB'
 Assert (-not (Test-Path -LiteralPath (Join-Path $TestRoot 'bad-backup'))) 'Invalid package caused writes'
 Write-Output "PASS: changed-file deployment, visible restart, metadata refresh without restart, no saved-data scanning/backups, receipt, no-op, invalid-package rejection. Fixtures: $TestRoot"
-
