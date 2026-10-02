@@ -9,6 +9,7 @@
     "Classes/DropDownControl.lua",
     "Classes/ControlHost.lua",
     "Classes/PassiveTreeView.lua",
+    "Classes/PassiveSpec.lua",
     "Classes/ConfigTab.lua",
     "Classes/CalcsTab.lua",
     "Classes/SkillsTab.lua",

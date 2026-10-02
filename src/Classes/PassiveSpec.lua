@@ -77,6 +77,7 @@ function PassiveSpecClass:Init(treeVersion, convert)
 	-- List of currently allocated nodes
 	-- Keys are node IDs, values are nodes
 	self.allocNodes = { }
+	self.directNotables = { }
 
 	-- List of nodes allocated in subgraphs, used to maintain allocation when loading, and when rebuilding subgraphs
 	self.allocSubgraphNodes = { }
@@ -216,7 +217,11 @@ function PassiveSpecClass:Load(xml, dbFileName)
 				end
 			end
 		end
-		self:ImportFromNodeList(nil, classId, ascendClassId, tonumber(xml.attrib.secondaryAscendClassId or 0), hashList, weaponSets, copyTable(self.hashOverrides, true), masteryEffects)
+		local directNotables = { }
+		for id in (xml.attrib.directNotables or ""):gmatch("%d+") do
+			directNotables[tonumber(id)] = true
+		end
+		self:ImportFromNodeList(nil, classId, ascendClassId, tonumber(xml.attrib.secondaryAscendClassId or 0), hashList, weaponSets, copyTable(self.hashOverrides, true), masteryEffects, nil, directNotables)
 	elseif url then
 		self:DecodeURL(url)
 	end
@@ -239,6 +244,10 @@ function PassiveSpecClass:Save(xml)
 		end
 	end
 	local masterySelections = { }
+	local directNotables = { }
+	for id in pairs(self.directNotables) do
+		t_insert(directNotables, id)
+	end
 	for mastery, effect in pairs(self.masterySelections) do
 		t_insert(masterySelections, "{"..mastery..","..effect.."}")
 	end
@@ -261,6 +270,7 @@ function PassiveSpecClass:Save(xml)
 		ascendancyInternalId = tostring(ascendancyInternalId),
 		secondaryAscendClassId = tostring(self.curSecondaryAscendClassId),
 		nodes = table.concat(allocNodeIdList, ","),
+		directNotables = table.concat(directNotables, ","),
 		masteryEffects = table.concat(masterySelections, ",")
 	}
 	t_insert(xml, {
@@ -318,7 +328,7 @@ function PassiveSpecClass:PostLoad()
 end
 
 -- Import passive spec from the provided class IDs and node hash list
-function PassiveSpecClass:ImportFromNodeList(className, classId, ascendClassId, secondaryAscendClassId, hashList, weaponSets, hashOverrides, masteryEffects, treeVersion)
+function PassiveSpecClass:ImportFromNodeList(className, classId, ascendClassId, secondaryAscendClassId, hashList, weaponSets, hashOverrides, masteryEffects, treeVersion, directNotables)
   if hashOverrides == nil then hashOverrides = {} end
 	if treeVersion and treeVersion ~= self.treeVersion then
 		self:Init(treeVersion)
@@ -370,6 +380,16 @@ function PassiveSpecClass:ImportFromNodeList(className, classId, ascendClassId, 
 		end
 	end
 
+	for id in pairs(directNotables or { }) do
+		local node = self.nodes[id]
+		if self:CanDirectAllocateNotable(node) then
+			self.directNotables[id] = true
+			node.alloc = true
+			node.allocMode = 0
+			node.isFreeAllocate = true
+			self.allocNodes[id] = node
+		end
+	end
 	-- Rebuild all the node paths and dependencies
 	self:BuildAllDependsAndPaths()
 end
@@ -811,6 +831,10 @@ end
 
 -- Clear the allocated status of all non-class-start nodes
 function PassiveSpecClass:ResetNodes()
+	for id in pairs(self.directNotables) do
+		if self.nodes[id] then self.nodes[id].isFreeAllocate = nil end
+	end
+	wipeTable(self.directNotables)
 	for id, node in pairs(self.nodes) do
 		if node.type ~= "ClassStart" and node.type ~= "AscendClassStart" then
 			node.alloc = false
@@ -824,6 +848,7 @@ end
 -- An alternate path to the node may be provided, otherwise the default path will be used
 -- The path must always contain the given node, as will be the case for the default path
 function PassiveSpecClass:CanPathThroughAllocMode(allocMode, node)
+	if self.directNotables[node.id] then return false end
 	-- Normal allocation can only use normal nodes, weapon set allocation can also use its own set.
 	local nodeMode = node.allocMode or 0
 	return nodeMode == 0 or allocMode > 0 and nodeMode == allocMode
@@ -963,7 +988,50 @@ function PassiveSpecClass:AllocNode(node, altPath)
 	self:BuildAllDependsAndPaths()
 end
 
+function PassiveSpecClass:CanDirectAllocateNotable(node)
+	return node and node.type == "Notable" and not node.ascendancyName and not node.isMultipleChoiceOption and not node.unlockConstraint and self.tree.nodes[node.id] ~= nil
+end
+
+function PassiveSpecClass:ToggleDirectNotable(node)
+	if not self:CanDirectAllocateNotable(node) then return false end
+	if self.directNotables[node.id] then
+		self:DeallocSingleNode(node)
+	elseif not node.alloc then
+		self.directNotables[node.id] = true
+		node.alloc = true
+		node.allocMode = 0
+		node.isFreeAllocate = true
+		self.allocNodes[node.id] = node
+	else
+		return false
+	end
+	self.build.treeTab.viewer.searchStrCached = ""
+	self:BuildAllDependsAndPaths()
+	return true
+end
+
+function PassiveSpecClass:GetUnsupportedDirectNotables(env)
+	local granted, names = { }, { }
+	for _, passive in pairs(env.itemModDB:List(nil, "GrantedPassive")) do
+		for _, node in ipairs(self:ResolveGrantedPassiveNodes(passive)) do
+			granted[node.id] = true
+		end
+	end
+	for id in pairs(self.directNotables) do
+		local node = self.nodes[id]
+		if node and not granted[id] then
+			t_insert(names, node.dn)
+		end
+	end
+	table.sort(names)
+	return names
+end
+
 function PassiveSpecClass:DeallocSingleNode(node)
+	if self.directNotables[node.id] then
+		self.directNotables[node.id] = nil
+		node.isFreeAllocate = nil
+	end
 	node.alloc = false
 	node.allocMode = 0
 	self.allocNodes[node.id] = nil
@@ -1766,7 +1834,7 @@ function PassiveSpecClass:BuildAllDependsAndPaths()
 		if node.isFreeAllocate then
 			node.connectedToStart = true
 		end
-		for _, other in ipairs(node.linked) do
+		for _, other in ipairs(self.directNotables[id] and { } or node.linked) do
 			local otherAlloc = other.alloc or alternateClassStartNodes[other.id]
 			if otherAlloc and self:CanPathThroughAllocMode(node.allocMode or 0, other) and not isValueInArray(node.depends, other) then
 				-- The other node is allocated and isn't already dependent on this node, so try and find a path to a start node through it
@@ -1979,7 +2047,7 @@ function PassiveSpecClass:BuildAllDependsAndPaths()
 		end
 	end
 	for id, node in pairs(self.allocNodes) do
-		if #node.intuitiveLeapLikesAffecting == 0 or node.connectedToStart then
+		if not self.directNotables[id] and (#node.intuitiveLeapLikesAffecting == 0 or node.connectedToStart) then
 			self:BuildPathFromNode(node)
 			if node.isJewelSocket or node.expansionJewel then
 				self:SetNodeDistanceToClassStart(node)
@@ -2536,6 +2604,7 @@ function PassiveSpecClass:CreateUndoState()
 		secondaryAscendClassId = self.secondaryAscendClassId,
 		hashList = allocNodeIdList,
 		weaponSets = weaponSets,
+		directNotables = copyTable(self.directNotables),
 		hashOverrides = copyTable(self.hashOverrides, true),
 		masteryEffects = selections,
 		treeVersion = self.treeVersion
@@ -2553,7 +2622,7 @@ function PassiveSpecClass:RestoreUndoState(state, treeVersion)
 			ascendClassId = self.tree.internalAscendNameMap[state.ascendancyInternalId].ascendClassId
 		end
 	end
-	self:ImportFromNodeList(nil, classId, ascendClassId, state.secondaryAscendClassId, state.hashList, state.weaponSets, state.hashOverrides, state.masteryEffects, treeVersion or state.treeVersion)
+	self:ImportFromNodeList(nil, classId, ascendClassId, state.secondaryAscendClassId, state.hashList, state.weaponSets, state.hashOverrides, state.masteryEffects, treeVersion or state.treeVersion, state.directNotables)
 	self:SetWindowTitleWithBuildClass()
 end
 

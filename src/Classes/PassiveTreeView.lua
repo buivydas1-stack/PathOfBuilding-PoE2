@@ -427,7 +427,12 @@ function PassiveTreeViewClass:Draw(build, viewPort, inputEvents)
 	end
 
 	if treeClick == "LEFT" then
-		if hoverNode then
+		if hoverNode and IsKeyDown("ALT") and spec:CanDirectAllocateNotable(hoverNode) then
+			if spec:ToggleDirectNotable(hoverNode) then
+				spec:AddUndoState()
+				build.buildFlag = true
+			end
+		elseif hoverNode then
 			-- User left-clicked on a node
 			if hoverNode.alloc and not shouldBlockGlobalNodeDeallocation(hoverNode) then
 				-- Handle deallocation of allocated nodes
@@ -1939,6 +1944,13 @@ function PassiveTreeViewClass:AddNodeTooltip(tooltip, node, build, incSmallPassi
 
 	-- Pathing distance
 	tooltip:AddSeparator(14)
+	if build.spec:CanDirectAllocateNotable(node) then
+		tooltip:AddLine(14, colorCodes.TIP.."Tip: Alt+left-click to allocate/unallocate this notable without its path.")
+	end
+	if node.isAttribute then
+		tooltip:AddLine(14, colorCodes.TIP.."Tip: Right-click to cycle attributes; on an unallocated node, use the last chosen attribute.")
+		tooltip:AddLine(14, colorCodes.TIP.."Tip: Hold 1/I (Int), 2/S (Str), or 3/D (Dex) while clicking to choose an attribute.")
+	end
 	if node.path and #node.path > 0 then
 		if self.traceMode and isValueInArray(self.tracePath, node) then
 			tooltip:AddLine(14, "^7"..#self.tracePath .. " nodes in trace path")

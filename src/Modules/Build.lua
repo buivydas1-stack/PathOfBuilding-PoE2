@@ -2202,6 +2202,9 @@ function buildMode:AddDisplayStatList(statList, actor)
 end
 
 function buildMode:InsertItemWarnings()
+	for _, name in ipairs(self.spec:GetUnsupportedDirectNotables(self.calcsTab.mainEnv)) do
+		InsertIfNew(self.controls.warnings.lines, "No equipped item grants "..name)
+	end
 	if self.calcsTab.mainEnv.itemWarnings.augmentLimitWarning then
 		for _, warning in ipairs(self.calcsTab.mainEnv.itemWarnings.augmentLimitWarning) do
 			InsertIfNew(self.controls.warnings.lines, "You are exceeding augment limit with: "..warning)

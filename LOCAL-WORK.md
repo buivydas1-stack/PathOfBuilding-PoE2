@@ -14,6 +14,8 @@ Latest deployed application commit: `6772a0281de61a069e2107130f7a59e52da89324`. 
 
 ## Pending local changes
 
+- Alt+left-click isolated notable allocation, existing bottom-left warnings for notables not granted by equipped items, and attribute-node shortcut tooltip hints. Focused functional checks cover input, calculation, point counting, item changes, no double count, persistence and tooltip text; the existing Power Report suite passes. Desktop visual inspection has not been performed.
+
 - Remove the informational Emergent Possibility red warning. Configuration help remains; serious build warnings remain.
 - Hide inactive Bonded lines in item tooltips, reveal with the existing comparison key (Alt by default), and keep active Shaman/local Idol bonuses visible.
 - These display changes were requested without tests. Do not claim functional or visual testing. Application payload hashes and the restarted process are verified during deployment.
