@@ -14,6 +14,8 @@ Latest deployed application commit: `f76e6bb75fdc36fec5f011b92a1fd404db164920`. 
 
 ## Pending local changes
 
+- Tree comparisons suppress Alt stat reveal while Shift is held; Shift+Alt+left-click still toggles isolated notables. Item comparisons and alternative reveal keys retain their behavior.
+
 - Alt+left-click isolated notable allocation, existing bottom-left warnings for notables not granted by equipped items, and attribute-node shortcut tooltip hints. Focused functional checks cover input, calculation, point counting, item changes, no double count, persistence and tooltip text; the existing Power Report suite passes. Desktop visual inspection has not been performed.
 
 - Remove the informational Emergent Possibility red warning. Configuration help remains; serious build warnings remain.

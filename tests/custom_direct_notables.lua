@@ -93,7 +93,7 @@ input.customMods = nil
 build.configTab:BuildModList()
 frame()
 local viewer = build.treeTab.viewer
-local keys = { ALT = true }
+local keys = { ALT = true, SHIFT = true }
 local oldKey, oldCursor = IsKeyDown, GetCursorPos
 IsKeyDown = function(key) return keys[key] or false end
 local viewport = { x = 350, y = 50, width = 1000, height = 800 }

@@ -2,6 +2,8 @@
 
 Based on the official Path of Building 2 **v0.23.1** release.
 
+- While **Shift** is held in the tree, **Alt** does not reveal other comparison stats, so **Shift + Alt + left-click** can toggle an isolated notable without expanding the tooltip. Alt alone still reveals comparisons. Items and alternative comparison keys retain their behavior.
+
 - **Alt + left-click a main-tree notable** to allocate or unallocate it without its path or passive-point cost. The node tooltip explains the shortcut. These allocations remain isolated from normal pathing and persist with tree variants and undo. The existing bottom-left Warnings tooltip lists **No equipped item grants <notable>** until an active equipped item grants it; item-granted effects are not applied twice. Attribute-node hover tooltips now explain right-click cycling and the **1/I (Int), 2/S (Str), 3/D (Dex)** shortcuts. Verified with `tests/custom_direct_notables.lua`.
 
 - **Voltaic Barrier:** wall damage uses its 250 ms hit interval; beam damage uses the selected eligible projectile attack's rate and chance to hit. Selecting Barrier or its beam for viewing retains the last projectile source. On loading a Barrier selection, the sole eligible selected attack in a Full DPS group (or sole eligible selected attack overall) supplies the source; ambiguous sources require selecting the intended projectile first. The Skills selector includes wall damage, beam damage, or both in Full DPS. Beam and projectile supports remain separate. Base Culling Strike uses the configured enemy rarity; the recent-cull bonus is not assumed. Support-gem hover comparisons include Full DPS. Verified in `tests/custom_voltaic_barrier.lua`.

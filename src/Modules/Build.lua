@@ -2282,7 +2282,8 @@ function buildMode:CompareStatList(tooltip, statList, actor, baseOutput, compare
 	local groups, groupOrder = {}, {}
 	local priority = {}
 	local focusComparison = self.viewMode == "TREE" or self.viewMode == "ITEMS"
-	local showAll = not focusComparison or main:IsComparisonRevealHeld()
+	local suppressAltReveal = self.viewMode == "TREE" and main.comparisonRevealKey == "ALT" and IsKeyDown("SHIFT")
+	local showAll = not focusComparison or main:IsComparisonRevealHeld() and not suppressAltReveal
 	for _, statData in ipairs(statList) do
 		category = statData.compareSection or category
 		if statData.stat and (not statData.flag or actor.mainSkill.activeEffect.statSet.skillFlags[statData.flag]) and not statData.childStat and statData.stat ~= "SkillDPS" then
@@ -2343,7 +2344,7 @@ function buildMode:CompareStatList(tooltip, statList, actor, baseOutput, compare
 				for _, line in ipairs(groups[group]) do tooltip:AddLine(14, line) end
 			end
 		elseif count > (priority.FullDPS and 1 or 0) + (priority.TotalEHP and 1 or 0) then
-			tooltip:AddLine(14, colorCodes.TIP .. "Hold " .. main.comparisonRevealKey .. " to show other stat changes.")
+			tooltip:AddLine(14, colorCodes.TIP .. (suppressAltReveal and "Release Shift and hold ALT" or "Hold " .. main.comparisonRevealKey) .. " to show other stat changes.")
 		end
 	end
 	return count

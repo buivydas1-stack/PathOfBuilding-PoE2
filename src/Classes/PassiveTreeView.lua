@@ -320,6 +320,11 @@ function PassiveTreeViewClass:Draw(build, viewPort, inputEvents)
 
 	unseenPathHover = hoverNode and hoverNode.id == 5571 and not hoverNode.alloc or false
 	self.hoverNode = hoverNode
+	-- Direct allocation takes precedence over Shift path tracing for notables.
+	if IsKeyDown("ALT") and spec:CanDirectAllocateNotable(hoverNode) then
+		self.traceMode = false
+		self.tracePath = nil
+	end
 	-- If hovering over a node, find the path to it (if unallocated) or the list of dependent nodes (if allocated)
 	local hoverPath, hoverDep
 	if self.traceMode then
@@ -1186,7 +1191,7 @@ function PassiveTreeViewClass:Draw(build, viewPort, inputEvents)
 			-- Draw tooltip
 			SetDrawLayer(nil, 100)
 			local size = m_floor(node.size * scale)
-			if self.tooltip:CheckForUpdate(node, self.showStatDifferences, self.tracePath, launch.devModeAlt, build.outputRevision, build.spec.allocMode, main.comparisonRevealKey, main:IsComparisonRevealHeld()) then
+			if self.tooltip:CheckForUpdate(node, self.showStatDifferences, self.tracePath, launch.devModeAlt, build.outputRevision, build.spec.allocMode, main.comparisonRevealKey, main:IsComparisonRevealHeld(), IsKeyDown("SHIFT")) then
 				self:AddNodeTooltip(self.tooltip, node, build, incSmallPassiveSkillEffect)
 			end
 			self.tooltip.center = true

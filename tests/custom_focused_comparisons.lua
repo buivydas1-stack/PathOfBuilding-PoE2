@@ -3,7 +3,8 @@ dofile("HeadlessWrapper.lua")
 newBuild()
 
 local held = false
-IsKeyDown = function(key) return key == main.comparisonRevealKey and held end
+local shiftHeld = false
+IsKeyDown = function(key) return key == main.comparisonRevealKey and held or key == "SHIFT" and shiftHeld end
 local actor = { mainSkill = { activeEffect = { statSet = { skillFlags = { hit = true } } } } }
 local before = { FullDPS = 100, TotalEHP = 1000, ShockChance = 20, Str = 10 }
 local after = { FullDPS = 120, TotalEHP = 900, ShockChance = 25, Str = 15 }
@@ -25,12 +26,21 @@ local _, expanded = compare("TREE")
 assert(expanded:find("Full DPS", 1, true) < expanded:find("Shock Chance", 1, true), "Full DPS must lead the expanded list")
 assert(expanded:find("Effective Hit Pool", 1, true) < expanded:find("Shock Chance", 1, true), "EHP must lead the expanded list")
 assert(expanded:find("Strength", 1, true), "Held key must reveal other stat changes")
+shiftHeld = true
+local _, traced = compare("TREE")
+assert(not traced:find("Shock Chance", 1, true) and traced:find("Release Shift and hold ALT", 1, true), "Shift+Alt must retain compact tree comparisons")
+assert(select(2, compare("ITEMS")):find("Shock Chance", 1, true), "Shift must not suppress item comparisons")
+shiftHeld = false
+assert(select(2, compare("TREE")):find("Shock Chance", 1, true), "Releasing Shift must restore Alt reveal")
 held = false
 assert(select(2, compare("ITEMS")) == compact, "Releasing the key must restore the compact Items view")
 
 main.comparisonRevealKey = "F3"
 assert(select(2, compare("ITEMS")):find("Hold F3", 1, true), "Hint must follow the selected key")
 held = true
+shiftHeld = true
+assert(select(2, compare("TREE")):find("Shock Chance", 1, true), "Shift must not suppress F3 reveal")
+shiftHeld = false
 assert(select(2, compare("ITEMS")):find("Shock Chance", 1, true), "Selected key must reveal other changes")
 held = false
 main.comparisonRevealKey = "ALT"
