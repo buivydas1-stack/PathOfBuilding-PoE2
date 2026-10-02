@@ -4,7 +4,7 @@
 
 The user requested accumulating minor changes locally without contacting GitHub at all. Do not fetch, query remote state, use GitHub connectors, push, create a release, or publish pending changes until explicitly authorized. Local commits, packaging, reinstalling and restarting remain authorized. Ask before mouse control; do not infer authorization for a future mouse session from deployment authorization.
 
-Every final answer while local changes remain pending must include the exact line: "there are pending unpushed changes".
+Every final answer while local changes remain pending must briefly mention the unpushed local changes, preferably in one concise bullet. No fixed wording is required.
 
 Continue from the current local HEAD on `codex/pob2-customizations` in `D:\Codex\PoE2\PathOfBuilding-PoE2`. GitHub can intentionally lag behind. Preserve all local/unpushed commits and unrelated edits; do not reset to origin or replace the checkout with a fresh clone. Read Git status/log and the installed `custom-build.json` to establish current state.
 
