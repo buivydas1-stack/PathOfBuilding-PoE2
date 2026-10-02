@@ -2,11 +2,15 @@
 
 ## Push hold — active
 
-The user requested accumulating minor changes locally. Do not push this repository, create a release, or publish pending changes until the user explicitly releases the hold. Local commits, packaging, reinstalling and restarting remain authorized. Ask before mouse control; do not infer authorization for a future mouse session from deployment authorization.
+The user requested accumulating minor changes locally without contacting GitHub at all. Do not fetch, query remote state, use GitHub connectors, push, create a release, or publish pending changes until explicitly authorized. Local commits, packaging, reinstalling and restarting remain authorized. Ask before mouse control; do not infer authorization for a future mouse session from deployment authorization.
+
+Every final answer while local changes remain pending must include the exact line: "there are pending unpushed changes".
 
 Continue from the current local HEAD on `codex/pob2-customizations` in `D:\Codex\PoE2\PathOfBuilding-PoE2`. GitHub can intentionally lag behind. Preserve all local/unpushed commits and unrelated edits; do not reset to origin or replace the checkout with a fresh clone. Read Git status/log and the installed `custom-build.json` to establish current state.
 
 Last published commit when the hold began: `6e5f115412cf5d6298a08ee6dc1c377fb6d925ab` (Emergent Possibility support).
+
+Latest deployed application commit: `6772a0281de61a069e2107130f7a59e52da89324`. Later commits may update these local instructions without changing application code. Local HEAD remains the continuation point. Read the installed metadata/receipt locally; no GitHub check is needed during the hold.
 
 ## Pending local changes
 
