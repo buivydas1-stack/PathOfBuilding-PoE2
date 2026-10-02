@@ -1182,11 +1182,23 @@ function calcs.offence(env, actor, activeSkill)
 			})
 		end
 	end
+	local randomRuneGain = 0
 	if skillModList:Sum("BASE", skillCfg, "PhysicalDamageGainAsRandom", "PhysicalDamageConvertToRandom", "PhysicalDamageGainAsColdOrLightning", "DamageGainAsRandom") > 0 then
 		skillFlags.randomPhys = true
 		local physMode = env.configInput.physMode or "AVERAGE"
+		output.RandomElementGainEstimate = physMode == "AVERAGE"
+			and skillModList:Flag(skillCfg, "RandomElementGainPerRune")
+			and not skillModList:Flag(skillCfg, "DamageGainIsOnlyCold")
 		for i, value in ipairs(skillModList:Tabulate("BASE", skillCfg, "DamageGainAsRandom")) do
 			local mod = value.mod
+			if output.RandomElementGainEstimate then
+				for _, tag in ipairs(mod) do
+					if tag.type == "Multiplier" and tag.var == "RunesInEquipment" then
+						randomRuneGain = randomRuneGain + value.value / 100
+						break
+					end
+				end
+			end
 			local effVal = mod.value / 3
 			if physMode == "AVERAGE" then
 				skillModList:NewMod("DamageGainAsFire", "BASE", effVal, mod.source, mod.flags, mod.keywordFlags, unpack(mod))
@@ -3982,6 +3994,20 @@ function calcs.offence(env, actor, activeSkill)
 			end
 		end
 
+		local runeGainMin, runeGainMax = 0, 0
+		output.RandomElementGainOutcomes = nil
+		if randomRuneGain > 0 then
+			-- Global gains use damage before other gains and damage modifiers.
+			-- Keep the three full rune outcomes for nonlinear ailment chances.
+			output.RandomElementGainOutcomes = { {}, {}, {} }
+			for _, damageType in ipairs(dmgTypeList) do
+				local convertedMin, convertedMax = calcConvertedDamage(activeSkill, output, cfg, damageType)
+				local remaining = activeSkill.conversionTable[damageType].mult
+				runeGainMin = runeGainMin + (output[damageType.."MinBase"] * remaining + convertedMin) * randomRuneGain
+				runeGainMax = runeGainMax + (output[damageType.."MaxBase"] * remaining + convertedMax) * randomRuneGain
+			end
+		end
+
 		for _, damageType in ipairs(dmgTypeList) do
 			local damageTypeMin = damageType.."Min"
 			local damageTypeMax = damageType.."Max"
@@ -4036,6 +4062,7 @@ function calcs.offence(env, actor, activeSkill)
 			local noManaLeech = skillModList:Flag(cfg, "CannotLeechMana") or enemyDB:Flag(nil, "CannotLeechManaFromSelf") or skillModList:Flag(cfg, "CannotGainMana")
 			for _, damageType in ipairs(dmgTypeList) do
 				local damageTypeHitMin, damageTypeHitMax, damageTypeHitAvg, damageTypeLuckyChance, damageTypeHitAvgLucky, damageTypeHitAvgNotLucky = 0, 0, 0, 0, 0
+				local outcomeAllMult, outcomeEffMult = 0, 1
 				if skillFlags.hit and canDeal[damageType] then
 					damageTypeHitMin, damageTypeHitMax = calcDamage(activeSkill, output, cfg, pass == 2 and breakdown and breakdown[damageType], damageType, 0)
 					if pass == 2 and breakdown then
@@ -4079,6 +4106,7 @@ function calcs.offence(env, actor, activeSkill)
 						-- Apply crit multiplier
 						allMult = allMult * output.CritMultiplier
 					end
+					outcomeAllMult = allMult
 					damageTypeHitMin = damageTypeHitMin * allMult
 					damageTypeHitMax = damageTypeHitMax * allMult
 					if skillModList:Flag(skillCfg, "LuckyHits")
@@ -4226,6 +4254,7 @@ function calcs.offence(env, actor, activeSkill)
 						damageTypeHitMin = damageTypeHitMin * effMult
 						damageTypeHitMax = damageTypeHitMax * effMult
 						damageTypeHitAvg = damageTypeHitAvg * effMult
+						outcomeEffMult = effMult
 						if env.mode == "CALCS" then
 							output[damageType.."EffMult"] = effMult
 							if pass == 2 and damageType ~= "Physical" then
@@ -4331,6 +4360,27 @@ function calcs.offence(env, actor, activeSkill)
 						breakdown[damageType] = {
 							"You can't deal "..damageType.." damage"
 						}
+					end
+				end
+				if output.RandomElementGainOutcomes then
+					local hitKind = pass == 1 and "Crit" or "Hit"
+					for i, element in ipairs({ "Fire", "Cold", "Lightning" }) do
+						local outcome = output.RandomElementGainOutcomes[i]
+						local minDamage, maxDamage = 0, 0
+						if skillFlags.hit and canDeal[damageType] then
+							local change = isElemental[damageType] and ((damageType == element and 1 or 0) - 1 / 3) or 0
+							local bases = {
+								[damageType.."SummedMinBase"] = m_max(0, output[damageType.."SummedMinBase"] + runeGainMin * change),
+								[damageType.."SummedMaxBase"] = m_max(0, output[damageType.."SummedMaxBase"] + runeGainMax * change),
+							}
+							minDamage, maxDamage = calcDamage(activeSkill, bases, cfg, nil, damageType, 0)
+							minDamage, maxDamage = minDamage * outcomeAllMult, maxDamage * outcomeAllMult
+						end
+						outcome[damageType.."Stored"..hitKind.."Min"] = minDamage
+						outcome[damageType.."Stored"..hitKind.."Max"] = maxDamage
+						local average = (minDamage + maxDamage) / 2 * (1 - damageTypeLuckyChance)
+							+ (minDamage + 2 * maxDamage) / 3 * damageTypeLuckyChance
+						outcome[damageType..hitKind.."Average"] = average * outcomeEffMult
 					end
 				end
 				if pass == 1 then
@@ -4885,14 +4935,15 @@ function calcs.offence(env, actor, activeSkill)
 		---@param ailment string
 		---@param defaultDamageTypes table
 		---@return number, number average hit damage, average crit damage
-		local function calcAverageUnmitigatedSourceDamage(ailment, defaultDamageTypes)
+		local function calcAverageUnmitigatedSourceDamage(ailment, defaultDamageTypes, sourceOutput)
+			sourceOutput = sourceOutput or output
 			local canCrit = not skillModList:Flag(cfg, "AilmentsAreNeverFromCrit")
 			local sourceHitDmg, sourceCritDmg = 0, 0
 			for _, dmg_type in ipairs(dmgTypeList) do
 				if canDoAilment(ailment, dmg_type, defaultDamageTypes) then
-					sourceHitDmg = sourceHitDmg + output[dmg_type.."HitAverage"]
+					sourceHitDmg = sourceHitDmg + sourceOutput[dmg_type.."HitAverage"]
 					if canCrit then
-						sourceCritDmg = sourceCritDmg + output[dmg_type.."CritAverage"]
+						sourceCritDmg = sourceCritDmg + sourceOutput[dmg_type.."CritAverage"]
 					end
 				end
 			end
@@ -4903,7 +4954,8 @@ function calcs.offence(env, actor, activeSkill)
 		---@param ailment string
 		---@param defaultDamageTypes table
 		---@return number, number, number, number min / max hit, min / max crit damage
-		local function calcMinMaxUnmitigatedAilmentSourceDamage(ailment, defaultDamageTypes)
+		local function calcMinMaxUnmitigatedAilmentSourceDamage(ailment, defaultDamageTypes, sourceOutput)
+			sourceOutput = sourceOutput or output
 			local canCrit = not skillModList:Flag(cfg, "AilmentsAreNeverFromCrit")
 			local hitMin, hitMax = 0, 0
 			local critMin, critMax = 0, 0
@@ -4911,16 +4963,18 @@ function calcs.offence(env, actor, activeSkill)
 				if canDoAilment(ailment, damageType, defaultDamageTypes) then
 					local override = skillModList:Override(cfg, ailment .. damageType .. "HitDamage")
 					local more = skillModList:More(cfg, damageType .. ailment .. "Buildup")
-					local ailmentHitMin = override or output[damageType.."StoredHitMin"] or 0
-					local ailmentHitMax = override or output[damageType.."StoredHitMax"] or 0
+					local ailmentHitMin = override or sourceOutput[damageType.."StoredHitMin"] or 0
+					local ailmentHitMax = override or sourceOutput[damageType.."StoredHitMax"] or 0
 					hitMin = hitMin + ailmentHitMin * more
 					hitMax = hitMax + ailmentHitMax * more
-					output[ailment .. damageType .. "Min"] = ailmentHitMin * more
-					output[ailment .. damageType .. "Max"] = ailmentHitMax * more
+					if sourceOutput == output then
+						output[ailment .. damageType .. "Min"] = ailmentHitMin * more
+						output[ailment .. damageType .. "Max"] = ailmentHitMax * more
+					end
 					if canCrit then
 						override = skillModList:Override(cfg, ailment .. damageType .. "CritDamage")
-						critMin = critMin + (override or output[damageType.."StoredCritMin"] or 0) * more
-						critMax = critMax + (override or output[damageType.."StoredCritMax"] or 0) * more
+						critMin = critMin + (override or sourceOutput[damageType.."StoredCritMin"] or 0) * more
+						critMax = critMax + (override or sourceOutput[damageType.."StoredCritMax"] or 0) * more
 					end
 				end
 			end
@@ -5424,6 +5478,15 @@ function calcs.offence(env, actor, activeSkill)
 			output["ChillChanceOnCrit"] = 0
 			skillFlags["inflictChill"] = false
 		end
+		if output.RandomElementGainOutcomes then
+			output.ChillChanceOnHit, output.ChillChanceOnCrit = 0, 0
+			for _, outcome in ipairs(output.RandomElementGainOutcomes) do
+				local hitDamage, critDamage = calcAverageUnmitigatedSourceDamage("Chill", data.defaultAilmentDamageTypes.Chill.ScalesFrom, outcome)
+				output.ChillChanceOnHit = output.ChillChanceOnHit + (hitDamage > chillMinimumThreshold and 100 / 3 or 0)
+				output.ChillChanceOnCrit = output.ChillChanceOnCrit + (critDamage > chillMinimumThreshold and 100 / 3 or 0)
+			end
+			skillFlags.inflictChill = output.ChillChanceOnHit + output.ChillChanceOnCrit > 0
+		end
 
 		output["FreezeChanceOnHit"] = 0
 		output["FreezeChanceOnCrit"] = 0
@@ -5493,6 +5556,19 @@ function calcs.offence(env, actor, activeSkill)
 			if skillFlags.hit and not skillModList:Flag(cfg, "Cannot"..ailment) then
 				output[ailment.."ChanceOnHit"] = m_min(100, hitElementalAilmentChance)
 				output[ailment.."ChanceOnCrit"] = m_min(100, critElementalAilmentChance)
+				if output.RandomElementGainOutcomes then
+					-- Cap each full elemental outcome before averaging its chance.
+					local hitChance, critChance = 0, 0
+					local function chance(damage)
+						return m_min(100, (damage / enemyThreshold * data.gameConstants[ailment.."ChanceMultiplier"] + base) * (1 + inc / 100) * more)
+					end
+					for _, outcome in ipairs(output.RandomElementGainOutcomes) do
+						local hitMin, hitMax, critMin, critMax = calcMinMaxUnmitigatedAilmentSourceDamage(ailment, data.defaultAilmentDamageTypes[ailment].ScalesFrom, outcome)
+						hitChance = hitChance + chance((hitMin + hitMax) / 2) / 3
+						critChance = critChance + chance((critMin + critMax) / 2) / 3
+					end
+					output[ailment.."ChanceOnHit"], output[ailment.."ChanceOnCrit"] = hitChance, critChance
+				end
 			else
 				output[ailment.."ChanceOnHit"] = 0
 				output[ailment.."ChanceOnCrit"] = 0

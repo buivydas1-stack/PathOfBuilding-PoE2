@@ -1196,6 +1196,11 @@ function calcs.initEnv(build, mode, override, specEnv)
 						elseif augType then
 							env.itemModDB.multipliers["NonIdolAugmentsInEquipment"] = (env.itemModDB.multipliers["NonIdolAugmentsInEquipment"] or 0) + 1
 						end
+						-- Rune-specific effects exclude Soul Cores and Idols, even
+						-- though all three share the item.runes socket storage.
+						if augType == "Rune" then
+							env.itemModDB.multipliers["RunesInEquipment"] = (env.itemModDB.multipliers["RunesInEquipment"] or 0) + 1
+						end
 					end
 				end
 				env.itemModDB.multipliers["RunesSocketedIn"..slotName] = socketed

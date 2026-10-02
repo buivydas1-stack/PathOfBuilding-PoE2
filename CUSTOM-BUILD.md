@@ -60,6 +60,18 @@ For routine local updates run `tools/Build-CustomPortable.ps1 -Lightweight -Outp
 
 For standalone distribution or preparing an upstream upgrade, run `tools/Build-CustomPortable.ps1 -UpstreamZip <official-v0.23.1-portable.zip> -OutputDirectory <new-empty-output-directory>`. The script validates the pinned upstream ZIP checksum, overlays the custom Lua files, verifies all other upstream files byte-for-byte, and creates a ZIP with SHA-256 and provenance metadata. When upgrading upstream, update the pinned release and checksum after review.
 
+## Emergent Possibility
+
+The glove modifier now gains damage per actual Rune in currently equipped gear, including Emergent Possibility itself. Soul Cores, Idols, empty sockets and inactive weapons do not count. Rune/Augment effect modifiers scale its coefficient through the existing item pipeline. Wrapped clipboard descriptions, item editing and saved-item round trips retain the modifier.
+
+Average mode uses the existing equal Fire/Cold/Lightning weighting. Each gained type receives its own damage scaling, Lucky calculation, critical multiplier and enemy mitigation. Ignite/Shock chances are calculated and capped for each full rune outcome before averaging; Chill thresholds are checked per outcome, separately for regular and critical hits. Embitter redirects the entire gain to Cold. A blocked element contributes zero damage without redistributing its probability.
+
+A warning identifies remaining estimates for persistent ailment strength/uptime and highest-damage-type conditions. Per-outcome chances retain PoB2's existing damage-roll approximations; they are not a simulation of the complete damage distribution, ailment history or conditional triggers. Forced element modes inspect one full outcome, not its long-run probability. Equal element probabilities follow the existing PoB2 model; server RNG weights were not independently measured.
+
+Run `tools/Test-CustomPowerReport.ps1 -TestPath tests/custom_emergent_possibility.lua` for mixed-augment imports, effect scaling, equipment swaps, persistence, type-specific hit calculations, conversions, other gains, Lucky/critical/double/triple damage, blocked elements, Embitter and nonlinear ailment-chance checks.
+
+Research references: [Emergent Possibility](https://poe2db.tw/us/Emergent_Possibility), [Lucky](https://poe2db.tw/us/Lucky), [Lightning Rod](https://poe2db.tw/us/Lightning_Rod), [damage conversion](https://poe2db.tw/us/Damage_Conversion), [Embitter](https://poe2db.tw/us/Embitter). Lightning Rod is a 30% chance for lightning hit damage to be Lucky; it does not choose the rune's element or force a maximum roll.
+
 ## Calcs hit details
 
 **Skill Hit Damage** displays per-damage-type Lucky chance for non-critical and critical hits alongside average hit values. **Enemy Resistances and Penetration** displays resistance-reduction subtotals, enemy resistance before penetration, total penetration, its minimum resistance floor, and the final effective resistance. Attack values are separated by hand. These read existing calculation values; damage formulas are unchanged. Resistance-reduction subtotals sum negative resistance modifiers (Exposure, curses and other reductions); positive resistance modifiers and caps are reflected in the final enemy resistance. Enabled Exposure uses the existing configured effect and enemy scaling. Leopold's Applause is supported by the existing -50% penetration floor. Hover resistance values for the existing effective-damage breakdown.

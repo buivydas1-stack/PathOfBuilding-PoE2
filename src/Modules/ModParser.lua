@@ -3744,6 +3744,10 @@ local specialModList = {
 	} end, -- Twisted Empyrean
 	["gain (%d+)%% of weapon physical damage as extra damage of an? r?a?n?d?o?m? ?element"] = function(num) return { mod("PhysicalDamageGainAsRandom", "BASE", num, nil, ModFlag.Weapon) } end,
 	["gain (%d+)%% of physical damage as extra damage of a random element"] = function(num) return { mod("PhysicalDamageGainAsRandom", "BASE", num ) } end,
+	["gain ([%d%.]+)%% of damage as extra damage of a random element per rune socketed in equipped items"] = function(num) return {
+		mod("DamageGainAsRandom", "BASE", num, { type = "Multiplier", var = "RunesInEquipment", actor = "player" }),
+		flag("RandomElementGainPerRune"),
+	} end,
 	["(%d+)%% chance for hits to deal (%d+)%% of physical damage as extra damage of a random element"] = function(num, _, physPercent) return { mod("PhysicalDamageGainAsRandom", "BASE", (num*physPercent/100) ) } end,
 	["gain (%d+)%% of physical damage as a random element if you've cast (.-) in the past (%d+) seconds"] = function(num, _, curse) return { mod("PhysicalDamageGainAsRandom", "BASE", num, { type = "Condition", var = "SelfCast"..curse:gsub("^%l", string.upper):gsub(" %l", string.upper):gsub(" ", "") }) } end,
 	["gain (%d+)%% of physical damage as extra damage of a random element while you are ignited"] = function(num) return { mod("PhysicalDamageGainAsRandom", "BASE", num, { type = "Condition", var = "Ignited" }) } end,

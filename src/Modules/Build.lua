@@ -2170,6 +2170,9 @@ function buildMode:AddDisplayStatList(statList, actor)
 			end
 		end
 	end
+	if actor.output.RandomElementGainEstimate then
+		InsertIfNew(self.controls.warnings.lines, "Emergent Possibility: Ailment strength, uptime and highest-damage-type effects remain estimates in Average mode. Select an element in Configuration to inspect a full elemental roll.")
+	end
 	for pool, warningFlag in pairs({["Life"] = "LifeCostWarningList", ["Mana"] = "ManaCostWarningList", ["Runic Ward"] = "WardCostWarningList", ["Rage"] = "RageCostWarningList", ["Energy Shield"] = "ESCostWarningList"}) do
 		if actor.output[warningFlag] then
 			local line = "You do not have enough "..(actor.output.EnergyShieldProtectsMana and pool == "Mana" and "Energy Shield and Mana" or pool).." to use: "

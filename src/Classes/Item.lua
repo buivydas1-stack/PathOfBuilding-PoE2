@@ -1164,7 +1164,8 @@ function ItemClass:ParseRaw(raw, rarity, highQuality)
 
 			local function getRuneLineParts(modLine)
 				local values = { }
-				local strippedModLine = modLine:gsub("(%d%.?%d*)", function(val)
+				-- Clipboard descriptions may wrap one augment modifier across lines.
+				local strippedModLine = modLine:gsub("\n", " "):gsub("(%d%.?%d*)", function(val)
 					t_insert(values, tonumber(val))
 					return "#"
 				end)
