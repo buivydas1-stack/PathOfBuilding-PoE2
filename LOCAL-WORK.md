@@ -10,7 +10,7 @@ Continue from the current local HEAD on `codex/pob2-customizations` in `D:\Codex
 
 Last published commit when the hold began: `6e5f115412cf5d6298a08ee6dc1c377fb6d925ab` (Emergent Possibility support).
 
-Latest deployed application commit: `6772a0281de61a069e2107130f7a59e52da89324`. Later commits may update these local instructions without changing application code. Local HEAD remains the continuation point. Read the installed metadata/receipt locally; no GitHub check is needed during the hold.
+Latest deployed application commit: `f76e6bb75fdc36fec5f011b92a1fd404db164920`. Later commits may update these local instructions without changing application code. Local HEAD remains the continuation point. Read the installed metadata/receipt locally; no GitHub check is needed during the hold.
 
 ## Pending local changes
 
@@ -20,6 +20,6 @@ Latest deployed application commit: `6772a0281de61a069e2107130f7a59e52da89324`. 
 - Hide inactive Bonded lines in item tooltips, reveal with the existing comparison key (Alt by default), and keep active Shaman/local Idol bonuses visible.
 - These display changes were requested without tests. Do not claim functional or visual testing. Application payload hashes and the restarted process are verified during deployment.
 
-Live installation: `C:\Users\Admin\AppData\Local\Programs\PoB2`. Latest stage for this batch: `D:\Codex\PoE2\artifacts\pob2-tooltip-cleanup-20261002`. Application-only deployment receipt: `D:\Codex\PoE2\artifacts\pob2-tooltip-cleanup-backup-20261002\deployment.json`.
+Live installation: `C:\Users\Admin\AppData\Local\Programs\PoB2`. Latest stage: `D:\Codex\PoE2\artifacts\pob2-direct-notables-20261002`. Application-only deployment receipt: `D:\Codex\PoE2\artifacts\pob2-direct-notables-backup-20261002\deployment.json`. Installed payload hashes and the restarted process were verified.
 
 For further changes, commit locally and deploy the current local source; update this note with relevant pending work. When the user asks to push, verify the active installation, push the accumulated commits normally, verify the remote commit, and remove/update the hold in both this note and the umbrella `AGENTS.md`.
