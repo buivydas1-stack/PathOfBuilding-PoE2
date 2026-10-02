@@ -3728,10 +3728,29 @@ function ItemsTabClass:AddItemTooltip(tooltip, item, slot, dbMode, maxWidth)
 		end
 	end
 
+	local env = self.build.calcsTab and self.build.calcsTab.mainEnv
+	local player = env and env.player
+	local showBonded = main:IsComparisonRevealHeld() or (player and player.modDB:GetCondition("CanUseBondedModifiers"))
+	local localBondedIdols = false
+	if item.type == "Body Armour" then
+		for _, modList in ipairs{item.runeModLines, item.explicitModLines} do
+			for _, modLine in ipairs(modList) do
+				if modLine.line:find("Idols socketed in this item gain the benefits of their Bonded modifiers", 1, true) then
+					localBondedIdols = true
+				end
+			end
+		end
+	end
+	local hiddenBonded = false
 	for _, modList in ipairs{item.enchantModLines, item.runeModLines, item.implicitModLines, item.explicitModLines} do
 		if modList[1] then
 			for _, modLine in ipairs(modList) do
 				local variantCount = item:GetModLineVariantCount(modLine)
+				if variantCount > 0 and (modLine.bonded or modLine.line:match("^Bonded:"))
+					and not showBonded and not (localBondedIdols and modLine.augmentType == "Idol") then
+					hiddenBonded = true
+					variantCount = 0
+				end
 				if variantCount > 0 then
 					local bg = modLine.desecrated and "HoverModBgAbyss" or nil
 					local formattedModLine
@@ -3786,6 +3805,10 @@ function ItemsTabClass:AddItemTooltip(tooltip, item, slot, dbMode, maxWidth)
 			end
 			tooltip:AddSeparator(10)
 		end
+	end
+
+	if hiddenBonded then
+		tooltip:AddLine(fontSizeSmall, colorCodes.TIP .. "Hold " .. main.comparisonRevealKey .. " to show inactive Bonded modifiers.")
 	end
 
 	-- Cluster jewel notables/keystone
