@@ -1,5 +1,3 @@
 # PoB2 local work
 
-Read `LOCAL-WORK.md` before work in this checkout. The current local HEAD is the starting point, including unpushed commits. Publishing is on hold until the user explicitly releases it. Local commits and deployments remain authorized. Preserve existing customizations and saved builds/settings.
-
-During the hold, do not contact GitHub for reads or writes, including fetch, remote checks, connectors and pushes, unless explicitly authorized. Every final answer while local changes remain pending must briefly mention the unpushed local changes, preferably in one concise bullet. No fixed wording is required.
+Read `LOCAL-WORK.md` before work in this checkout. The current local HEAD is the starting point, including unpushed commits. The user released the GitHub hold on 2026-10-02 after confirming the update works. Local commits, deployments and publication to the existing custom fork remain authorized. Verify the active installation before pushing. Preserve existing customizations and saved builds/settings.
