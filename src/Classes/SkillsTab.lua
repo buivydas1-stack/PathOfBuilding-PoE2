@@ -211,7 +211,7 @@ local SkillsTabClass = newClass("SkillsTab", "UndoHandler", "ControlHost", "Cont
 					self.displayGroup.enabled = not self.displayGroup.enabled
 					local output = calcFunc()
 					self.displayGroup.enabled = not self.displayGroup.enabled
-					self.build:AddStatComparesToTooltip(tooltip, calcBase, output, self.displayGroup.enabled and "^7Disabling this group will give you:" or "^7Enabling this group will give you:")
+					self.build:AddStatComparesToTooltip(tooltip, calcBase, output, self.displayGroup.enabled and "^7Disabling this group will give you:" or "^7Enabling this group will give you:", nil, { "FullDPS", "TotalEHP" })
 				end
 			end
 		end
@@ -1035,7 +1035,7 @@ function SkillsTabClass:CreateGemSlot(index)
 					self.displayGroup.gemList[index].enabled = not self.displayGroup.gemList[index].enabled
 					local output = calcFunc()
 					self.displayGroup.gemList[index].enabled = not self.displayGroup.gemList[index].enabled
-					self.build:AddStatComparesToTooltip(tooltip, calcBase, output, self.displayGroup.gemList[index].enabled and "^7Disabling this gem will give you:" or "^7Enabling this gem will give you:")
+					self.build:AddStatComparesToTooltip(tooltip, calcBase, output, self.displayGroup.gemList[index].enabled and "^7Disabling this gem will give you:" or "^7Enabling this gem will give you:", nil, { "FullDPS", "TotalEHP" })
 				end
 			end
 		end

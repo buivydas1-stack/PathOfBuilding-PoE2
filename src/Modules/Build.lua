@@ -2282,12 +2282,14 @@ function buildMode:RefreshStatList()
 	self:EstimatePlayerProgress()
 end
 
-function buildMode:CompareStatList(tooltip, statList, actor, baseOutput, compareOutput, header, nodeCount)
+function buildMode:CompareStatList(tooltip, statList, actor, baseOutput, compareOutput, header, nodeCount, priorityStats)
 	local count = 0
 	local category = "Other"
 	local groups, groupOrder = {}, {}
 	local priority = {}
 	local focusComparison = self.viewMode == "TREE" or self.viewMode == "ITEMS"
+	local priorityOrder = priorityStats or (focusComparison and { "FullDPS", "TotalEHP" }) or {}
+	for _, stat in ipairs(priorityOrder) do priority[stat] = false end
 	local suppressAltReveal = self.viewMode == "TREE" and main.comparisonRevealKey == "ALT" and IsKeyDown("SHIFT")
 	local showAll = not focusComparison or main:IsComparisonRevealHeld() and not suppressAltReveal
 	for _, statData in ipairs(statList) do
@@ -2326,7 +2328,7 @@ function buildMode:CompareStatList(tooltip, statList, actor, baseOutput, compare
 				if nodeCount then
 					line = line .. s_format(" ^8[%+"..statData.fmt.."%s per point]", diff * ((statData.pc or statData.mod) and 100 or 1) / nodeCount, pcPerPt)
 				end
-				if focusComparison and (statData.stat == "FullDPS" or statData.stat == "TotalEHP") then
+				if priority[statData.stat] ~= nil then
 					priority[statData.stat] = line
 				else
 					local group = statData.compareCategory or category
@@ -2342,7 +2344,7 @@ function buildMode:CompareStatList(tooltip, statList, actor, baseOutput, compare
 	end
 	if count > 0 then
 		tooltip:AddLine(14, header)
-		for _, stat in ipairs({ "FullDPS", "TotalEHP" }) do
+		for _, stat in ipairs(priorityOrder) do
 			if priority[stat] then tooltip:AddLine(14, priority[stat]) end
 		end
 		if showAll then
@@ -2361,17 +2363,17 @@ end
 -- Compare values of all display stats between the two output tables, and add any changed stats to the tooltip
 -- Adds the provided header line before the first stat line, if any are added
 -- Returns the number of stat lines added
-function buildMode:AddStatComparesToTooltip(tooltip, baseOutput, compareOutput, header, nodeCount)
+function buildMode:AddStatComparesToTooltip(tooltip, baseOutput, compareOutput, header, nodeCount, priorityStats)
 	local count = 0
 	if self.calcsTab.mainEnv.player.mainSkill.minion and baseOutput.Minion and compareOutput.Minion then
-		count = count + self:CompareStatList(tooltip, self.minionDisplayStats, self.calcsTab.mainEnv.minion, baseOutput.Minion, compareOutput.Minion, header.."\n^7Minion:", nodeCount)
+		count = count + self:CompareStatList(tooltip, self.minionDisplayStats, self.calcsTab.mainEnv.minion, baseOutput.Minion, compareOutput.Minion, header.."\n^7Minion:", nodeCount, priorityStats)
 		if count > 0 then
 			header = "^7Player:"
 		else
 			header = header.."\n^7Player:"
 		end
 	end
-	count = count + self:CompareStatList(tooltip, self.displayStats, self.calcsTab.mainEnv.player, baseOutput, compareOutput, header, nodeCount)
+	count = count + self:CompareStatList(tooltip, self.displayStats, self.calcsTab.mainEnv.player, baseOutput, compareOutput, header, nodeCount, priorityStats)
 	return count
 end
 

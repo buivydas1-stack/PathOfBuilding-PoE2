@@ -43,6 +43,8 @@ Based on the official Path of Building 2 **v0.23.1** release.
 
 ## Augment recommendations
 
+- In Skills, hovering a group or gem **Enabled** checkbox shows changed Full DPS first, then EHP, followed by the remaining stat changes.
+
 In Items, the table to the right of the augment selectors uses the same numeric stat choices as the tree Power Report. Click **Calculate augment recommendations** to run comparisons in a separate Lua thread. Opening/importing/editing an item never starts calculations. The table sorts by the selected stat's benefit and includes signed change, percentage and resulting value; click column headers to reverse/change sorting. Search filters names and modifier text, and **Gains only / Losses only** filters the selected stat. Stat/filter/sort changes reuse completed results immediately. Item, build, socket or comparison-mode changes discard stale results and wait for another explicit calculation.
 
 By default, each row equips the same edited item with one eligible augment and all its other sockets empty, regardless of imported augments. Check **Consider existing augments** and choose a socket to compare replacing that socket while retaining every other augment. The baseline then includes the item's existing augments. Candidates use real socket rebuilding, including local effects and Bonded modifiers. Item/socket categories, individual equipped caps and shared Ancient augment caps are enforced; the replaced socket releases its current limit. Socket-bound replacements and retained invalid augment limits are rejected. These comparisons use PoB's current skills, gear and Configuration; they do not apply augments automatically.
