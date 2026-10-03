@@ -1084,6 +1084,9 @@ function buildMode:CanExit(mode)
 end
 
 function buildMode:Shutdown()
+	if self.itemsTab and self.itemsTab.controls.augmentReport then
+		self.itemsTab.controls.augmentReport:Cancel()
+	end
 	if launch.devMode and (not main.disableDevAutoSave) and self.targetVersion and not self.abortSave then
 		if self.dbFileName then
 			self:SaveDBFile()

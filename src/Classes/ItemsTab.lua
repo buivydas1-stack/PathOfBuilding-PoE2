@@ -789,6 +789,8 @@ holding Shift will put it in the second.]])
 		self.controls["displayItemRuneLabel"..i] = new("LabelControl", {"RIGHT",drop,"LEFT"}, {-4, 0, 0, 14}, "^7Rune #"..i)
 	end
 
+	self.controls.augmentReport = new("AugmentReportControl", {"TOPLEFT", self.controls.displayItemRune1, "TOPRIGHT"}, {12, 58, 650, 280}, self)
+
 	-- Section: Affix Selection
 	local maxModCount = 9
 	self.controls.displayItemSectionAffix = new("Control", {"TOPLEFT",self.controls.displayItemSectionRune,"BOTTOMLEFT"}, {0, 0, 0, function()
@@ -1344,6 +1346,7 @@ function ItemsTabClass:Save(xml)
 end
 
 function ItemsTabClass:Draw(viewPort, inputEvents)
+	self.controls.augmentReport:Update()
 	local comparisonRevealHeld = main:IsComparisonRevealHeld()
 	if self.displayItem and (self.comparisonRevealHeld ~= comparisonRevealHeld or self.comparisonRevealKey ~= main.comparisonRevealKey) then
 		self:UpdateDisplayItemTooltip()
@@ -1368,6 +1371,11 @@ function ItemsTabClass:Draw(viewPort, inputEvents)
 			local ttW, ttH = self.displayItemTooltip:GetDynamicSize(viewPort)
 			maxY = m_max(maxY, y + ttH + 4)
 			maxX = m_max(maxX, x + ttW + 80)
+		end
+		if self.controls.augmentReport:IsShown() then
+			local x, y = self.controls.augmentReport:GetPos()
+			maxX = m_max(maxX, x + 654)
+			maxY = m_max(maxY, y + 308)
 		end
 		local contentHeight = maxY - self.y
 		local contentWidth = maxX - self.x
@@ -1992,6 +2000,7 @@ function ItemsTabClass:UpdateDisplayItemTooltip()
 	self.displayItemTooltip:Clear()
 	self:AddItemTooltip(self.displayItemTooltip, self.displayItem)
 	self.displayItemTooltip.center = true
+	self.controls.augmentReport:SetItem(self.displayItem)
 end
 
 function ItemsTabClass:UpdateClusterJewelControls()

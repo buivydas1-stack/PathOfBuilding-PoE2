@@ -4,6 +4,9 @@
   "executableSHA256": "AE3A82B69815C2DBE4517FACA1CB7A3474B556A1B63546FB23A909DD302CD2AD",
   "portableDirectory": "PathOfBuilding-PoE2-v0.23.1-custom.2-Portable",
   "files": [
+	"Classes/AugmentReportControl.lua",
+	"Modules/AugmentReport.lua",
+	"Modules/AugmentReportWorker.lua",
     "Data/Runeforging.lua",
     "Classes/PowerReportListControl.lua",
     "Classes/TreeTab.lua",

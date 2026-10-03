@@ -208,7 +208,9 @@ function launch:OnSubCall(func, ...)
 end
 
 function launch:OnSubError(id, errMsg)
-	if self.subScripts[id].type == "UPDATE" then
+	local script = self.subScripts[id]
+	if not script then return end -- An explicitly cancelled worker may still report completion.
+	if script.type == "UPDATE" then
 		self:ShowErrMsg("In update thread: %s", errMsg)
 		self.updateCheckRunning = false
 	elseif self.subScripts[id].type == "DOWNLOAD" then
@@ -216,11 +218,15 @@ function launch:OnSubError(id, errMsg)
 		if errMsg then
 			self:ShowErrMsg("In download callback: %s", errMsg)
 		end
+	elseif script.type == "CUSTOM" and script.errorCallback then
+		local callbackError = PCall(script.errorCallback, errMsg)
+		if callbackError then self:ShowErrMsg("In subscript error callback: %s", callbackError) end
 	end
 	self.subScripts[id] = nil
 end
 
 function launch:OnSubFinished(id, ...)
+	if not self.subScripts[id] then return end
 	if self.subScripts[id].type == "UPDATE" then
 		self.updateAvailable, self.updateErrMsg = ...
 		self.updateCheckRunning = false
@@ -243,11 +249,12 @@ function launch:OnSubFinished(id, ...)
 	self.subScripts[id] = nil
 end
 
-function launch:RegisterSubScript(id, callback)
+function launch:RegisterSubScript(id, callback, errorCallback)
 	if id then
 		self.subScripts[id] = {
 			type = "CUSTOM",
 			callback = callback,
+			errorCallback = errorCallback,
 		}
 	end
 end
