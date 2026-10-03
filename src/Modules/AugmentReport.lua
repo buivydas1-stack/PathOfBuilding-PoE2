@@ -61,6 +61,49 @@ function report.Compare(baseline, values, stat)
 	return delta, benefit, report.IsFinite(percent) and percent or nil, value
 end
 
+-- Read parsed condition tags using the same evaluator as tree/item comparisons.
+-- Inspect only this augment, so retained sockets cannot make it look applicable.
+-- Unknown effects stay visible; an inactive Bonded bonus never hides a useful
+-- ordinary bonus. No hypothetical conditions or extra calculation passes are used.
+function report.InactiveEffects(item, env)
+	local inactive, hasActive = { }, false
+	local function conditionsMatch(mod, db)
+		if not db then return true end -- Cannot establish inactivity for this actor.
+		local test = { name = "AugmentCondition", type = "FLAG", value = true, flags = 0, keywordFlags = 0, source = "" }
+		for _, tag in ipairs(mod) do
+			if tag.type == "Condition" or tag.type == "ActorCondition" then table.insert(test, tag) end
+		end
+		if db:EvalMod(test) then return true end
+		-- Some conditions belong to a particular skill rather than the global DB.
+		for _, skill in ipairs(env.player.activeSkillList) do
+			if db:EvalMod(test, skill.skillCfg) then return true end
+		end
+		return false
+	end
+	local function active(mod, db)
+		if not conditionsMatch(mod, db) then return false end
+		if type(mod.value) == "table" and mod.value.mod then
+			local target = mod.name == "EnemyModifier" and env.enemy.modDB or
+				mod.name == "MinionModifier" and env.minion and env.minion.modDB or db
+			return active(mod.value.mod, target)
+		end
+		return true
+	end
+	for _, line in ipairs(item.runeModLines) do
+		local bonded = line.line:match("^Bonded:")
+		if not bonded or env.player.modDB:GetCondition("CanUseBondedModifiers") then
+			if line.extra or #line.modList == 0 then
+				hasActive = true
+			else
+				local lineActive = false
+				for _, mod in ipairs(line.modList) do lineActive = active(mod, env.player.modDB) or lineActive end
+				if lineActive then hasActive = true else table.insert(inactive, line.line) end
+			end
+		end
+	end
+	return not hasActive and #inactive > 0, inactive
+end
+
 function report.Calculate(build, raw, slotName, candidateNames, considerExisting, socketIndex)
 	local item = considerExisting and new("Item", raw) or report.EmptyItem(raw)
 	socketIndex = considerExisting and (socketIndex or 1) or 1
@@ -94,6 +137,7 @@ function report.Calculate(build, raw, slotName, candidateNames, considerExisting
 	local calculator = build.calcsTab:GetMiscCalculator()
 	local result = { baseline = report.Snapshot(calculator(override, true, { noEnvReuse = true })), rows = { }, slot = slotName, excluded = 0, considerExisting = considerExisting or false, socketIndex = socketIndex }
 	local emptyRaw = item:BuildRaw()
+	local effectItem = report.EmptyItem(emptyRaw)
 	for _, augment in ipairs(build.itemsTab:GetValidRunesForItem(item)) do
 		if augment.name ~= "None" and (not candidateNames or candidateNames[augment.name]) then
 			if augment.limit and (used[augment.limitId or augment.name] or 0) >= augment.limit then
@@ -104,8 +148,11 @@ function report.Calculate(build, raw, slotName, candidateNames, considerExisting
 				candidate:UpdateRunes()
 				candidate:BuildAndParseRaw()
 				candidate:BuildModList()
-				local output = calculator({ repSlotName = slotName, repItem = candidate }, true, { noEnvReuse = true })
-				table.insert(result.rows, { name = augment.name, type = augment.type, lines = augment.lines, values = report.Snapshot(output) })
+				local output, candidateEnv = calculator({ repSlotName = slotName, repItem = candidate }, true, { noEnvReuse = true, includeEnv = true })
+				effectItem.runes[1] = augment.name
+				effectItem:UpdateRunes()
+				local inactive, inactiveEffects = report.InactiveEffects(effectItem, candidateEnv)
+				table.insert(result.rows, { name = augment.name, type = augment.type, lines = augment.lines, values = report.Snapshot(output), inactive = inactive, inactiveEffects = inactiveEffects })
 			end
 		end
 	end

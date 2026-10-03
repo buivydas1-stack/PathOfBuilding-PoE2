@@ -3190,9 +3190,11 @@ function calcs.perform(env, skipEHP)
 	end
 	modDB.multipliers["CurseOnEnemy"] = #cursesInCurseSlots
 	for _, slot in ipairs(curseSlots) do
-		enemyDB.conditions["Cursed"] = true
 		if slot.isMark then
 			enemyDB.conditions["Marked"] = true
+		else
+			-- PoE2 marks are separate debuffs, not curses.
+			enemyDB.conditions["Cursed"] = true
 		end
 		if slot.modList then
 			enemyDB:AddList(slot.modList)

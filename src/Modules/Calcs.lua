@@ -174,6 +174,8 @@ function calcs.getMiscCalculator(build)
 			env.player.output.FullDPS = fullDPS.combinedDPS
 			env.player.output.FullDotDPS = fullDPS.TotalDotDPS
 		end
+		-- Reports may inspect the conditions from this already-completed pass.
+		if fastCalcOptions and fastCalcOptions.includeEnv then return env.player.output, env end
 		return env.player.output
 	end, env.player.output
 end

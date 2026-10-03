@@ -577,6 +577,9 @@ function buildMode:Init(dbFileName, buildName, buildXML, convertBuild, importLin
 		-- Check for old calcs tab settings
 		self.configTab:ImportCalcSettings()
 	end
+	-- Saved sections have no fixed order. Item-dependent configuration conditions
+	-- (e.g. Lavianga's mana flask effect) must see the fully loaded equipment.
+	self.configTab:BuildModList()
 
 	-- Build calculation output tables
 	self.outputRevision = 1

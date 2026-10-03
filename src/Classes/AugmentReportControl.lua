@@ -60,6 +60,9 @@ function ReportClass:Cancel()
 end
 
 function ReportClass:Update()
+	local reveal = main:IsComparisonRevealHeld()
+	local revealChanged = self.revealInactive ~= reveal
+	self.revealInactive = reveal
 	local item = self.itemsTab.displayItem
 	local slot = item and self.itemsTab:GetComparisonSlotNameForItem(item)
 	local revision = self.itemsTab.build.outputRevision
@@ -68,6 +71,8 @@ function ReportClass:Update()
 	if key ~= self.key then
 		self:Cancel()
 		self.key, self.result, self.failed = key, nil, nil
+		self:Refresh()
+	elseif revealChanged and self.result then
 		self:Refresh()
 	end
 end
@@ -121,17 +126,23 @@ function ReportClass:Refresh()
 	self.list = { }
 	self.selIndex, self.selValue = nil, nil
 	if self.result then
+		local hidden = 0
 		local search = (self.controls.search.buf or ""):lower()
 		local filter = self.controls.filter.selIndex
 		for _, row in ipairs(self.result.rows) do
 			local delta, benefit, percent, value = report.Compare(self.result.baseline, row.values, self.stat)
 			local text = (row.name .. " " .. table.concat(row.lines, " ")):lower()
-			if (search == "" or text:find(search, 1, true)) and
+			-- Keep real gains from indirect effects (for example equipped augment
+			-- counts), even when this augment's own conditional bonus is inactive.
+			local inactive = row.inactive and not (benefit and benefit > 0.000001)
+			if inactive and not self.revealInactive then hidden = hidden + 1 end
+			if (not inactive or self.revealInactive) and (search == "" or text:find(search, 1, true)) and
 				(filter == 1 or (filter == 2 and benefit and benefit > 0) or (filter == 3 and benefit and benefit < 0)) then
 				table.insert(self.list, { row = row, delta = delta, benefit = benefit, percent = percent, value = value })
 			end
 		end
 		self.label = self.result.slot .. (self.result.considerExisting and (" | Replace socket #" .. self.result.socketIndex) or " | One augment; other sockets empty") .. " | " .. #self.list .. " / " .. #self.result.rows
+		if hidden > 0 then self.label = self.label .. " | " .. hidden .. " inactive (" .. main.comparisonRevealKey .. ")" end
 		if self.result.excluded > 0 then self.label = self.label .. " | " .. self.result.excluded .. " at limit" end
 	else
 		self.label = self.failed and "Comparison unavailable (hover Calculate for reason)" or self.worker and "Calculating in background..." or "Click Calculate to compare eligible augments"
@@ -180,6 +191,11 @@ function ReportClass:AddValueTooltip(tooltip, _, entry)
 		tooltip:AddLine(14, "^7Same edited item equipped in " .. self.result.slot .. ".")
 		tooltip:AddLine(14, self.result.considerExisting and ("^7Replaces socket #" .. self.result.socketIndex .. "; keeps all other augments.") or "^7Adds one augment; all other sockets start empty.")
 		tooltip:AddLine(14, "^7Uses current skills, gear and Configuration.")
+		if entry.row.inactiveEffects and #entry.row.inactiveEffects > 0 then
+			tooltip:AddLine(14, "^7Inactive under current skills, gear and Configuration:")
+			for _, line in ipairs(entry.row.inactiveEffects) do tooltip:AddLine(14, "^7" .. line) end
+			tooltip:AddLine(14, "^7Values use current conditions; holding " .. main.comparisonRevealKey .. " only reveals rows.")
+		end
 		tooltip:AddLine(14, "^7" .. self.stat.label .. ": " .. number(self.result.baseline[self.stat.stat]) .. " -> " .. number(entry.value))
 		for _, stat in ipairs(self.controls.stat.list) do
 			local delta, benefit, percent = report.Compare(self.result.baseline, entry.row.values, stat)

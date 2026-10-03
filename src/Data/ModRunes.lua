@@ -697,6 +697,8 @@ return {
 	["Amanamu's Gaze"] = {
 		["helmet"] = {
 				type = "AbyssalEye",
+				limit = 1,
+				limitId = "AncientAugment",
 				"Remove a Damaging Ailment when you use a Command Skill",
 				statOrder = { 9748 },
 				tradeHashes = { [594547430] = { "Remove a Damaging Ailment when you use a Command Skill" },  },
@@ -705,6 +707,8 @@ return {
 		},
 		["body armour"] = {
 				type = "AbyssalEye",
+				limit = 1,
+				limitId = "AncientAugment",
 				"+2 to Armour per 1 Spirit",
 				statOrder = { 4398 },
 				tradeHashes = { [1197632982] = { "+2 to Armour per 1 Spirit" },  },
@@ -713,6 +717,8 @@ return {
 		},
 		["boots"] = {
 				type = "AbyssalEye",
+				limit = 1,
+				limitId = "AncientAugment",
 				"1% increased Movement Speed per 15 Spirit, up to a maximum of 40%",
 				"Other Modifiers to Movement Speed except for Sprinting do not apply",
 				statOrder = { 9153, 9153.1 },
@@ -724,6 +730,8 @@ return {
 	["Kurgal's Gaze"] = {
 		["helmet"] = {
 				type = "AbyssalEye",
+				limit = 1,
+				limitId = "AncientAugment",
 				"Increases and Reductions to Life Regeneration Rate also apply to Mana Regeneration Rate",
 				statOrder = { 4233 },
 				tradeHashes = { [3570773271] = { "Increases and Reductions to Life Regeneration Rate also apply to Mana Regeneration Rate" },  },
@@ -732,6 +740,8 @@ return {
 		},
 		["gloves"] = {
 				type = "AbyssalEye",
+				limit = 1,
+				limitId = "AncientAugment",
 				"40% increased effect of Arcane Surge on you",
 				statOrder = { 2996 },
 				tradeHashes = { [2103650854] = { "40% increased effect of Arcane Surge on you" },  },
@@ -740,6 +750,8 @@ return {
 		},
 		["boots"] = {
 				type = "AbyssalEye",
+				limit = 1,
+				limitId = "AncientAugment",
 				"15% increased Mana Cost Efficiency if you haven't Dodge Rolled Recently",
 				statOrder = { 7970 },
 				tradeHashes = { [2876843277] = { "15% increased Mana Cost Efficiency if you haven't Dodge Rolled Recently" },  },
@@ -750,6 +762,8 @@ return {
 	["Tecrod's Gaze"] = {
 		["body armour"] = {
 				type = "AbyssalEye",
+				limit = 1,
+				limitId = "AncientAugment",
 				"Regenerate 1.5% of maximum Life per second",
 				statOrder = { 1691 },
 				tradeHashes = { [836936635] = { "Regenerate 1.5% of maximum Life per second" },  },
@@ -758,6 +772,8 @@ return {
 		},
 		["gloves"] = {
 				type = "AbyssalEye",
+				limit = 1,
+				limitId = "AncientAugment",
 				"25% increased Life Cost Efficiency",
 				statOrder = { 4708 },
 				tradeHashes = { [310945763] = { "25% increased Life Cost Efficiency" },  },
@@ -766,6 +782,8 @@ return {
 		},
 		["boots"] = {
 				type = "AbyssalEye",
+				limit = 1,
+				limitId = "AncientAugment",
 				"10% increased Movement Speed when on Low Life",
 				statOrder = { 1554 },
 				tradeHashes = { [649025131] = { "10% increased Movement Speed when on Low Life" },  },
@@ -776,6 +794,8 @@ return {
 	["Ulaman's Gaze"] = {
 		["helmet"] = {
 				type = "AbyssalEye",
+				limit = 1,
+				limitId = "AncientAugment",
 				"+1 to Accuracy Rating per 1 Item Evasion Rating on Equipped Helmet",
 				statOrder = { 4139 },
 				tradeHashes = { [687156079] = { "+1 to Accuracy Rating per 1 Item Evasion Rating on Equipped Helmet" },  },
@@ -784,6 +804,8 @@ return {
 		},
 		["gloves"] = {
 				type = "AbyssalEye",
+				limit = 1,
+				limitId = "AncientAugment",
 				"Critical Hit chance is Lucky against Parried enemies",
 				statOrder = { 5809 },
 				tradeHashes = { [935518591] = { "Critical Hit chance is Lucky against Parried enemies" },  },
@@ -792,6 +814,8 @@ return {
 		},
 		["body armour"] = {
 				type = "AbyssalEye",
+				limit = 1,
+				limitId = "AncientAugment",
 				"Prevent +3% of Damage from Deflected Hits",
 				statOrder = { 4679 },
 				tradeHashes = { [3552135623] = { "Prevent +3% of Damage from Deflected Hits" },  },
