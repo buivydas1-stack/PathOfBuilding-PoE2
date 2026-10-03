@@ -877,6 +877,36 @@ function main:OpenPathPopup(invalidPath, errMsg, ignoreBuild)
 	self:OpenPopup(600, 150, "Change Settings Path", controls, "save", nil, "cancel")
 end
 
+function main:ResolveStartupBuild()
+	-- A renamed/deleted remembered build must not strand a single-build user
+	-- on the list. Preserve explicit list/import modes and inaccessible files.
+	local remembered = self.newMode == "BUILD" and self.newModeArgs and self.newModeArgs[1]
+	if type(remembered) ~= "string" or self.errorReadingSettings then return end
+	local file, _, code = io.open(remembered, "r")
+	if file then file:close(); return end
+	if code ~= 2 then return end -- Missing file, not permission/cloud read failure.
+	local builds = { }
+	local function scan(subPath, depth)
+		if depth > 32 then return false end
+		local handle = NewFileSearch(self.buildPath .. subPath .. "*.xml")
+		while handle do
+			local name = handle:GetFileName()
+			builds[#builds + 1] = { self.buildPath .. subPath .. name, name:sub(1, -5) }
+			if #builds > 1 then return false end
+			if not handle:NextFile() then break end
+		end
+		handle = NewFileSearch(self.buildPath .. subPath .. "*", true)
+		while handle do
+			local name = handle:GetFileName()
+			if name ~= "." and name ~= ".." and not scan(subPath .. name .. "/", depth + 1) then return false end
+			if not handle:NextFile() then break end
+		end
+		return true
+	end
+	local ok, complete = pcall(scan, "", 0)
+	if ok and complete and #builds == 1 then self:SetMode("BUILD", unpack(builds[1])) end
+end
+
 function main:ChangeUserPath(newUserPath, ignoreBuild)
 	self.userPath = newUserPath
 	MakeDir(self.userPath)
@@ -884,6 +914,7 @@ function main:ChangeUserPath(newUserPath, ignoreBuild)
 	self.buildPath = self.defaultBuildPath
 	MakeDir(self.buildPath)
 	self:LoadSettings(ignoreBuild)
+	if not ignoreBuild then self:ResolveStartupBuild() end
 	self:LoadSharedItems()
 end
 --- Opens the popup for the "Options" menu
