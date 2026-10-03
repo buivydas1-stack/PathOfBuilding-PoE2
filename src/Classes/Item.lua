@@ -9,6 +9,7 @@ local t_remove = table.remove
 local m_min = math.min
 local m_max = math.max
 local m_floor = math.floor
+local runeforgingRecipes = LoadModule("Data/Runeforging")
 
 local dmgTypeList = {"Physical", "Lightning", "Cold", "Fire", "Chaos"}
 local catalystList = {"Flesh", "Neural", "Carapace", "Uul-Netol's", "Xoph's", "Tul's", "Esh's", "Chayula's", "Reaver", "Sibilant", "Skittering", "Adaptive", "Necrotic"}
@@ -1713,6 +1714,43 @@ function ItemClass:BuildRaw()
 		t_insert(rawLines, "Corrupted")
 	end
 	return table.concat(rawLines, "\n")
+end
+
+-- Return only verified, deterministic recipes supported by the local base data.
+function ItemClass:GetRuneforgingBase()
+	if not self.base then return nil, "Unknown item base." end
+	if self.runicItem or self.base.tags.runeforged then return nil, "Already Runeforged." end
+	if self.corrupted or self.mirrored or self.sanctified then
+		return nil, "Corrupted, mirrored or sanctified items cannot be Runeforged."
+	end
+	local unique = self.rarity == "UNIQUE" or self.rarity == "RELIC"
+	local key = unique and ((self.title or "") .. ", " .. self.baseName) or self.baseName
+	local recipe = runeforgingRecipes[key]
+	if not recipe or recipe.unique ~= unique then return nil, "No Runeforging recipe for this item." end
+	if recipe.ambiguous then return nil, "This recipe has multiple outcomes; accurate variant selection is not supported yet." end
+	if recipe.unsupportedVariant then return nil, "This base has conflicting variants in PoB's data; accurate conversion is not supported yet." end
+	for _, baseLine in pairs(self.baseLines or {}) do
+		if baseLine.variantList then return nil, "Items with alternative bases cannot be converted accurately yet." end
+	end
+	local base = data.itemBases[recipe.base]
+	if not base then return nil, "The Runeforged base is missing from PoB's data." end
+	return recipe.base
+end
+
+function ItemClass:Runeforge()
+	local baseName, reason = self:GetRuneforgingBase()
+	if not baseName then return nil, reason end
+	local item = new("Item", self:BuildRaw())
+	item.id = self.id
+	item.baseName = baseName
+	item.base = data.itemBases[baseName]
+	item.baseLines = { [baseName] = { line = baseName } }
+	item.runicItem = true
+	-- Recalculate before serialization so copied defence properties cannot survive.
+	item:BuildModList()
+	item:BuildAndParseRaw()
+	item:BuildModList()
+	return item
 end
 
 function ItemClass:BuildAndParseRaw()

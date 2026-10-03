@@ -546,7 +546,7 @@ holding Shift will put it in the second.]])
 
 	-- Section: Enchant / Anoint / Corrupt
 	self.controls.displayItemSectionEnchant = new("Control", {"TOPLEFT",self.controls.displayItemSectionSockets,"BOTTOMLEFT"}, {0, 0, 0, function()
-		return (self.controls.displayItemAnoint:IsShown() or self.controls.displayItemCorrupt:IsShown() ) and 28 or 0
+		return (self.controls.displayItemAnoint:IsShown() or self.controls.displayItemCorrupt:IsShown() or self.controls.displayItemRuneforge:IsShown()) and 28 or 0
 	end})
 	self.controls.displayItemAnoint = new("ButtonControl", {"TOPLEFT",self.controls.displayItemSectionEnchant,"TOPLEFT"}, {0, 0, 100, 20}, "Anoint...", function()
 		self:AnointDisplayItem(1)
@@ -580,6 +580,21 @@ holding Shift will put it in the second.]])
 	end)
 	self.controls.displayItemCorrupt.shown = function()
 		return self.displayItem and self.displayItem.corruptible
+	end
+	self.controls.displayItemRuneforge = new("ButtonControl", {"TOPLEFT",self.controls.displayItemCorrupt,"TOPRIGHT",true}, {8, 0, 100, 20}, "Runeforge", function()
+		local item = self.displayItem and self.displayItem:Runeforge()
+		if item then self:SetDisplayItem(item) end
+	end, nil, true)
+	self.controls.displayItemRuneforge.tooltipFunc = function(tooltip)
+		tooltip:Clear()
+		local baseName, reason = self.displayItem:GetRuneforgingBase()
+		tooltip:AddLine(16, baseName and ("Convert to " .. baseName .. ". Keeps modifiers, quality and augments. Use Add to build / Save to apply.") or reason)
+	end
+	self.controls.displayItemRuneforge.shown = function()
+		return self.displayItem and self.displayItem.base and (self.displayItem.base.armour or self.displayItem.base.weapon)
+	end
+	self.controls.displayItemRuneforge.enabled = function()
+		return self.displayItem and self.displayItem:GetRuneforgingBase() ~= nil
 	end
 
 	-- Section: Item Quality

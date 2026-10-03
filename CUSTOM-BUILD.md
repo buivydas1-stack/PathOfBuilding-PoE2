@@ -2,6 +2,8 @@
 
 Based on the official Path of Building 2 **v0.23.1** release.
 
+- **Runeforge:** the Items editor has a button beside **Corrupt...**. It previews the item's verified Runeforging recipe while preserving rolls, modifiers, quality and augments; use **Add to build / Save** to apply it. Item defences and character comparisons recalculate from the new base. Corrupted, mirrored, sanctified, already Runeforged and non-recipe items are disabled. Ambiguous recipes, conflicting local base variants and missing bases are disabled with a reason instead of guessing. Recipe snapshot: 2026-10-03, public game patch **0.5.5d**, separate from PoB release/tree versions. Verified in `tests/custom_runeforging.lua`.
+
 - While **Shift** is held in the tree, **Alt** does not reveal other comparison stats, so **Shift + Alt + left-click** can toggle an isolated notable without expanding the tooltip. Alt alone still reveals comparisons. Items and alternative comparison keys retain their behavior.
 
 - **Alt + left-click a main-tree notable** to allocate or unallocate it without its path or passive-point cost. The node tooltip explains the shortcut. These allocations remain isolated from normal pathing and persist with tree variants and undo. The existing bottom-left Warnings tooltip lists **No equipped item grants <notable>** until an active equipped item grants it; item-granted effects are not applied twice. Attribute-node hover tooltips now explain right-click cycling and the **1/I (Int), 2/S (Str), 3/D (Dex)** shortcuts. Verified with `tests/custom_direct_notables.lua`.
