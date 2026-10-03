@@ -8,9 +8,9 @@ local ReportClass = newClass("AugmentReportControl", "ListControl", function(sel
 	self.colLabels = true
 	self.colList = {
 		{ width = 300, label = "Augment", sortable = true },
-		{ width = 110, label = "Change", sortable = true },
-		{ width = 100, label = "Change %", sortable = true },
-		{ width = 120, label = "Result", sortable = true },
+		{ width = 110, label = "Change", sortable = true, textHeight = 17 },
+		{ width = 100, label = "Change %", sortable = true, textHeight = 17 },
+		{ width = 120, label = "Result", sortable = true, textHeight = 17 },
 	}
 	self.sortColumn = 2
 	self.descending = true
@@ -164,7 +164,7 @@ end
 
 local function number(value, signed)
 	if value == nil then return "N/A" end
-	return string.format(signed and "%+.2f" or "%.2f", value)
+	return formatNumSep(string.format(signed and "%+.2f" or "%.2f", value))
 end
 
 function ReportClass:GetRowValue(column, _, entry)

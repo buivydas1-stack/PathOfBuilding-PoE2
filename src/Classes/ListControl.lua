@@ -202,6 +202,7 @@ function ListClass:Draw(viewPort, noTooltip)
 	local minIndex = m_floor(scrollOffsetV / rowHeight + 1)
 	local maxIndex = m_min(m_floor((scrollOffsetV + height) / rowHeight + 1), #list)
 	for colIndex, column in ipairs(self.colList) do
+		local textHeight = self:GetColumnProperty(column, "textHeight") or textHeight
 		local colFont = self:GetColumnProperty(column, "font") or "VAR"
 		local clipWidth = DrawStringWidth(textHeight, colFont, "...")
 		colOffset = column._offset - scrollOffsetH
