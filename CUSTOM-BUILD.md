@@ -44,6 +44,7 @@ Based on the official Path of Building 2 **v0.23.1** release.
 ## Augment recommendations
 
 - In Skills, hovering a group or gem **Enabled** checkbox shows changed Full DPS first, then EHP, followed by the remaining stat changes.
+- Skill-slot warnings refresh when groups or gems are enabled, disabled or removed, so an old ten-group warning does not persist after returning to nine. Meta skills such as Mirage Archer and their socketed skills count as one group.
 
 In Items, the table to the right of the augment selectors uses the same numeric stat choices as the tree Power Report. Click **Calculate augment recommendations** to run comparisons in a separate Lua thread. Opening/importing/editing an item never starts calculations. The table sorts by the selected stat's benefit and includes signed change, percentage and resulting value; click column headers to reverse/change sorting. Search filters names and modifier text, and **Gains only / Losses only** filters the selected stat. Stat/filter/sort changes reuse completed results immediately. Item, build, socket or comparison-mode changes discard stale results and wait for another explicit calculation.
 

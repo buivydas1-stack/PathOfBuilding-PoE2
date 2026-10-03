@@ -465,6 +465,7 @@ end
 -- Build the calculation output tables
 function CalcsTabClass:BuildOutput()
 	self.powerBuildFlag = true
+	self.build.skillsTab:UpdateGlobalGemCountAssignments()
 
 	--[[
 	local start = GetTime()
