@@ -1737,15 +1737,49 @@ function ItemClass:GetRuneforgingBase()
 	return recipe.base
 end
 
-function ItemClass:Runeforge()
-	local baseName, reason = self:GetRuneforgingBase()
+function ItemClass:GetUnruneforgingBase()
+	if not self.base or not (self.runicItem or self.base.tags.runeforged) then
+		return nil, "This item is not Runeforged."
+	end
+	local unique = self.rarity == "UNIQUE" or self.rarity == "RELIC"
+	local prefix = (self.title or "") .. ", "
+	local originalBase
+	for key, recipe in pairs(runeforgingRecipes) do
+		if recipe.base == self.baseName and recipe.unique == unique and not recipe.ambiguous and not recipe.unsupportedVariant then
+			local candidate = not unique and key or (key:sub(1, #prefix) == prefix and key:sub(#prefix + 1))
+			if candidate and data.itemBases[candidate] then
+				if originalBase and originalBase ~= candidate then
+					return nil, "The original base is ambiguous; accurate reversal is not supported."
+				end
+				originalBase = candidate
+			end
+		end
+	end
+	if not originalBase then return nil, "No verified original base for this Runeforged item." end
+	for _, baseLine in pairs(self.baseLines or {}) do
+		if baseLine.variantList then return nil, "Items with alternative bases cannot be reversed accurately yet." end
+	end
+	return originalBase
+end
+
+function ItemClass:GetRuneforgingToggleBase()
+	if self.runicItem or (self.base and self.base.tags.runeforged) then
+		return self:GetUnruneforgingBase()
+	end
+	return self:GetRuneforgingBase()
+end
+
+function ItemClass:Runeforge(reverse)
+	local baseName, reason
+	if reverse then baseName, reason = self:GetUnruneforgingBase()
+	else baseName, reason = self:GetRuneforgingBase() end
 	if not baseName then return nil, reason end
 	local item = new("Item", self:BuildRaw())
 	item.id = self.id
 	item.baseName = baseName
 	item.base = data.itemBases[baseName]
 	item.baseLines = { [baseName] = { line = baseName } }
-	item.runicItem = true
+	item.runicItem = not reverse
 	-- Recalculate before serialization so copied defence properties cannot survive.
 	item:BuildModList()
 	item:BuildAndParseRaw()

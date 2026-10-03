@@ -581,20 +581,25 @@ holding Shift will put it in the second.]])
 	self.controls.displayItemCorrupt.shown = function()
 		return self.displayItem and self.displayItem.corruptible
 	end
-	self.controls.displayItemRuneforge = new("ButtonControl", {"TOPLEFT",self.controls.displayItemCorrupt,"TOPRIGHT",true}, {8, 0, 100, 20}, "Runeforge", function()
-		local item = self.displayItem and self.displayItem:Runeforge()
+	self.controls.displayItemRuneforge = new("ButtonControl", {"TOPLEFT",self.controls.displayItemCorrupt,"TOPRIGHT",true}, {8, 0, 120, 20}, function()
+		return self.displayItem and self.displayItem.runicItem and "Undo Runeforge" or "Runeforge"
+	end, function()
+		local item = self.displayItem and self.displayItem:Runeforge(self.displayItem.runicItem)
 		if item then self:SetDisplayItem(item) end
 	end, nil, true)
 	self.controls.displayItemRuneforge.tooltipFunc = function(tooltip)
 		tooltip:Clear()
-		local baseName, reason = self.displayItem:GetRuneforgingBase()
+		local baseName, reason = self.displayItem:GetRuneforgingToggleBase()
 		tooltip:AddLine(16, baseName and ("Convert to " .. baseName .. ". Keeps modifiers, quality and augments. Use Add to build / Save to apply.") or reason)
+		if self.displayItem.runicItem and baseName then
+			tooltip:AddLine(16, "Undo is a PoB preview only; it does not reverse crafting in the game.")
+		end
 	end
 	self.controls.displayItemRuneforge.shown = function()
 		return self.displayItem and self.displayItem.base and (self.displayItem.base.armour or self.displayItem.base.weapon)
 	end
 	self.controls.displayItemRuneforge.enabled = function()
-		return self.displayItem and self.displayItem:GetRuneforgingBase() ~= nil
+		return self.displayItem and self.displayItem:GetRuneforgingToggleBase() ~= nil
 	end
 
 	-- Section: Item Quality
