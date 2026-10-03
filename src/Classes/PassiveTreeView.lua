@@ -157,15 +157,19 @@ function PassiveTreeViewClass:GetCompareNodeColor(node, compareNode, spec, build
 end
 
 -- Normalize the two actual report metrics independently, as with offence/defence.
-function PassiveTreeViewClass:GetCombinedPowerColor(power, maximum, theme)
-	local function intensity(value, peak)
-		if not value or value <= 0 or not peak or peak <= 0 or value ~= value or peak == math.huge then
-			return 0
-		end
-		return m_min(1, (value / peak * 1.5) ^ 0.5)
+function PassiveTreeViewClass:PowerColorIntensity(value, peak)
+	-- Maxima start at zero while the coroutine builds the report. Never pass
+	-- NaN/infinity to the native renderer, including metrics with no gains.
+	if not value or value <= 0 or value ~= value or value == math.huge
+		or not peak or peak <= 0 or peak ~= peak or peak == math.huge then
+		return 0
 	end
-	local damage = intensity(power.singleStat, maximum.singleStat)
-	local ehp = intensity(power.ehpStat, maximum.ehpStat)
+	return m_min(1, (value / peak * 1.5) ^ 0.5)
+end
+
+function PassiveTreeViewClass:GetCombinedPowerColor(power, maximum, theme)
+	local damage = self:PowerColorIntensity(power.singleStat, maximum.singleStat)
+	local ehp = self:PowerColorIntensity(power.ehpStat, maximum.ehpStat)
 	if theme == "RED/GREEN" then
 		return damage, ehp, 0
 	elseif theme == "GREEN/BLUE" then
@@ -986,8 +990,7 @@ function PassiveTreeViewClass:Draw(build, viewPort, inputEvents)
 					SetDrawColor(self:GetCombinedPowerColor(node.power, build.calcsTab.powerMax, main.nodePowerTheme))
 				elseif self.heatMapStat and self.heatMapStat.stat then
 					-- Calculate color based on a single stat
-					local stat = m_max(node.power.singleStat or 0, 0)
-					local statCol = (stat / build.calcsTab.powerMax.singleStat * 1.5) ^ 0.5
+					local statCol = self:PowerColorIntensity(node.power.singleStat, build.calcsTab.powerMax.singleStat)
 					if main.nodePowerTheme == "RED/BLUE" then
 						SetDrawColor(statCol, 0, 0)
 					elseif main.nodePowerTheme == "RED/GREEN" then
@@ -997,10 +1000,8 @@ function PassiveTreeViewClass:Draw(build, viewPort, inputEvents)
 					end
 				else
 					-- Calculate color based on DPS and defensive powers
-					local offence = m_max(node.power.offence or 0, 0)
-					local defence = m_max(node.power.defence or 0, 0)
-					local dpsCol = (offence / build.calcsTab.powerMax.offence * 1.5) ^ 0.5
-					local defCol = (defence / build.calcsTab.powerMax.defence * 1.5) ^ 0.5
+					local dpsCol = self:PowerColorIntensity(node.power.offence, build.calcsTab.powerMax.offence)
+					local defCol = self:PowerColorIntensity(node.power.defence, build.calcsTab.powerMax.defence)
 					local mixCol = (m_max(dpsCol - 0.5, 0) + m_max(defCol - 0.5, 0)) / 2
 					if main.nodePowerTheme == "RED/BLUE" then
 						SetDrawColor(dpsCol, mixCol, defCol)

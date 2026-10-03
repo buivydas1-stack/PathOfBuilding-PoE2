@@ -330,10 +330,14 @@ local TreeTabClass = newClass("TreeTab", "ControlHost", function(self, build)
 		end
 	end
 	-- Completion callback from the CalcsTab power builder coroutine
-	self.build.powerBuilderCallback = function()
+	self.build.powerBuilderCallback = function(errorMessage)
 		local powerStat = self.build.calcsTab.powerStat or data.powerStatList[1]
-		local report = self:BuildPowerReportList(powerStat)
+		local report = not errorMessage and self:BuildPowerReportList(powerStat) or { }
 		self.controls.powerReportList:SetReport(powerStat, report, self.build.calcsTab.nodePowerSingleNotables)
+		if errorMessage then
+			self.controls.powerReportList.label = "Power Report failed"
+			main:ShowMessage("Power Report", "Calculation failed:\n" .. errorMessage)
+		end
 		local toastIndex = findToastIndex("^Building Power Report")
 		if self.powerBuilderToastActive and toastIndex then
 			-- Remove the toast from the queue instead of triggering hide animation

@@ -501,19 +501,18 @@ function CalcsTabClass:BuildPower()
 	if self.powerBuildFlag then
 		self.powerBuildFlag = false
 		self.powerMax = nil
+		self.powerBuilderInitialized = false
 		self.powerBuilder = coroutine.create(self.PowerBuilder)
 	end
 	if self.powerBuilder then
 		local res, errMsg = coroutine.resume(self.powerBuilder, self)
-		if launch.devMode and not res then
-			error(errMsg)
-		end
 		if coroutine.status(self.powerBuilder) == "dead" then
 			self.powerBuilder = nil
 			if self.build.powerBuilderCallback then
-				self.build.powerBuilderCallback()
+				self.build.powerBuilderCallback(not res and tostring(errMsg) or nil)
 			end
 		end
+		if launch.devMode and not res then error(errMsg) end
 	end
 end
 
@@ -522,8 +521,8 @@ function CalcsTabClass:PowerBuilder()
 	-- local timer_start = GetTime()
 	local singleNotables = self.nodePowerSingleNotables
 	local useFullDPS = self.powerStat ~= nil and (self.powerStat.stat == "FullDPS" or self.powerStat.combinedReport)
-	-- Retain basic defence calculations, and full EHP estimates for all other report metrics.
-	local calcOptions = { noEnvReuse = true, skipEHP = self.powerStat and self.powerStat.stat == "TotalDPS" }
+	local calcOptions = { noEnvReuse = true, skipEHP = self.powerStat and self.powerStat.stat == "TotalDPS",
+		fullDPSOnly = self.powerStat and self.powerStat.stat == "FullDPS" and not self.powerStat.combinedReport }
 	local timeSlice = 25 -- Yield between nodes so the UI can respond during report generation.
 	local calcFunc, calcBase = self:GetMiscCalculator()
 	self.powerReportBase = calcBase
@@ -548,6 +547,43 @@ function CalcsTabClass:PowerBuilder()
 	local start = GetTime()
 	local nodeIndex = 0
 	local total = 0
+	local pathCache = { }
+	local function yieldIfNeeded()
+		if coroutine.running() and GetTime() - start > timeSlice then
+			if self.build.powerBuilderProgressCallback then
+				self.build.powerBuilderProgressCallback(total > 0 and m_floor(nodeIndex/total*100) or 100)
+			end
+			coroutine.yield()
+			start = GetTime()
+		end
+	end
+	local function calculate(override, key, store)
+		store = store or cache
+		if store[key] then return store[key] end
+		-- Retain only report numbers, not the full per-node output tables.
+		local output = calcFunc(override, useFullDPS, calcOptions)
+		local power = { }
+		if self.powerStat and self.powerStat.stat and not self.powerStat.ignoreForNodes then
+			power.singleStat = self:CalculatePowerStat(self.powerStat, output, calcBase)
+			if self.powerStat.combinedReport then
+				power.ehpStat = self:CalculatePowerStat({ stat = "TotalEHP" }, output, calcBase)
+			end
+		elseif not self.powerStat or not self.powerStat.ignoreForNodes then
+			power.offence, power.defence = self:CalculateCombinedOffDefStat(output, calcBase)
+			power.singleStat = power.offence
+		end
+		store[key] = power
+		return power
+	end
+	local function calculatePath(nodes, removal)
+		local ids = { }
+		for node in pairs(nodes) do ids[#ids + 1] = node.id end
+		table.sort(ids)
+		-- Cache only identical node sets, including the operation. Equal modifier
+		-- text is insufficient for paths affected by jewel radii or allocations.
+		local key = (removal and "remove:" or "add:") .. table.concat(ids, ",")
+		return calculate(removal and { removeNodes = nodes } or { addNodes = nodes }, key, pathCache).singleStat
+	end
 
 	for nodeId, node in pairs(self.build.spec.nodes) do
 		wipeTable(node.power)
@@ -598,14 +634,11 @@ function CalcsTabClass:PowerBuilder()
 		end
 		for nodeId, node in pairs(nodes) do
 			if not node.alloc and node.modKey ~= "" and not self.mainEnv.grantedPassives[nodeId] then
-				if not cache[node.modKey] then
-					cache[node.modKey] = calcFunc({ addNodes = { [node] = true } }, useFullDPS, calcOptions)
-				end
-				local output = cache[node.modKey]
+				local power = calculate({ addNodes = { [node] = true } }, node.modKey)
 				if self.powerStat and self.powerStat.stat and not self.powerStat.ignoreForNodes then
-					node.power.singleStat = self:CalculatePowerStat(self.powerStat, output, calcBase)
+					node.power.singleStat = power.singleStat
 					if self.powerStat.combinedReport then
-						node.power.ehpStat = self:CalculatePowerStat({ stat = "TotalEHP" }, output, calcBase)
+						node.power.ehpStat = power.ehpStat
 					end
 					if (singleNotables or node.path) and not node.ascendancyName then
 						newPowerMax.singleStat = m_max(newPowerMax.singleStat, node.power.singleStat)
@@ -616,11 +649,11 @@ function CalcsTabClass:PowerBuilder()
 							pathNodes[node] = true
 						end
 						if not singleNotables and distance > 1 then
-							node.power.pathPower = self:CalculatePowerStat(self.powerStat, calcFunc({ addNodes = pathNodes }, useFullDPS, calcOptions), calcBase)
+							node.power.pathPower = calculatePath(pathNodes)
 						end
 					end
 				elseif not self.powerStat or not self.powerStat.ignoreForNodes then
-					node.power.offence, node.power.defence = self:CalculateCombinedOffDefStat(output, calcBase)
+					node.power.offence, node.power.defence = power.offence, power.defence
 					node.power.singleStat = node.power.offence
 					if node.path and not node.ascendancyName then
 						newPowerMax.offence = m_max(newPowerMax.offence, node.power.offence)
@@ -631,16 +664,13 @@ function CalcsTabClass:PowerBuilder()
 				end
 			elseif (node.alloc or singleNotables and self.mainEnv.grantedPassives[nodeId]) and node.modKey ~= "" then
 				local removeKey = nodeId.."_remove"
-				if not cache[removeKey] then
-					local removeNodes = { [node] = true }
-					if self.mainEnv.grantedPassives[nodeId] then removeNodes[nodeId] = true end
-					cache[removeKey] = calcFunc({ removeNodes = removeNodes }, useFullDPS, calcOptions)
-				end
-				local output = cache[removeKey]
+				local removeNodes = { [node] = true }
+				if self.mainEnv.grantedPassives[nodeId] then removeNodes[nodeId] = true end
+				local power = calculate({ removeNodes = removeNodes }, removeKey)
 				if self.powerStat and self.powerStat.stat and not self.powerStat.ignoreForNodes then
-					node.power.singleStat = self:CalculatePowerStat(self.powerStat, output, calcBase)
+					node.power.singleStat = power.singleStat
 					if self.powerStat.combinedReport then
-						node.power.ehpStat = self:CalculatePowerStat({ stat = "TotalEHP" }, output, calcBase)
+						node.power.ehpStat = power.ehpStat
 					end
 					if (singleNotables or node.depends) and not node.ascendancyName then
 						node.power.pathPower = node.power.singleStat
@@ -649,19 +679,13 @@ function CalcsTabClass:PowerBuilder()
 							pathNodes[node] = true
 						end
 						if not singleNotables and #node.depends > 1 then
-							node.power.pathPower = self:CalculatePowerStat(self.powerStat, calcFunc({ removeNodes = pathNodes }, useFullDPS, calcOptions), calcBase)
+							node.power.pathPower = calculatePath(pathNodes, true)
 						end
 					end
 				end
 			end
 			nodeIndex = nodeIndex + 1
-			if coroutine.running() and GetTime() - start > timeSlice then
-				if self.build.powerBuilderProgressCallback then
-					self.build.powerBuilderProgressCallback(m_floor(nodeIndex/total*100))
-				end
-				coroutine.yield()
-				start = GetTime()
-			end
+			yieldIfNeeded()
 		end
 	end
 
@@ -673,24 +697,15 @@ function CalcsTabClass:PowerBuilder()
 		end
 		wipeTable(node.power)
 		if not node.alloc and node.modKey ~= "" and not self.mainEnv.grantedPassives[node.id] then
-			if not cache[node.modKey] then
-				cache[node.modKey] = calcFunc({ addNodes = { [node] = true } }, useFullDPS, calcOptions)
-			end
-			local output = cache[node.modKey]
+			local power = calculate({ addNodes = { [node] = true } }, node.modKey)
 			if self.powerStat and self.powerStat.stat and not self.powerStat.ignoreForNodes then
-				node.power.singleStat = self:CalculatePowerStat(self.powerStat, output, calcBase)
+				node.power.singleStat = power.singleStat
 				if self.powerStat.combinedReport then
-					node.power.ehpStat = self:CalculatePowerStat({ stat = "TotalEHP" }, output, calcBase)
+					node.power.ehpStat = power.ehpStat
 				end
 			end
 			nodeIndex = nodeIndex + 1
-			if coroutine.running() and GetTime() - start > timeSlice then
-				if self.build.powerBuilderProgressCallback then
-					self.build.powerBuilderProgressCallback(m_floor(nodeIndex/total*100))
-				end
-				coroutine.yield()
-				start = GetTime()
-			end
+			yieldIfNeeded()
 		end
 	end
 	self.powerMax = newPowerMax

@@ -51,6 +51,9 @@ for _, skill in ipairs({ "Spark", "Skeletal Sniper" }) do
 		local tooltip = calcFunc(override)
 		sameOutput(expected, tooltip, defenceFields)
 		close(expected.FullDPS, tooltip.FullDPS, "Full DPS tooltip")
+		local fullOnly = calcFunc(override, true, { noEnvReuse = true, fullDPSOnly = true })
+		close(expected.FullDPS, fullOnly.FullDPS, "Full DPS only")
+		assert(fullOnly.TotalEHP == nil and fullOnly.TotalDPS == nil, "Full DPS only repeated the main-skill pass")
 	end
 	-- Count calls to verify dispatch; no elapsed-time assertions or measurements.
 	local oldEHP, oldFullDPS = calcs.buildDefenceEstimations, calcs.calcFullDPS
@@ -93,7 +96,7 @@ for _, skill in ipairs({ "Spark", "Skeletal Sniper" }) do
 				if coroutine.status(co) ~= "dead" then yields = yields + 1 end
 			until coroutine.status(co) == "dead"
 			GetTime = oldTime
-			assert(yields == 3 and #progress == 2 and progress[2] == 100, "Builder did not yield between nodes")
+			assert(yields >= 3 and #progress >= 2 and progress[#progress] == 100, "Builder did not yield between calculation passes")
 		else
 			report:PowerBuilder()
 		end
@@ -114,7 +117,7 @@ for _, skill in ipairs({ "Spark", "Skeletal Sniper" }) do
 	runCallback("OnFrame")
 	calcFunc = build.calcsTab:GetMiscCalculator()
 	local expected = calcFunc({}, true)
-	local actual = calcFunc({}, true, { noEnvReuse = true })
+	local actual = calcFunc({}, true, { noEnvReuse = true, fullDPSOnly = true })
 	close(data.powerStatList.GetFromOutput(expected, { stat = "FullDPS" }), data.powerStatList.GetFromOutput(actual, { stat = "FullDPS" }), "Full DPS fallback")
 	print("PASS: "..skill.." report parity, metric switches, tooltip completeness, and cooperative scheduling")
 end

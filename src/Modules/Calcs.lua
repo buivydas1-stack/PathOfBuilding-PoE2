@@ -136,6 +136,12 @@ function calcs.getMiscCalculator(build)
 	end
 	local fastEnv
 	return function(override, useFullDPS, fastCalcOptions)
+		if fastCalcOptions and fastCalcOptions.fullDPSOnly and fastCalcOptions.noEnvReuse and usedFullDPS and useFullDPS then
+			-- Tree Full DPS reports only read the roll-up. Recalculate every included skill
+			-- with the override; the gem-only input cache cannot validate tree changes.
+			local result = calcs.calcFullDPS(build, "CALCULATOR", override, { cachedPlayerDB = cachedPlayerDB, cachedEnemyDB = cachedEnemyDB, cachedMinionDB = cachedMinionDB, env = nil })
+			return { SkillDPS = result.skills, FullDPS = result.combinedDPS, FullDotDPS = result.TotalDotDPS }
+		end
 		if fastCalcOptions and not fastCalcOptions.noEnvReuse then
 			if fastCalcOptions.fullDPSOnly and usedFullDPS and useFullDPS then
 				-- The caller only reads the FullDPS roll-up (e.g. sorting gems by Full DPS), and
