@@ -2292,7 +2292,9 @@ function buildMode:CompareStatList(tooltip, statList, actor, baseOutput, compare
 	local showAll = not focusComparison or main:IsComparisonRevealHeld() and not suppressAltReveal
 	for _, statData in ipairs(statList) do
 		category = statData.compareSection or category
-		if statData.stat and (not statData.flag or actor.mainSkill.activeEffect.statSet.skillFlags[statData.flag]) and not statData.childStat and statData.stat ~= "SkillDPS" then
+		if statData.stat and not (baseOutput.unavailableStats and baseOutput.unavailableStats[statData.stat])
+			and not (compareOutput.unavailableStats and compareOutput.unavailableStats[statData.stat])
+			and (not statData.flag or actor.mainSkill.activeEffect.statSet.skillFlags[statData.flag]) and not statData.childStat and statData.stat ~= "SkillDPS" then
 			local statVal1 = compareOutput[statData.stat] or 0
 			local statVal2 = baseOutput[statData.stat] or 0
 			local diff = statVal1 - statVal2

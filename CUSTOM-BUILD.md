@@ -48,6 +48,8 @@ Parsed conditional effects use the calculation engine's current player/enemy con
 
 Build loading rebuilds Configuration after all equipment and other sections have loaded. This preserves equipment-dependent conditions such as Lavianga's mana flask effect regardless of XML section order, including snapshots used by the background worker. `tests/custom_augment_worker_snapshot.lua` checks every report metric against the original build and an independently reloaded worker snapshot with Configuration deliberately placed before Items.
 
+Augment hover comparisons use the same formatter and display-stat definitions as passive-tree/item comparisons: DPS/EHP first, then hold **Alt** for detailed changes. Hit Chance and effective Crit Chance show their before/after percentages. Hit Chance is also available in the shared sortable stat dropdown. The worker returns one scalar baseline plus changed fields per candidate; hovering, sorting and revealing details use cached values without new calculation passes. `tests/custom_augment_tooltips.lua` verifies Accuracy-driven gains and exact tooltip parity with direct tree comparisons through JSON transport and Alt transitions.
+
 Functional checks compare real socket calculations with independent EHP/Full DPS passes and cover restrictions, scaling, replacement baselines, sorting/filtering, cancellation and stale results. An isolated native-runtime test calculated 126 helmet candidates in 8.84 seconds; frame intervals during that worker had a 6 ms 95th percentile and 9 ms maximum. This is a worker-delivery measurement, not a benchmark of the full PoB interface. Cached filtering/sorting averaged 0.085 ms on the sample; XML capture and result decoding each took approximately 10 ms on the UI thread.
 
 ## Portable version

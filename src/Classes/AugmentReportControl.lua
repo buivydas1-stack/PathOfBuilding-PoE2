@@ -184,7 +184,7 @@ function ReportClass:GetRowValue(column, _, entry)
 end
 
 function ReportClass:AddValueTooltip(tooltip, _, entry)
-	if tooltip:CheckForUpdate(entry) then
+	if tooltip:CheckForUpdate(entry, main:IsComparisonRevealHeld(), self.stat) then
 		tooltip:AddLine(16, "^7" .. entry.row.name)
 		for _, line in ipairs(entry.row.lines) do tooltip:AddLine(14, "^7" .. line) end
 		tooltip:AddSeparator(8)
@@ -197,12 +197,7 @@ function ReportClass:AddValueTooltip(tooltip, _, entry)
 			tooltip:AddLine(14, "^7Values use current conditions; holding " .. main.comparisonRevealKey .. " only reveals rows.")
 		end
 		tooltip:AddLine(14, "^7" .. self.stat.label .. ": " .. number(self.result.baseline[self.stat.stat]) .. " -> " .. number(entry.value))
-		for _, stat in ipairs(self.controls.stat.list) do
-			local delta, benefit, percent = report.Compare(self.result.baseline, entry.row.values, stat)
-			if delta and math.abs(delta) > 0.000001 then
-				local color = benefit > 0 and main.colorPositive or main.colorNegative
-				tooltip:AddLine(14, color .. number(delta, true) .. " " .. stat.label .. (percent and " (" .. number(percent, true) .. "%)" or ""))
-			end
-		end
+		local comparison = report.ComparisonOutput(self.result.baselineComparison, entry.row.comparison)
+		self.itemsTab.build:AddStatComparesToTooltip(tooltip, self.result.baselineComparison, comparison, "^7Stat changes:")
 	end
 end

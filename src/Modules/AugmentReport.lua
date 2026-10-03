@@ -51,6 +51,53 @@ function report.Snapshot(output)
 	return values
 end
 
+-- Preserve the scalar output used by the shared tree/item comparison formatter,
+-- including condition flags and before/after chances. Never send environments,
+-- modifier databases, skill lists or other calculation graphs to the UI thread.
+function report.ComparisonSnapshot(output)
+	local values, unavailable = { }, { }
+	for key, value in pairs(output) do
+		if type(value) == "number" then
+			if report.IsFinite(value) then values[key] = value else unavailable[key] = true end
+		elseif type(value) == "boolean" or type(value) == "string" then
+			values[key] = value
+		end
+	end
+	if next(unavailable) then values.unavailableStats = unavailable end
+	if output.Minion then values.Minion = report.ComparisonSnapshot(output.Minion) end
+	return values
+end
+
+-- Most outputs are identical for every augment. Send one baseline and only the
+-- changed/deleted fields per candidate, avoiding a large decode on the UI thread.
+function report.ComparisonChanges(baseline, values)
+	local changes, removed = { }, { }
+	for key, value in pairs(values) do
+		if key == "Minion" then
+			changes.Minion = report.ComparisonChanges(baseline.Minion or { }, value)
+		elseif value ~= baseline[key] then
+			changes[key] = value
+		end
+	end
+	for key in pairs(baseline) do if values[key] == nil then removed[key] = true end end
+	if next(removed) then changes.removedStats = removed end
+	return changes
+end
+
+function report.ComparisonOutput(baseline, changes)
+	local output = { }
+	for key, value in pairs(baseline) do output[key] = value end
+	for key in pairs(changes.removedStats or { }) do output[key] = nil end
+	for key, value in pairs(changes) do
+		if key == "Minion" then
+			output.Minion = report.ComparisonOutput(baseline.Minion or { }, value)
+		elseif key ~= "removedStats" then
+			output[key] = value
+		end
+	end
+	return output
+end
+
 function report.Compare(baseline, values, stat)
 	local base, value = baseline[stat.stat], values[stat.stat]
 	if not report.IsFinite(base) or not report.IsFinite(value) then return end
@@ -135,7 +182,8 @@ function report.Calculate(build, raw, slotName, candidateNames, considerExisting
 	assert(equipped, "Select an item in an active, usable equipment slot.")
 	assert(not env.itemWarnings.augmentLimitWarning, "Other retained augments already exceed an equipped limit. Fix those sockets before comparing replacements.")
 	local calculator = build.calcsTab:GetMiscCalculator()
-	local result = { baseline = report.Snapshot(calculator(override, true, { noEnvReuse = true })), rows = { }, slot = slotName, excluded = 0, considerExisting = considerExisting or false, socketIndex = socketIndex }
+	local baselineOutput = calculator(override, true, { noEnvReuse = true })
+	local result = { baseline = report.Snapshot(baselineOutput), baselineComparison = report.ComparisonSnapshot(baselineOutput), rows = { }, slot = slotName, excluded = 0, considerExisting = considerExisting or false, socketIndex = socketIndex }
 	local emptyRaw = item:BuildRaw()
 	local effectItem = report.EmptyItem(emptyRaw)
 	for _, augment in ipairs(build.itemsTab:GetValidRunesForItem(item)) do
@@ -152,7 +200,7 @@ function report.Calculate(build, raw, slotName, candidateNames, considerExisting
 				effectItem.runes[1] = augment.name
 				effectItem:UpdateRunes()
 				local inactive, inactiveEffects = report.InactiveEffects(effectItem, candidateEnv)
-				table.insert(result.rows, { name = augment.name, type = augment.type, lines = augment.lines, values = report.Snapshot(output), inactive = inactive, inactiveEffects = inactiveEffects })
+				table.insert(result.rows, { name = augment.name, type = augment.type, lines = augment.lines, values = report.Snapshot(output), comparison = report.ComparisonChanges(result.baselineComparison, report.ComparisonSnapshot(output)), inactive = inactive, inactiveEffects = inactiveEffects })
 			end
 		end
 	end
