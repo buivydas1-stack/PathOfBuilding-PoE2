@@ -4438,6 +4438,8 @@ local specialModList = {
 	} end,
 	["arcane surge grants more life regeneration rate instead of mana regeneration rate"] = { flag("ArcaneSurgeLifeRegen") },
 	["gain onslaught for (%d+) seconds on hit while at maximum frenzy charges"] = { flag("Onslaught", { type = "StatThreshold", stat = "FrenzyCharges", thresholdStat = "FrenzyChargesMax" }, { type = "Condition", var = "HitRecently" }) },
+	["gain onslaught for 4 seconds when your marks activate"] = { flag("Condition:Onslaught", { type = "Condition", var = "MarkActivatedRecently" }) },
+	["gain (%d+)%% of damage as extra physical damage per ten percent missing mana"] = function(num) return { mod("DamageGainAsPhysical", "BASE", num, { type = "Multiplier", var = "MissingManaPercentage", div = 10 }) } end,
 	["enemies in your chilling areas take (%d+)%% increased lightning damage"] = function(num) return { mod("EnemyModifier", "LIST", { mod = mod("LightningDamageTaken", "INC", num) }, { type = "ActorCondition", actor = "enemy", var = "InChillingArea" }) } end,
 	["warcries count as having (%d+) additional nearby enemies"] = function(num) return {
 		mod("Multiplier:WarcryNearbyEnemies", "BASE", num),

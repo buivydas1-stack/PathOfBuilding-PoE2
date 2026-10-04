@@ -114,8 +114,21 @@ local configSettings = {
 	{ var = "detonateDeadCorpseLife", type = "count", label = "Enemy Corpse ^xE05030Life:", ifSkillData = "explodeCorpse", tooltip = "Sets the maximum ^xE05030life ^7of the target corpse for Detonate Dead and similar skills.\nFor reference, a level 70 monster has "..data.monsterLifeTable[70].." base ^xE05030life^7, and a level 80 monster has "..data.monsterLifeTable[80]..".", apply = function(val, modList, enemyModList)
 		modList:NewMod("SkillData", "LIST", { key = "corpseLife", value = val }, "Config")
 	end },
-	{ var = "multiplierCurrentManaPercentage", type = "count", label = "Current ^x7070FFMana^7 %:", ifSkillData = "currentManaPercentage", defaultState = 100, apply = function(val, modList, enemyModList)
-		modList:NewMod("Multiplier:CurrentManaPercentage", "BASE", m_max(m_min(val,100), 0), "Config")
+	{ var = "multiplierCurrentManaPercentage", type = "countAllowZero", label = "Current ^x7070FFMana^7 %:", ifSkillData = "currentManaPercentage", defaultState = 100,
+		tooltip = "Percentage of maximum Mana currently remaining. For 70% missing Mana, enter 30.\nDefaults to full Mana. This sets missing-Mana damage scaling, not the separate Low Mana condition.", showIf = function(build)
+		local env = build.calcsTab.mainEnv
+		if not env or not env.player then return false end
+		if env.multipliersUsed.MissingManaPercentage then return true end
+		-- Allow configuring Pharisee comparisons before equipping the candidate.
+		for _, item in pairs(env.player.itemList) do
+			local category = item:GetSocketedAugmentTypes()
+			if (item.itemSocketCount or 0) > 0 and (category == "weapon" or category == "wand" or category == "staff") then return true end
+		end
+		return false
+	end, apply = function(val, modList, enemyModList)
+		local current = m_max(m_min(val, 100), 0)
+		modList:NewMod("Multiplier:CurrentManaPercentage", "BASE", current, "Config")
+		modList:NewMod("Multiplier:MissingManaPercentage", "BASE", 100 - current, "Config")
 	end },
 	{ var = "conditionStationary", type = "count", label = "Time spent stationary", ifCond = "Stationary",
 		tooltip = "Applies mods that use `while stationary` and `per / every second while stationary`",
@@ -1559,6 +1572,9 @@ Huge sets the radius to 11.
 	{ var = "conditionCastMarkRecently", type = "check", label = "Have you used a Mark Recently?", ifCond = "CastMarkRecently", apply = function(val, modList, enemyModList)
 		modList:NewMod("Condition:CastMarkRecently", "FLAG", true, "Config", { type = "Condition", var = "Combat" })
 	end },
+	{ var = "conditionMarkActivatedRecently", type = "check", label = "Has a Mark Activated Recently?", ifCond = "MarkActivatedRecently", tooltip = "Select when a Mark has activated in the past 4 seconds. Casting a Mark alone does not activate it.\nVoltaic Mark activates when its marked enemy is Electrocuted.\nThis models the active buff, not its average uptime.", apply = function(val, modList, enemyModList)
+		modList:NewMod("Condition:MarkActivatedRecently", "FLAG", true, "Config", { type = "Condition", var = "Combat" })
+	end },
 	{ var = "conditionSpawnedCorpseRecently", type = "check", label = "Spawned a corpse Recently?", ifCond = "SpawnedCorpseRecently", apply = function(val, modList, enemyModList)
 		modList:NewMod("Condition:SpawnedCorpseRecently", "FLAG", true, "Config", { type = "Condition", var = "Combat" })
 	end },
@@ -2421,6 +2437,10 @@ local manualSources = {
 			return skill.skillTypes[SkillType.Mark] and not skill.skillData.triggered
 		end)
 		if name then return "you have "..name.." enabled" end
+	end },
+	conditionMarkActivatedRecently = { condition = "MarkActivatedRecently", source = function(build, env)
+		local name = findSkillSource(env, function(skill) return skill.skillTypes[SkillType.Mark] end)
+		if name then return "you have "..name.." enabled; activation must be assumed separately from casting" end
 	end },
 	conditionEnemyOnShockedGround = { condition = "OnShockedGround", enemy = true, source = function(build, env)
 		local name = findSkillSource(env, function(skill)

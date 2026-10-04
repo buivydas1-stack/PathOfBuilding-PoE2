@@ -6,11 +6,12 @@ All 83 idol/slot entries pass the real selector, import, editor and item round-t
 
 The first combat batch adds three effects using existing calculations: Carved Cunning's helmet hit guarantee against enemies on Full Life, its body-armour deflection prevention bonus, and Carved Mischief's raised-shield maximum Block bonus. Full Life and Active Blocked Recently use existing Configuration conditions; Deflected Recently has a new manual checkbox. Wrapped Cunning body-armour clipboard text is recognised as one modifier. Import/editor checks, condition toggles and independent recommendation/calculation comparisons pass. Current effect text checked against [Carved Cunning](https://poe2db.tw/us/Carved_Cunning) and [Carved Mischief](https://poe2db.tw/us/Carved_Mischief).
 
-The following 43 item modifier lines still have no complete parser result. This list retains the earlier inventory; non-combat effects are excluded from further implementation at the user's request. They remain marked unsupported in item previews and contribute no value for that effect. Parsed remaining lines are not thereby proven fully simulated: charge transfer, temporal/conditional uptime, probabilistic actions and skill limits require their own calculation models. These are existing engine support limitations, not evidence that a recommendation with those lines has zero potential in-game value.
+The second combat batch adds Carved Cunning boots' Onslaught on Mark activation and Pharisee's missing-Mana physical damage for martial weapons, wands and staves. "Has a Mark Activated Recently?" is distinct from casting a Mark and is exposed when an enabled Mark can supply that scenario. Current Mana % is available with a socketed eligible weapon before comparing Pharisee; enter 30 for 70% missing Mana. It accepts zero, clamps 0-100 and uses completed ten-percent missing-Mana increments. It does not set the existing Low Mana checkbox. Onslaught does not stack with the existing manual buff. Direct and background-snapshot comparisons agree; item import/editor round trips and zero/full/blank/boundary Mana checks pass. [Voltaic Mark activates on Electrocution](https://poe2db.tw/us/Voltaic_Mark); [Pharisee effects](https://poe2db.tw/us/Idol_of_the_Pharisee) are checked separately from simulation assumptions. Pharisee's sceptre Command-skill cost wording remains outside this batch.
+
+The following 39 item modifier lines still have no complete parser result. This list retains the earlier inventory; non-combat effects are excluded from further implementation at the user's request. They remain marked unsupported in item previews and contribute no value for that effect. Parsed remaining lines are not thereby proven fully simulated: charge transfer, temporal/conditional uptime, probabilistic actions and skill limits require their own calculation models. These are existing engine support limitations, not evidence that a recommendation with those lines has zero potential in-game value.
 
 | Idol | Socket category | Unsupported modifier |
 | --- | --- | --- |
-| Carved Cunning | boots | Gain Onslaught for 4 seconds when your Marks Activate |
 | Carved Majesty | boots | 1% increased Movement Speed while Sprinting per Persistent Minion |
 | Carved Majesty | gloves | Companions gain Onslaught for 4 seconds on Hitting your Marked targets |
 | Carved Mischief | helmet | Gain Guard equal to 10% of maximum Life for 4 seconds on taking Savage Hit |
@@ -43,9 +44,6 @@ The following 43 item modifier lines still have no complete parser result. This 
 | Idol of the Martyr | weapon | Bonded: Invocated skills have 25% increased Maximum Energy |
 | Idol of the Martyr | weapon | Meta Skills gain 40% increased Energy |
 | Idol of the Pharisee | sceptre | 30% reduced Mana Cost Efficiency of Command Skills |
-| Idol of the Pharisee | staff | Gain 2% of Damage as Extra Physical Damage per ten percent missing Mana |
-| Idol of the Pharisee | wand | Gain 2% of Damage as Extra Physical Damage per ten percent missing Mana |
-| Idol of the Pharisee | weapon | Gain 2% of Damage as Extra Physical Damage per ten percent missing Mana |
 | Owl Idol | focus | Bonded: 20% increased effect of Archon Buffs on you |
 | Ox Idol | buckler | Bonded: 15% chance for Damage of Enemies Hitting you to be Unlucky |
 | Ox Idol | shield | Bonded: 15% chance for Damage of Enemies Hitting you to be Unlucky |
