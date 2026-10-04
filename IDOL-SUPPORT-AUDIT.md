@@ -1,0 +1,57 @@
+# Idol support audit - 2026-10-04
+
+PoB source/runtime baseline: v0.23.1 custom fork. Current public patch checked: 0.5.5d (separate from the source version). Data comparison: pinned RePoE b818b843337cae43b090b272fd98bbc0fd3a34f3, 2026-09-15; [current Sycophant effects](https://poe2db.tw/us/Idol_of_the_Sycophant) agree with it. This is a software support audit, not a claim of complete current-game data.
+
+All 83 idol/slot entries pass the real selector, import, editor and item round-trip checks. Sycophant's weapon damage/resistances and replacement limit have independent calculation checks. The shared combined weapon category, missing limits, Bonded actor/special parsing, item-local Fox Idol activation and Carved Majesty's Spirit-per-Idol wording are repaired.
+
+The following 47 item modifier lines still have no complete parser result. They remain marked unsupported in item previews and contribute no value for that effect. Parsed remaining lines are not thereby proven fully simulated: charge transfer, temporal/conditional uptime, probabilistic actions and skill limits require their own calculation models. These are existing engine support limitations, not evidence that a recommendation with those lines has zero potential in-game value.
+
+| Idol | Socket category | Unsupported modifier |
+| --- | --- | --- |
+| Carved Cunning | body armour | Deflected no Hits Recently |
+| Carved Cunning | body armour | Prevent +5% of Damage from Deflected Hits if you've |
+| Carved Cunning | boots | Gain Onslaught for 4 seconds when your Marks Activate |
+| Carved Cunning | helmet | Enemies which are on Full Life cannot Evade your Hits |
+| Carved Majesty | boots | 1% increased Movement Speed while Sprinting per Persistent Minion |
+| Carved Majesty | gloves | Companions gain Onslaught for 4 seconds on Hitting your Marked targets |
+| Carved Mischief | gloves | +5% to maximum Block chance if you've Blocked with a raised Shield Recently |
+| Carved Mischief | helmet | Gain Guard equal to 10% of maximum Life for 4 seconds on taking Savage Hit |
+| Carved Tenacity | boots | Your speed is Unaffected by Slows while Sprinting |
+| Carved Tenacity | gloves | Enemies you Critically Hit get 100% reduced Life Regeneration Rate for 4 seconds |
+| Carved Tenacity | helmet | Enemies have no Critical Damage Bonus for 4 seconds after you Blind them |
+| Idol of Alira | helmet | 15% chance when you gain a Power Charge to gain an additional Power Charge |
+| Idol of Alira | sceptre | If you would gain a Power Charge, Allies in your Presence gain that Charge instead |
+| Idol of Egrin | sceptre | Bonded: Curse zones erupt after 20% reduced delay |
+| Idol of Eramir | body armour | Bonded: 15% chance for Charms you use to not consume Charges |
+| Idol of Eramir | body armour | Skills have 10% chance to not remove Charges but still count as consuming them |
+| Idol of Eramir | sceptre | Allies in your Presence share Charges with you |
+| Idol of Greust | sceptre | Bonded: Recover 3% of maximum Life when one of your Minions is Revived |
+| Idol of Greust | sceptre | Companions deal 10% more Damage for each different type of dead Companion you have |
+| Idol of Grold | boots | Bonded: 30% increased Glory generation |
+| Idol of Grold | sceptre | 15% increased Damage per each different Companion in your Presence |
+| Idol of Kraityn | gloves | 15% chance when you gain a Frenzy Charge to gain an additional Frenzy Charge |
+| Idol of Kraityn | sceptre | If you would gain a Frenzy Charge, Allies in your Presence gain that Charge instead |
+| Idol of Maxarius | body armour | Bonded: Storm Skills have +1 to Limit |
+| Idol of Oak | boots | 15% chance when you gain an Endurance Charge to gain an additional Endurance Charge |
+| Idol of Oak | sceptre | If you would gain an Endurance Charge, Allies in your Presence gain that Charge instead |
+| Idol of Silk | sceptre | Companions in your Presence gain 1 Rage on hit |
+| Idol of Sirrius | gloves | Bonded: 20% reduced Slowing Potency of Debuffs on You |
+| Idol of Yeena | boots | Bonded: Plants have a 25% chance to immediately Overgrow when they enter your Presence for the first time |
+| Idol of Yeena | sceptre | Plants have a 25% chance to immediately Overgrow when they enter your Presence for the first time |
+| Idol of the Martyr | staff | Bonded: Invocated skills have 25% increased Maximum Energy |
+| Idol of the Martyr | staff | Meta Skills gain 40% increased Energy |
+| Idol of the Martyr | wand | Bonded: Invocated skills have 25% increased Maximum Energy |
+| Idol of the Martyr | wand | Meta Skills gain 40% increased Energy |
+| Idol of the Martyr | weapon | Bonded: Invocated skills have 25% increased Maximum Energy |
+| Idol of the Martyr | weapon | Meta Skills gain 40% increased Energy |
+| Idol of the Pharisee | sceptre | 30% reduced Mana Cost Efficiency of Command Skills |
+| Idol of the Pharisee | staff | Gain 2% of Damage as Extra Physical Damage per ten percent missing Mana |
+| Idol of the Pharisee | wand | Gain 2% of Damage as Extra Physical Damage per ten percent missing Mana |
+| Idol of the Pharisee | weapon | Gain 2% of Damage as Extra Physical Damage per ten percent missing Mana |
+| Owl Idol | focus | Bonded: 20% increased effect of Archon Buffs on you |
+| Ox Idol | buckler | Bonded: 15% chance for Damage of Enemies Hitting you to be Unlucky |
+| Ox Idol | shield | Bonded: 15% chance for Damage of Enemies Hitting you to be Unlucky |
+| Primate Idol | helmet | Bonded: Remnants can be collected from 30% further away |
+| Rabbit Idol | body armour | Bonded: 10% increased Quantity of Gold Dropped by Slain Enemies |
+| Stag Idol | helmet | Bonded: Projectiles have 25% chance for an additional Projectile when Forking |
+| Stag Idol | helmet | Projectiles have 15% chance to Fork |

@@ -1366,9 +1366,13 @@ function ItemsTabClass:Draw(viewPort, inputEvents)
 	do
 		local maxY = select(2, self.lastSlot:GetPos()) + 24
 		local maxX = self.anchorDisplayItem:GetPos() + 462
+		self.controls.augmentReport.x = 12
 		if self.displayItem then
 			local x, y = self.controls.displayItemTooltipAnchor:GetPos()
 			local ttW, ttH = self.displayItemTooltip:GetDynamicSize(viewPort)
+			local runeX = self.controls.displayItemRune1:GetPos()
+			local runeW = self.controls.displayItemRune1:GetSize()
+			self.controls.augmentReport.x = m_max(12, x + ttW + 12 - runeX - runeW)
 			maxY = m_max(maxY, y + ttH + 4)
 			maxX = m_max(maxX, x + ttW + 80)
 		end

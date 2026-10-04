@@ -112,13 +112,14 @@ end
 -- Inspect only this augment, so retained sockets cannot make it look applicable.
 -- Unknown effects stay visible; an inactive Bonded bonus never hides a useful
 -- ordinary bonus. No hypothetical conditions or extra calculation passes are used.
-function report.InactiveEffects(item, env)
+function report.InactiveEffects(item, env, localBondedIdols)
 	local inactive, hasActive = { }, false
 	local function conditionsMatch(mod, db)
 		if not db then return true end -- Cannot establish inactivity for this actor.
 		local test = { name = "AugmentCondition", type = "FLAG", value = true, flags = 0, keywordFlags = 0, source = "" }
 		for _, tag in ipairs(mod) do
-			if tag.type == "Condition" or tag.type == "ActorCondition" then table.insert(test, tag) end
+			if (tag.type == "Condition" or tag.type == "ActorCondition") and
+				not (localBondedIdols and tag.type == "Condition" and tag.var == "CanUseBondedModifiers") then table.insert(test, tag) end
 		end
 		if db:EvalMod(test) then return true end
 		-- Some conditions belong to a particular skill rather than the global DB.
@@ -138,7 +139,7 @@ function report.InactiveEffects(item, env)
 	end
 	for _, line in ipairs(item.runeModLines) do
 		local bonded = line.line:match("^Bonded:")
-		if not bonded or env.player.modDB:GetCondition("CanUseBondedModifiers") then
+		if not bonded or localBondedIdols or env.player.modDB:GetCondition("CanUseBondedModifiers") then
 			if line.extra or #line.modList == 0 then
 				hasActive = true
 			else
@@ -199,7 +200,7 @@ function report.Calculate(build, raw, slotName, candidateNames, considerExisting
 				local output, candidateEnv = calculator({ repSlotName = slotName, repItem = candidate }, true, { noEnvReuse = true, includeEnv = true })
 				effectItem.runes[1] = augment.name
 				effectItem:UpdateRunes()
-				local inactive, inactiveEffects = report.InactiveEffects(effectItem, candidateEnv)
+				local inactive, inactiveEffects = report.InactiveEffects(effectItem, candidateEnv, augment.type == "Idol" and candidate.baseModList:Flag(nil, "LocalBondedIdols"))
 				table.insert(result.rows, { name = augment.name, type = augment.type, lines = augment.lines, values = report.Snapshot(output), comparison = report.ComparisonChanges(result.baselineComparison, report.ComparisonSnapshot(output)), inactive = inactive, inactiveEffects = inactiveEffects })
 			end
 		end

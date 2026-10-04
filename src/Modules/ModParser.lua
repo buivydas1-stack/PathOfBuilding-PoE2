@@ -1279,6 +1279,7 @@ local preFlagList = {
 	["^raised zombies' slam attack has "] = { addToMinion = true, tag = { type = "SkillId", skillId = "ZombieSlam" } },
 	["^raised spectres, raised zombies, and summoned skeletons have "] = { addToMinion = true, addToMinionTag = { type = "SkillName", skillNameList = { "Raise Spectre", "Raise Zombie", "Summon Skeletons" }, includeTransfigured = true } },
 	["^companions [hd][ae][va][el] "] = { addToMinion = true, addToMinionTag = { type = "SkillType", skillType = SkillType.CreatesCompanion } },
+	["^companions in your presence [hgd][ae][via][enl] "] = { addToMinion = true, addToMinionTag = { type = "SkillType", skillType = SkillType.CreatesCompanion } },
 	["^companions "] = { addToMinion = true, addToMinionTag = { type = "SkillType", skillType = SkillType.CreatesCompanion } },
 	-- Totem/trap/mine
 	["^attacks used by totems have "] = { flags = ModFlag.Attack, keywordFlags = KeywordFlag.Totem },
@@ -1492,6 +1493,7 @@ local modTagList = {
 	["per socketed rune or soul core"] = { tag = { type = "Multiplier", var = "RunesSocketedIn{SlotName}" } },
 	["per socket filled"] = { tag = { type = "Multiplier", var = "RunesSocketedIn{SlotName}" } },
 	["per idol in your equipment"] = { tag = { type = "Multiplier", var = "IdolsInEquipment", actor = "player" } },
+	["per idol socketed in your equipment"] = { tag = { type = "Multiplier", var = "IdolsInEquipment", actor = "player" } },
 	["per non%-idol augment in your equipment"] = { tag = { type = "Multiplier", var = "NonIdolAugmentsInEquipment", actor = "player" } },
 	["per (%d+) (%a+) support gems socketed"] = function(num, _, color) return { tag = { type = "Multiplier", var = firstToUpper(color) .. "SupportGems", div = num } } end,
 	["per socketed (%a+) support gem"] = function(color) return { tag = { type = "Multiplier", var = firstToUpper(color) .. "SupportGems" } } end,
@@ -3443,6 +3445,7 @@ local specialModList = {
 	["gain the benefits of bonded modifiers on runes and idols"] = {
 		flag("Condition:CanUseBondedModifiers"),
 	},
+	["idols socketed in this item gain the benefits of their bonded modifiers"] = { flag("LocalBondedIdols") },
 	-- Item local modifiers
 	["has no sockets"] = { flag("NoSockets") },
 	["has ([%+%-]%d+) to evasion rating per player level"] = function(num) return { mod("EvasionPerLevel", "BASE", num) } end,
@@ -6546,6 +6549,17 @@ end
 local jewelFuncList = { }
 
 local function parseMod(line, order)
+	-- Bonded can precede another actor prefix or an exact special modifier.
+	-- Parse that complete effect first, then gate its outer modifier on the
+	-- equipment owner's Bonded condition (also for companion/aura effects).
+	local bondedLine = line:match("^[Bb]onded: (.+)$")
+	if bondedLine then
+		local mods, extra = parseMod(bondedLine, order)
+		for _, effect in ipairs(mods or { }) do
+			t_insert(effect, { type = "Condition", var = "CanUseBondedModifiers" })
+		end
+		return mods, extra
+	end
 	-- Check if this is a special modifier
 	local lineLower = line:lower()
 	for pattern, patternVal in pairs(jewelFuncList) do

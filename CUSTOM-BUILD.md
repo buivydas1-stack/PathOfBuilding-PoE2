@@ -43,6 +43,9 @@ Based on the official Path of Building 2 **v0.23.1** release.
 
 ## Augment recommendations
 
+- Sycophant, Martyr and Pharisee now use recognised weapon/wand/staff socket categories. Idol one-copy/shared Ancient limits are enforced. Bonded actor and exact-special effects parse correctly; Fox Idol enables Bonded bonuses only for Idols in its own item. Carved Majesty's Spirit-per-Idol line is recognised. The [idol support audit](IDOL-SUPPORT-AUDIT.md) records remaining unsupported effects; selector presence does not prove complete effect simulation.
+- The recommendation table sits beyond the measured item-preview width, including extra columns for tall items. Existing horizontal scrolling provides access when both panels exceed the available window width.
+
 - In Skills, hovering a group or gem **Enabled** checkbox shows changed Full DPS first, then EHP, followed by the remaining stat changes.
 - Skill-slot warnings refresh when groups or gems are enabled, disabled or removed, so an old ten-group warning does not persist after returning to nine. Meta skills such as Mirage Archer and their socketed skills count as one group.
 

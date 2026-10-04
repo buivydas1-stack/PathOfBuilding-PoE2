@@ -2349,6 +2349,25 @@ function ItemClass:BuildModList()
 	self.baseModList = baseList
 	self.rangeLineList = { }
 	self.modSource = "Item:"..(self.id or -1)..":"..self.name
+	local localBondedIdols = false
+	for _, lines in ipairs({ self.runeModLines, self.explicitModLines, self.implicitModLines }) do
+		for _, line in ipairs(lines) do
+			if self:CheckModLineVariant(line) and not line.extra then
+				for _, effect in ipairs(line.modList) do
+					if effect.name == "LocalBondedIdols" then localBondedIdols = true end
+				end
+			end
+		end
+	end
+	local function localAugmentMod(mod, line)
+		if localBondedIdols and line.augmentType == "Idol" and line.line:match("^Bonded:") then
+			mod = copyTable(mod, true)
+			for index = #mod, 1, -1 do
+				if mod[index].type == "Condition" and mod[index].var == "CanUseBondedModifiers" then table.remove(mod, index) end
+			end
+		end
+		return mod
+	end
 	for _, modLine in ipairs(self.buffModLines) do
 		if not modLine.extra and self:CheckModLineVariant(modLine) then
 			for _, mod in ipairs(modLine.modList) do
@@ -2378,7 +2397,7 @@ function ItemClass:BuildModList()
 				end
 				for _, mod in ipairs(modLine.modList) do
 					for _ = 1, variantCount do
-						baseList:AddMod(modLib.setSource(mod, self.modSource))
+						baseList:AddMod(modLib.setSource(localAugmentMod(mod, modLine), self.modSource))
 					end
 				end
 				if modLine.modTags and #modLine.modTags > 0 then
@@ -2419,7 +2438,7 @@ function ItemClass:BuildModList()
 		end
 		if effectModifier and effectModifier ~= 0 and self:CheckModLineVariant(modLine) and not modLine.extra and not modLine.socketedRuneEffectAlreadyApplied then
 			for _, mod in ipairs(modLine.modList) do
-				baseList:ScaleAddMod(mod, effectModifier)
+				baseList:ScaleAddMod(localAugmentMod(mod, modLine), effectModifier)
 			end
 		end
 	end
