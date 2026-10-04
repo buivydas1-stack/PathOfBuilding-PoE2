@@ -43,6 +43,9 @@ function ReportClass:SetItem(item)
 	-- BuildRaw is called on edits, never on every draw frame. Preserve the item ID
 	-- separately: it chooses the comparison slot but is absent from clipboard text.
 	self.itemRaw = item and item.itemSocketCount > 0 and item:BuildRaw() or nil
+	-- Match the unchecked calculation baseline. Socket edits then leave both
+	-- completed recommendations and an in-flight worker valid.
+	self.emptyItemRaw = self.itemRaw and report.EmptyItem(self.itemRaw):BuildRaw() or nil
 	local sockets = { }
 	for i = 1, item and item.itemSocketCount or 0 do sockets[i] = "Socket #" .. i end
 	self.controls.socket:SetList(sockets)
@@ -67,7 +70,8 @@ function ReportClass:Update()
 	local slot = item and self.itemsTab:GetComparisonSlotNameForItem(item)
 	local revision = self.itemsTab.build.outputRevision
 	local existing, socketIndex = self.controls.existing.state, self.controls.socket.selIndex
-	local key = self.itemRaw and slot and (revision .. "\n" .. slot .. "\n" .. tostring(existing) .. "\n" .. socketIndex .. "\n" .. self.itemRaw)
+	local comparisonRaw = existing and self.itemRaw or self.emptyItemRaw
+	local key = comparisonRaw and slot and (revision .. "\n" .. slot .. "\n" .. tostring(existing) .. "\n" .. (existing and socketIndex or 1) .. "\n" .. comparisonRaw)
 	if key ~= self.key then
 		self:Cancel()
 		self.key, self.result, self.failed = key, nil, nil

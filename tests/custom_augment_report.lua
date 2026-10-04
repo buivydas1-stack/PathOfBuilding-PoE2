@@ -156,18 +156,53 @@ assert(launched == 1, "Unchanged drawing must not launch another calculation")
 control.result = result; control.stat = stat("Life"); control:Refresh()
 control.controls.filter:SetSel(2); control:ReSort(1)
 assert(launched == 1, "Sorting/filtering must use cached results")
+-- Exercise the real rune dropdown path, including raw rebuilding and tooltip
+-- updates, for armour and weapons. It must preserve a pending worker as well
+-- as the completed rows while existing augments are ignored.
+local function changeRune(name)
+	local drop = build.itemsTab.controls.displayItemRune1
+	for index, value in ipairs(drop.list) do
+		if value.name == name then drop.selFunc(index, value); control:Update(); return end
+	end
+	error("Missing fixture rune: " .. name)
+end
+local cached, generation, key = control.result, control.generation, control.key
+changeRune("Perfect Iron Rune")
+assert(control.result == cached and control.worker == 1 and control.generation == generation and control.key == key and aborted == 0,
+	"Ignored armour augment edits must retain cached rows and the pending worker")
+changeRune("Perfect Body Rune")
+control.controls.socket.selIndex = 2; control:Update()
+assert(control.result == cached and control.worker == 1, "Unchecked socket selection cannot affect comparisons")
+control.controls.socket.selIndex = 1
 control.controls.existing.state = true; control:Update()
 assert(aborted == 1 and control.result == nil)
 stale(json.encode(result)); assert(control.result == nil, "Cancelled results must not replace newer results")
 now = now + 10000; control:Update(); assert(launched == 1, "Mode changes must wait for Calculate")
 control:Calculate(); assert(launched == 2)
 launch:OnSubFinished(2, json.encode(replaced)); assert(control.result.considerExisting)
+changeRune("Perfect Iron Rune")
+assert(control.result == nil, "Existing-augment mode must invalidate on rune edits")
+changeRune("Perfect Body Rune")
 build.outputRevision = build.outputRevision + 1; control:Update()
 assert(control.result == nil, "Build changes must invalidate cached comparisons")
 now = now + 10000; control:Update(); assert(launched == 2, "Build changes must wait for Calculate")
 control:Calculate(); assert(launched == 3)
 launch:OnSubError(3, "Worker error fixture"); assert(control.failed and control.worker == nil)
 control:Cancel(); launch:OnSubFinished(999, "late"); launch:OnSubError(999, "late")
+control.controls.existing.state = false
+build.itemsTab:SetDisplayItem(bow); control:Update()
+control.result = result; control:Refresh()
+cached, generation, key = control.result, control.generation, control.key
+changeRune("Greater Iron Rune")
+assert(control.result == cached and control.generation == generation and control.key == key,
+	"Ignored bow augment edits must retain recommendations")
+bow.quality = (bow.quality or 0) + 1
+bow:BuildAndParseRaw(); build.itemsTab:UpdateDisplayItemTooltip(); control:Update()
+assert(control.result == nil and control.key ~= key, "Other item edits must still invalidate recommendations")
+control.result = result
+bow.itemSocketCount = 1
+bow:BuildAndParseRaw(); build.itemsTab:UpdateDisplayItemTooltip(); control:Update()
+assert(control.result == nil, "Socket count changes must still invalidate recommendations")
 build.itemsTab:SetDisplayItem(nil); control:Update(); assert(not control:IsShown())
 GetTime, LaunchSubScript, AbortSubScript, GetScriptPath = oldTime, oldLaunch, oldAbort, oldPath
 print("PASS: explicit calculation only, cache reuse, mode/build invalidation, cancellation, stale delivery and worker errors")
