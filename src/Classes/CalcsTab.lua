@@ -492,8 +492,8 @@ function CalcsTabClass:BuildOutput()
 		self.controls.breakdown:SetBreakdownData(self.displayData, self.displayPinned)
 	end
 	
-	-- Retrieve calculator functions
-	self.nodeCalculator = { self.calcs.getNodeCalculator(self.build) }
+	-- Invalidate the optional node calculator; construct it only when requested.
+	self.nodeCalculator = nil
 	self.miscCalculator = { self.calcs.getMiscCalculator(self.build) }
 end
 
@@ -527,6 +527,8 @@ function CalcsTabClass:PowerBuilder()
 	local timeSlice = 25 -- Yield between nodes so the UI can respond during report generation.
 	local calcFunc, calcBase = self:GetMiscCalculator()
 	self.powerReportBase = calcBase
+	-- Equal raw modifiers can differ under radius effects; single-node additions
+	-- are cached by node identity, while whole paths use identical node sets.
 	local cache = { }
 	local distanceMap = { }
 	local distanceList = { }
@@ -635,7 +637,7 @@ function CalcsTabClass:PowerBuilder()
 		end
 		for nodeId, node in pairs(nodes) do
 			if not node.alloc and node.modKey ~= "" and not self.mainEnv.grantedPassives[nodeId] then
-				local power = calculate({ addNodes = { [node] = true } }, node.modKey)
+				local power = calculate({ addNodes = { [node] = true } }, node)
 				if self.powerStat and self.powerStat.stat and not self.powerStat.ignoreForNodes then
 					node.power.singleStat = power.singleStat
 					if self.powerStat.combinedReport then
@@ -698,7 +700,7 @@ function CalcsTabClass:PowerBuilder()
 		end
 		wipeTable(node.power)
 		if not node.alloc and node.modKey ~= "" and not self.mainEnv.grantedPassives[node.id] then
-			local power = calculate({ addNodes = { [node] = true } }, node.modKey)
+			local power = calculate({ addNodes = { [node] = true } }, node)
 			if self.powerStat and self.powerStat.stat and not self.powerStat.ignoreForNodes then
 				node.power.singleStat = power.singleStat
 				if self.powerStat.combinedReport then
@@ -734,6 +736,9 @@ function CalcsTabClass:CalculateCombinedOffDefStat(original, modified)
 end
 
 function CalcsTabClass:GetNodeCalculator()
+	if not self.nodeCalculator then
+		self.nodeCalculator = { self.calcs.getNodeCalculator(self.build) }
+	end
 	return unpack(self.nodeCalculator)
 end
 

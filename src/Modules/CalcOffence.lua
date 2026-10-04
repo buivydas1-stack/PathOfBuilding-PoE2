@@ -2927,8 +2927,8 @@ function calcs.offence(env, actor, activeSkill)
 				output.Speed = (output.ChanceToNotConsumeAmmo >= 100) and output.FiringRate or (1 / ((output.TotalFiringTime + output.EffectiveReloadTime) / (output.EffectiveBoltCount)))
 
 				-- Average bolts reloaded past six second for purposes of calculating Fresh Clip support damage bonus
-				local boltsReloadedPastSixSeconds = skillModList:Override({ source = "Config"}, "Multiplier:BoltsReloadedPastSixSeconds") or (output.ChanceToNotConsumeAmmo > 100) and 0 or (output.BoltCount * 6 / (output.TotalFiringTime + output.EffectiveReloadTime)) -- assume 0 bolts reloaded when none are consumed
-				local boltsReloadedPastEightSeconds = skillModList:Override({ source = "Config"}, "Multiplier:BoltsReloadedPastEightSeconds") or (output.ChanceToNotConsumeAmmo > 100) and 0 or (output.BoltCount * 8 / (output.TotalFiringTime + output.EffectiveReloadTime)) -- assume 0 bolts reloaded when none are consumed
+				local boltsReloadedPastSixSeconds = skillModList:Override({ source = "Config"}, "Multiplier:BoltsReloadedPastSixSeconds") or (output.ChanceToNotConsumeAmmo >= 100) and 0 or (output.BoltCount * 6 / (output.TotalFiringTime + output.EffectiveReloadTime)) -- assume 0 bolts reloaded when none are consumed
+				local boltsReloadedPastEightSeconds = skillModList:Override({ source = "Config"}, "Multiplier:BoltsReloadedPastEightSeconds") or (output.ChanceToNotConsumeAmmo >= 100) and 0 or (output.BoltCount * 8 / (output.TotalFiringTime + output.EffectiveReloadTime)) -- assume 0 bolts reloaded when none are consumed
 				if boltsReloadedPastSixSeconds > 0 then
 					skillModList:ReplaceMod("Multiplier:BoltsReloadedPastSixSeconds", "BASE", boltsReloadedPastSixSeconds, activeSkill.activeEffect.grantedEffect.name)
 				end
@@ -3842,7 +3842,7 @@ function calcs.offence(env, actor, activeSkill)
 			else
 				local extraDamage = skillModList:Sum("BASE", cfg, "CritMultiplier") / 100
 				local extraDamageInc = 1 + skillModList:Sum("INC", cfg, "CritMultiplier") / 100
-				local extraDamageMore = skillModList:More("MORE", cfg, "CritMultiplier")
+				local extraDamageMore = skillModList:More(cfg, "CritMultiplier")
 				extraDamage = extraDamage * extraDamageInc * extraDamageMore
 				local multiOverride = skillModList:Override(skillCfg, "CritMultiplier")
 				if multiOverride then
