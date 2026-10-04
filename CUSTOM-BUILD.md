@@ -2,6 +2,8 @@
 
 Based on the official Path of Building 2 **v0.23.1** release.
 
+- Ring item comparisons display in equipment-slot order: **Ring 1**, **Ring 2**, then **Ring 3** when available, regardless of stat gains or empty slots. Limited-unique comparisons follow the same order; affected-slot-only comparisons retain the selected slot. Verified with `tests/custom_ring_comparison_order.lua`.
+
 - If the remembered build file is missing and exactly one saved build remains (including subfolders), startup opens that build. Existing files, explicit build-list mode and ambiguous choices retain their normal behavior. Verified with `tests/custom_startup_build.lua` and an isolated native startup.
 
 - **Runeforge:** the Items editor has a button beside **Corrupt...**. It previews the item's verified Runeforging recipe while preserving rolls, modifiers, quality and augments; use **Add to build / Save** to apply it. After conversion the same button becomes **Undo Runeforge**, restoring the verified original base and recalculating defences. Reversal also works after saving/reopening or importing a supported Runeforged item; subsequent modifier edits are preserved. This reversal is a PoB simulation. Corrupted, mirrored, sanctified and non-recipe items cannot be Runeforged. Ambiguous recipes, conflicting local base variants and missing bases are disabled with a reason instead of guessing. Recipe snapshot: 2026-10-03, public game patch **0.5.5d**, separate from PoB release/tree versions. Verified in `tests/custom_runeforging.lua`.

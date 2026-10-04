@@ -4178,6 +4178,9 @@ function ItemsTabClass:AddItemTooltip(tooltip, item, slot, dbMode, maxWidth)
 				t_insert(compareSlots, slot)
 			end
 		end
+		if item.base.type == "Ring" then
+			table.sort(compareSlots, function(a, b) return self.slotOrder[a.slotName] < self.slotOrder[b.slotName] end)
+		end
 
 		tooltip:AddLine(14, colorCodes.TIP .. "Tip: Press Ctrl+D to disable the display of stat differences.", "VAR")
 
@@ -4257,6 +4260,10 @@ function ItemsTabClass:AddItemTooltip(tooltip, item, slot, dbMode, maxWidth)
 		-- 4. EHP
 		local function sortFunc(a, b)
 			if a == b then return end
+			-- Keep ring comparisons in equipment-slot order, regardless of stat gains.
+			if item.base.type == "Ring" then
+				return self.slotOrder[a.compareSlot.slotName] < self.slotOrder[b.compareSlot.slotName]
+			end
 
 			local aParams = { a.compareSlot.selItemId == 0 and 1 or 0, similar(a.selItem, a.isSameUnique), a.output
 				.FullDPS, a.output.CombinedDPS, a.output.TotalEHP, a.compareSlot.label, a.compareSlot.slotName }
