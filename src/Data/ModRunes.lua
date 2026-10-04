@@ -3087,6 +3087,7 @@ local runes = {
 	["Thane Leld's Rune of Spring"] = {
 		["weapon"] = {
 				type = "Rune",
+				limit = 1,
 				"Adds 1 to 60 Lightning Damage against Shocked Enemies",
 				"Bonded: +2% to Maximum Lightning Resistance",
 				statOrder = { 6910, 1011 },

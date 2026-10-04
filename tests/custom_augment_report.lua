@@ -69,6 +69,18 @@ assert(not row(bowResult, "Jiquani's Thesis"), "Armour Idol must not be suggeste
 assert(row(bowResult, "Perfect Storm Rune").values.FullDPS > bowResult.baseline.FullDPS, "Socketed weapon damage must alter Full DPS")
 print("PASS: empty/current baselines, real sockets, local scaling, Idol/Soul Core eligibility, EHP and Full DPS, no mutation")
 
+local spring = "Thane Leld's Rune of Spring"
+local springBow = item("Crude Bow", {spring, "None"}, "Adds 10 to 20 Physical Damage")
+local springNames = {[spring] = true, ["Greater Tempered Rune"] = true}
+local springBlocked = report.Calculate(build, springBow:BuildRaw(), "Weapon 1", springNames, true, 2)
+assert(not row(springBlocked, spring) and springBlocked.excluded == 1, "Retained Spring must block a second copy")
+assert(row(springBlocked, "Greater Tempered Rune"), "Spring limit must not exclude ordinary runes")
+local springReplacement = report.Calculate(build, springBow:BuildRaw(), "Weapon 1", springNames, true, 1)
+assert(row(springReplacement, spring), "Replacing Spring itself must remain allowed")
+local springEmpty = report.Calculate(build, springBow:BuildRaw(), "Weapon 1", springNames, false)
+assert(row(springEmpty, spring), "Ignoring existing augments must allow one Spring")
+print("PASS: Spring retained-copy exclusion, same-socket replacement and empty baseline")
+
 -- A retained limited augment blocks another copy; replacing that socket frees
 -- the limit. Ancient augments share their cap even when their names differ.
 local limited = "Quipolatl's Soul Core of Flow"
