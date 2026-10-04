@@ -4,17 +4,15 @@ PoB source/runtime baseline: v0.23.1 custom fork. Current public patch checked: 
 
 All 83 idol/slot entries pass the real selector, import, editor and item round-trip checks. Sycophant's weapon damage/resistances and replacement limit have independent calculation checks. The shared combined weapon category, missing limits, Bonded actor/special parsing, item-local Fox Idol activation and Carved Majesty's Spirit-per-Idol wording are repaired.
 
-The following 47 item modifier lines still have no complete parser result. They remain marked unsupported in item previews and contribute no value for that effect. Parsed remaining lines are not thereby proven fully simulated: charge transfer, temporal/conditional uptime, probabilistic actions and skill limits require their own calculation models. These are existing engine support limitations, not evidence that a recommendation with those lines has zero potential in-game value.
+The first combat batch adds three effects using existing calculations: Carved Cunning's helmet hit guarantee against enemies on Full Life, its body-armour deflection prevention bonus, and Carved Mischief's raised-shield maximum Block bonus. Full Life and Active Blocked Recently use existing Configuration conditions; Deflected Recently has a new manual checkbox. Wrapped Cunning body-armour clipboard text is recognised as one modifier. Import/editor checks, condition toggles and independent recommendation/calculation comparisons pass. Current effect text checked against [Carved Cunning](https://poe2db.tw/us/Carved_Cunning) and [Carved Mischief](https://poe2db.tw/us/Carved_Mischief).
+
+The following 43 item modifier lines still have no complete parser result. This list retains the earlier inventory; non-combat effects are excluded from further implementation at the user's request. They remain marked unsupported in item previews and contribute no value for that effect. Parsed remaining lines are not thereby proven fully simulated: charge transfer, temporal/conditional uptime, probabilistic actions and skill limits require their own calculation models. These are existing engine support limitations, not evidence that a recommendation with those lines has zero potential in-game value.
 
 | Idol | Socket category | Unsupported modifier |
 | --- | --- | --- |
-| Carved Cunning | body armour | Deflected no Hits Recently |
-| Carved Cunning | body armour | Prevent +5% of Damage from Deflected Hits if you've |
 | Carved Cunning | boots | Gain Onslaught for 4 seconds when your Marks Activate |
-| Carved Cunning | helmet | Enemies which are on Full Life cannot Evade your Hits |
 | Carved Majesty | boots | 1% increased Movement Speed while Sprinting per Persistent Minion |
 | Carved Majesty | gloves | Companions gain Onslaught for 4 seconds on Hitting your Marked targets |
-| Carved Mischief | gloves | +5% to maximum Block chance if you've Blocked with a raised Shield Recently |
 | Carved Mischief | helmet | Gain Guard equal to 10% of maximum Life for 4 seconds on taking Savage Hit |
 | Carved Tenacity | boots | Your speed is Unaffected by Slows while Sprinting |
 | Carved Tenacity | gloves | Enemies you Critically Hit get 100% reduced Life Regeneration Rate for 4 seconds |

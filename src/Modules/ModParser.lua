@@ -1990,6 +1990,7 @@ local modTagList = {
 	["if you[' ]h?a?ve blocked recently"] = { tag = { type = "Condition", var = "BlockedRecently" } },
 	["if you[' ]h?a?ve successfully parried recently"] = { tag = { type = "Condition", var = "ParriedRecently" } },
 	["if you[' ]h?a?ve blocked with active block recently"] = { tag = { type = "Condition", var = "ActiveBlockedRecently" } },
+	["if you[' ]h?a?ve blocked with a raised shield recently"] = { tag = { type = "Condition", var = "ActiveBlockedRecently" } },
 	["if you haven't blocked recently"] = { tag = { type = "Condition", var = "BlockedRecently", neg = true } },
 	["if you[' ]h?a?ve blocked an attack recently"] = { tag = { type = "Condition", var = "BlockedAttackRecently" } },
 	["if you[' ]h?a?ve blocked attack damage recently"] = { tag = { type = "Condition", var = "BlockedAttackRecently" } },
@@ -4226,6 +4227,7 @@ local specialModList = {
 	["gain deflection rating equal to (%d+)%% of evasion rating"] = function(num) return { mod("EvasionGainAsDeflection", "BASE", num) } end,
 	["gain deflection rating equal to (%d+)%% of armour"] = function(num) return { mod("ArmourGainAsDeflection", "BASE", num) } end,
 	["prevent %+(%d+)%% of damage from deflected hits"] = function(num) return { mod("DeflectEffect", "BASE", num) } end,
+	["prevent %+(%d+)%% of damage from deflected hits if you've deflected no hits recently"] = function(num) return { mod("DeflectEffect", "BASE", num, { type = "Condition", var = "DeflectedRecently", neg = true }) } end,
 	["chance to deflect is lucky"] = { flag("DeflectIsLucky") },
 	["chance to deflect is lucky while on low life"] = { flag("DeflectIsLucky", { type = "Condition", var = "LowLife" }), },
 	["y?o?u?r? ?chance to suppress spell damage is lucky"] = { flag("SpellSuppressionChanceIsLucky") },
@@ -5816,6 +5818,7 @@ local specialModList = {
 	["hits ignore enemy cold resistance"] = { flag("IgnoreColdResistance") },
 	["hits ignore enemy lightning resistance"] = { flag("IgnoreLightningResistance") },
 	["your hits can't be evaded by blinded enemies"] = { flag("CannotBeEvaded", { type = "ActorCondition", actor = "enemy", var = "Blinded" }) },
+	["enemies which are on full life cannot evade your hits"] = { flag("CannotBeEvaded", { type = "ActorCondition", actor = "enemy", var = "FullLife" }) },
 	["your hits cannot be evaded by pinned enemies"] = { flag("CannotBeEvaded", { type = "ActorCondition", actor = "enemy", var = "Pinned" }) },
 	["your hits cannot be evaded by heavy stunned enemies"] = { flag("CannotBeEvaded", { type = "ActorCondition", actor = "enemy", var = "HeavyStunned" }) },
 	["cannot immobilise enemies"] = {

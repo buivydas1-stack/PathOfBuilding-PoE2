@@ -1366,6 +1366,9 @@ Huge sets the radius to 11.
 	{ var = "conditionActiveBlockedRecently", type = "check", label = "Have you Active Blocked Recently?", ifCond = "ActiveBlockedRecently", apply = function(val, modList, enemyModList)
 		modList:NewMod("Condition:ActiveBlockedRecently", "FLAG", true, "Config", { type = "Condition", var = "Combat" })
 	end },
+	{ var = "conditionDeflectedRecently", type = "check", label = "Have you Deflected a Hit Recently?", ifCond = "DeflectedRecently", tooltip = "Recently refers to the past 4 seconds.", apply = function(val, modList, enemyModList)
+		modList:NewMod("Condition:DeflectedRecently", "FLAG", true, "Config", { type = "Condition", var = "Combat" })
+	end },
 	{ var = "conditionBlockedAttackRecently", type = "check", label = "Have you Blocked an Attack Recently?", ifCond = "BlockedAttackRecently", implyCond = "BlockedRecently", tooltip = "This also implies that you have Blocked Recently.", apply = function(val, modList, enemyModList)
 		modList:NewMod("Condition:BlockedAttackRecently", "FLAG", true, "Config", { type = "Condition", var = "Combat" })
 		modList:NewMod("Condition:BlockedRecently", "FLAG", true, "Config", { type = "Condition", var = "Combat" })
