@@ -1165,6 +1165,11 @@ function ItemClass:ParseRaw(raw, rarity, highQuality)
 
 			local function getRuneLineParts(modLine)
 				local values = { }
+				-- Converted game items describe the bound rune with a forging marker;
+				-- their explicit modifiers already contain the conversion result.
+				if modLine == "Forged by the Ire of Aldur" then
+					modLine = "Transforms all Fire and Cold modifiers on the item into equivalent Lightning modifiers"
+				end
 				-- Clipboard descriptions may wrap one augment modifier across lines.
 				local strippedModLine = modLine:gsub("\n", " "):gsub("(%d%.?%d*)", function(val)
 					t_insert(values, tonumber(val))

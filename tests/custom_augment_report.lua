@@ -81,6 +81,41 @@ local springEmpty = report.Calculate(build, springBow:BuildRaw(), "Weapon 1", sp
 assert(row(springEmpty, spring), "Ignoring existing augments must allow one Spring")
 print("PASS: Spring retained-copy exclusion, same-socket replacement and empty baseline")
 
+local forgedBow = new("Item", [[Item Class: Bows
+Rarity: Rare
+Spirit Reach
+Ironwood Shortbow
+--------
+Quality: +20% (augmented)
+Sockets: S S S
+--------
+Item Level: 83
+--------
+Forged by the Ire of Aldur (rune)
+36% increased Physical Damage (rune)
+--------
+Adds 3 to 227 Lightning Damage (fractured)
+Adds 4 to 121 Lightning Damage
+142% increased Physical Damage
+18% increased Attack Speed
+Companions have 13% increased Attack Speed
+20% chance to gain Onslaught on Killing Hits with this Weapon
++2 to Level of all Attack Skills
+--------
+Fractured Item]])
+local ireSocket
+for index, name in ipairs(forgedBow.runes) do if name == "Ire of Aldur" then ireSocket = index end end
+assert(ireSocket and #forgedBow.runes == 3, "Forging marker must occupy one of the three sockets")
+assert(build.itemsTab:IsSocketBoundRune(forgedBow, forgedBow.runes[ireSocket]), "Imported Ire must remain socket-bound")
+local forgedDamage = forgedBow.weaponData[1].LightningMax
+assert(forgedDamage == 348, "Already transformed lightning rolls must not change")
+forgedBow:UpdateRunes(); forgedBow:BuildAndParseRaw(); forgedBow:BuildModList()
+local forgedRoundTrip = new("Item", forgedBow:BuildRaw())
+assert(forgedRoundTrip.runes[ireSocket] == "Ire of Aldur" and forgedRoundTrip.weaponData[1].LightningMax == forgedDamage, "Editor and round trip must preserve Ire and converted damage")
+local forgedAllowed, forgedError = pcall(report.Calculate, build, forgedRoundTrip:BuildRaw(), "Weapon 1", springNames, true, ireSocket)
+assert(not forgedAllowed and tostring(forgedError):find("socket%-bound"), "Recommendations must reject replacing bound Ire")
+print("PASS: forged Ire import occupies and locks socket, preserves converted rolls and round trip")
+
 -- A retained limited augment blocks another copy; replacing that socket frees
 -- the limit. Ancient augments share their cap even when their names differ.
 local limited = "Quipolatl's Soul Core of Flow"
