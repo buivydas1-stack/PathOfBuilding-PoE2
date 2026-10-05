@@ -189,6 +189,49 @@ local lineFlags = {
 	["custom"] = true, ["crafted"] = true, ["fractured"] = true, ["desecrated"] = true, ["mutated"] = true, ["enchant"] = true, ["implicit"] = true, ["rune"] = true, ["unscalable"] = true
 }
 
+-- Market copies omit advanced affix names and ranges. Recover only complete,
+-- unique single-range jewel matches that reproduce every printed value.
+function ItemClass:InferMarketJewelAffixes()
+	if self.crafted or self.type ~= "Jewel" or not self.affixes or (self.rarity ~= "RARE" and self.rarity ~= "MAGIC") then return end
+	local effects = { Prefix = 0, Suffix = 0 }
+	for _, line in ipairs(self.explicitModLines) do
+		for side in pairs(effects) do
+			local value = line.line:match("^(%d+)%% increased Effect of " .. side .. "es$")
+			if value then effects[side] = effects[side] + tonumber(value) end
+		end
+	end
+	local prefixes, suffixes, used = {}, {}, {}
+	for _, line in ipairs(self.explicitModLines) do
+		local match
+		for id, mod in pairs(self.affixes) do
+			local effect = id == "CraftedJewelPrefixEffect" or id == "CraftedJewelSuffixEffect"
+			if #mod == 1 and (mod.type == "Prefix" or mod.type == "Suffix")
+				and (self:GetModSpawnWeight(mod) > 0 or (effect and line.crafted))
+				and catalystLineKey(mod[1]) == catalystLineKey(line.line) then
+				local low, high = mod[1]:match("%((%-?%d+)%-(%-?%d+)%)")
+				local _, count = mod[1]:gsub("%b()", "")
+				if low and count == 1 then
+					low, high = tonumber(low), tonumber(high)
+					local scalar = line.unscalable and 1 or getCatalystScalar(self.catalyst, mod, self.catalystQuality) + (effect and 0 or effects[mod.type] / 100)
+					for value = low, high do
+						local range = high == low and 0.5 or (value - low) / (high - low)
+						if itemLib.applyRange(mod[1], range, scalar) == line.line then
+							if match and match.modId ~= id then return end
+							match = { modId = id, range = range, desecrated = line.desecrated, crafted = line.crafted, unscalable = line.unscalable }
+							break
+						end
+					end
+				end
+			end
+		end
+		if not match or used[match.modId] then return end
+		used[match.modId] = true
+		t_insert(self.affixes[match.modId].type == "Prefix" and prefixes or suffixes, match)
+	end
+	if #prefixes + #suffixes == 0 then return end
+	self.prefixes, self.suffixes, self.crafted = prefixes, suffixes, true
+end
+
 local function baseHasImplicitLine(base, line)
 	if not base or not base.implicit then
 		return false
@@ -1435,6 +1478,9 @@ function ItemClass:ParseRaw(raw, rarity, highQuality)
 		end
 		self.requirements.level = self.requirements.level or self.requirements.naturalLevel
 		self.requirements.level = m_max(self.requirements.level, self.requirements.naturalLevel, self.requirements.runeLevel)
+	end
+	if raw:find("Item Class:", 1, true) and not raw:find("{ ", 1, true) then
+		self:InferMarketJewelAffixes()
 	end
 	self.affixLimit = 0
 	if self.crafted then
