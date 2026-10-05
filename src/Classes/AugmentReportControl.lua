@@ -90,7 +90,6 @@ function ReportClass:Calculate()
 		self:Refresh()
 		local xml = self.itemsTab.build:SaveDB("augment comparison")
 		if not xml then self:Fail("Could not read the current build."); return end
-		local generation = self.generation
 		local script = [[
 			local root, xml, raw, slot, existing, socketIndex = ...
 			local ok, result = pcall(function()
@@ -98,24 +97,30 @@ function ReportClass:Calculate()
 			end)
 			if ok then return result else return nil, tostring(result) end
 		]]
-		local id = LaunchSubScript(script, "", "", GetScriptPath(), xml, self.itemRaw, slot, existing, socketIndex)
-		if not id then self:Fail("Could not start the background calculation."); return end
-		self.worker = id
-		self.label = "Calculating in background..."
-		launch:RegisterSubScript(id, function(encoded, err)
-			if generation ~= self.generation then return end
-			self.worker = nil
-			if not encoded then self:Fail(err); return end
-			local result, _, decodeError = json.decode(encoded)
-			if decodeError or not result or not result.baseline or not result.rows then
-				self:Fail("Invalid calculation result."); return
-			end
-			self.result = result
-			self:Refresh()
-		end, function(err)
-			if generation == self.generation then self.worker = nil; self:Fail(err) end
-		end)
+		self:StartWorker(script, xml, self.itemRaw, slot, existing, socketIndex)
 	end
+end
+
+-- Both item reports use the same worker lifecycle and sparse build comparisons.
+function ReportClass:StartWorker(script, ...)
+	local generation = self.generation
+	local id = LaunchSubScript(script, "", "", GetScriptPath(), ...)
+	if not id then self:Fail("Could not start the background calculation."); return end
+	self.worker = id
+	self.label = "Calculating in background..."
+	launch:RegisterSubScript(id, function(encoded, err)
+		if generation ~= self.generation then return end
+		self.worker = nil
+		if not encoded then self:Fail(err); return end
+		local result, _, decodeError = json.decode(encoded)
+		if decodeError or not result or not result.baseline or not result.rows then
+			self:Fail("Invalid calculation result."); return
+		end
+		self.result = result
+		self:Refresh()
+	end, function(err)
+		if generation == self.generation then self.worker = nil; self:Fail(err) end
+	end)
 end
 
 function ReportClass:Fail(err)

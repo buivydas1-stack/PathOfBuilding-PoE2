@@ -41,7 +41,7 @@ local thirdPrefix = build.itemsTab.controls.displayItemAffix3
 local craftedSuffix = build.itemsTab.controls.displayItemAffix5
 assert(thirdPrefix.list[thirdPrefix.selIndex].modId == "JewelElementalDamage", "Editor must select the desecrated third prefix")
 assert(craftedSuffix.list[craftedSuffix.selIndex].modId == "CraftedJewelPrefixEffect", "Editor must select the crafted effect suffix")
-local qualitySlider = build.itemsTab.controls.displayItemJewelQualitySlider
+local qualitySlider = build.itemsTab.controls.displayItemCatalystQualitySlider
 assert(qualitySlider:IsShown() and qualitySlider.maxQuality == 20 and qualitySlider.val == 0.5, "Editable jewel quality must have a 0-20% slider")
 local affixRanges = { pasted.prefixes[1].range, pasted.prefixes[2].range, pasted.prefixes[3].range, pasted.suffixes[1].range, pasted.suffixes[2].range }
 qualitySlider:SetVal(1)

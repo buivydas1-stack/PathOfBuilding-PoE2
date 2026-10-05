@@ -8,6 +8,8 @@
 	"Classes/AugmentReportControl.lua",
 	"Modules/AugmentReport.lua",
 	"Modules/AugmentReportWorker.lua",
+	"Classes/CatalystReportControl.lua",
+	"Modules/CatalystReport.lua",
     "Data/Runeforging.lua",
     "Classes/PowerReportListControl.lua",
     "Classes/TreeTab.lua",

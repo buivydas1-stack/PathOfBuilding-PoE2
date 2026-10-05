@@ -84,7 +84,7 @@ local function catalystLineKey(line)
 end
 
 function ItemClass:InferCatalystTags()
-	if not self.base or (self.base.type ~= "Ring" and self.base.type ~= "Amulet") then
+	if not self:CanUseCatalysts() then
 		return
 	end
 	local relevantTags = {}
@@ -146,6 +146,43 @@ function ItemClass:InferCatalystTags()
 			end
 		end
 	end
+end
+
+function ItemClass:CanUseCatalysts()
+	return self.base and (self.base.type == "Ring" or self.base.type == "Amulet"
+		or (self.base.type == "Jewel" and self.base.subType ~= "Charm"))
+end
+
+function ItemClass:GetCatalystName(id)
+	local name = catalystList[id]
+	return name and ((self.type == "Jewel" and "Refined " or "") .. name .. " Catalyst")
+end
+
+function ItemClass:GetCatalystScalar(mod, id, quality)
+	return getCatalystScalar(id, mod, quality)
+end
+
+function ItemClass:GetCatalystAffixes(line, implicit)
+	local matches = { }
+	local key = catalystLineKey(line.line)
+	if implicit and self.base.implicit then
+		local index = 0
+		for text in self.base.implicit:gmatch("[^\n]+") do
+			index = index + 1
+			if catalystLineKey(text) == key then
+				t_insert(matches, { line = text, mod = { modTags = (self.base.implicitModTypes or { })[index] } })
+			end
+		end
+	else
+		for _, affix in pairs(self.affixes or { }) do
+			if type(affix) == "table" and affix.modTags and self:GetModSpawnWeight(affix) > 0 then
+				for _, text in ipairs(affix) do
+					if catalystLineKey(text) == key then t_insert(matches, { line = text, mod = affix }) end
+				end
+			end
+		end
+	end
+	return matches
 end
 
 local lineFlags = {

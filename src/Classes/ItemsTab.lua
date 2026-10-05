@@ -644,28 +644,23 @@ holding Shift will put it in the second.]])
 		},
 		function(index, value)
 			if (self.displayItem.catalyst or 0) == index - 1 then return end
-			self.displayItem:InferCatalystTags()
-			self.displayItem.catalyst = index - 1
-			self:SetDisplayItemCatalystQuality(index > 1 and 20 or nil)
+			self:SetDisplayItemCatalystQuality(index > 1 and 20 or nil, index - 1)
 		end)
 	self.controls.displayItemCatalyst.shown = function()
-		return self.displayItem and self.displayItem.base and (self.displayItem.base.type == "Amulet" or self.displayItem.base.type == "Ring")
+		return self.displayItem and self.displayItem:CanUseCatalysts()
 	end
 	self.controls.displayItemCatalyst.tooltipFunc = function(tooltip, mode, index, value)
 		tooltip:Clear()
 		if mode ~= "HOVER" or index <= 1 or not self.displayItem then return end
-		tooltip:AddLine(14, "^7"..value.." at 20% quality")
-		if not self.showStatDifferences then return end
 		local item = self.displayItem
+		tooltip:AddLine(14, "^7"..item:GetCatalystName(index - 1).." at 20% quality")
+		if not self.showStatDifferences then return end
 		local raw = item:BuildRaw()
 		local key = raw..":"..index..":"..tostring(self.build.calcsTab.mainOutput)
 		if not self.catalystPreview or self.catalystPreview.key ~= key then
-			local preview = new("Item", raw)
+			local ok, preview = pcall(LoadModule("Modules/CatalystReport").Prepare, raw, index - 1, 20)
+			if not ok then tooltip:AddLine(14, "^1" .. tostring(preview):gsub("^.-:%d+: ", "")); return end
 			preview.id = item.id
-			preview:InferCatalystTags()
-			preview.catalyst = index - 1
-			preview.catalystQuality = 20
-			preview:BuildAndParseRaw()
 			local slotName = self:GetComparisonSlotNameForItem(item)
 			local calcFunc = self.build.calcsTab:GetMiscCalculator()
 			self.catalystPreview = {
@@ -700,6 +695,7 @@ holding Shift will put it in the second.]])
 	self.controls.displayItemJewelQualityLabel.shown = function()
 		return self.displayItem and self.displayItem.type == "Jewel" and self.displayItem.crafted
 			and self.displayItem.catalyst and self.displayItem.catalyst > 0 and self.displayItem.catalystQuality
+			and not self.controls.displayItemCatalyst:IsShown()
 	end
 	self.controls.displayItemJewelQualitySlider = new("SliderControl", {"LEFT",self.controls.displayItemJewelQualityLabel,"RIGHT"}, {6, 0, 210, 16}, function(val)
 		local slider = self.controls.displayItemJewelQualitySlider
@@ -790,6 +786,7 @@ holding Shift will put it in the second.]])
 	end
 
 	self.controls.augmentReport = new("AugmentReportControl", {"TOPLEFT", self.controls.displayItemRune1, "TOPRIGHT"}, {12, 58, 650, 280}, self)
+	self.controls.catalystReport = new("CatalystReportControl", {"TOPLEFT", self.controls.displayItemCatalyst, "TOPRIGHT"}, {12, 78, 650, 280}, self)
 
 	-- Section: Affix Selection
 	local maxModCount = 9
@@ -1347,6 +1344,7 @@ end
 
 function ItemsTabClass:Draw(viewPort, inputEvents)
 	self.controls.augmentReport:Update()
+	self.controls.catalystReport:Update()
 	local comparisonRevealHeld = main:IsComparisonRevealHeld()
 	if self.displayItem and (self.comparisonRevealHeld ~= comparisonRevealHeld or self.comparisonRevealKey ~= main.comparisonRevealKey) then
 		self:UpdateDisplayItemTooltip()
@@ -1366,18 +1364,26 @@ function ItemsTabClass:Draw(viewPort, inputEvents)
 	do
 		local maxY = select(2, self.lastSlot:GetPos()) + 24
 		local maxX = self.anchorDisplayItem:GetPos() + 462
-		self.controls.augmentReport.x = 12
+		self.controls.augmentReport.x, self.controls.catalystReport.x = 12, 12
 		if self.displayItem then
 			local x, y = self.controls.displayItemTooltipAnchor:GetPos()
 			local ttW, ttH = self.displayItemTooltip:GetDynamicSize(viewPort)
 			local runeX = self.controls.displayItemRune1:GetPos()
 			local runeW = self.controls.displayItemRune1:GetSize()
 			self.controls.augmentReport.x = m_max(12, x + ttW + 12 - runeX - runeW)
+			local catalystX = self.controls.displayItemCatalyst:GetPos()
+			local catalystW = self.controls.displayItemCatalyst:GetSize()
+			self.controls.catalystReport.x = m_max(12, x + ttW + 12 - catalystX - catalystW)
 			maxY = m_max(maxY, y + ttH + 4)
 			maxX = m_max(maxX, x + ttW + 80)
 		end
 		if self.controls.augmentReport:IsShown() then
 			local x, y = self.controls.augmentReport:GetPos()
+			maxX = m_max(maxX, x + 654)
+			maxY = m_max(maxY, y + 308)
+		end
+		if self.controls.catalystReport:IsShown() then
+			local x, y = self.controls.catalystReport:GetPos()
 			maxX = m_max(maxX, x + 654)
 			maxY = m_max(maxY, y + 308)
 		end
@@ -1955,9 +1961,13 @@ function ItemsTabClass:SetDisplayItem(item)
 		self.controls.displayItemSocketRuneEdit:SetText(item.itemSocketCount)
 		self.controls.displayItemSocketJewelEdit:SetText(item.jewelSocketCount)
 		self.controls.displayItemQualityEdit:SetText(item.quality)
+		for index = 2, #self.controls.displayItemCatalyst.list do
+			local label = self.controls.displayItemCatalyst.list[index]:gsub("^Refined ", "")
+			self.controls.displayItemCatalyst.list[index] = (item.type == "Jewel" and "Refined " or "") .. label
+		end
 		self.controls.displayItemCatalyst:SetSel((item.catalyst or 0) + 1, true)
 		local catalystQualitySlider = self.controls.displayItemCatalystQualitySlider
-		catalystQualitySlider.maxQuality = m_max(40, item.catalystQuality or 0)
+		catalystQualitySlider.maxQuality = m_max(item.type == "Jewel" and 20 or 40, item.catalystQuality or 0)
 		catalystQualitySlider.divCount = catalystQualitySlider.maxQuality
 		catalystQualitySlider.val = (item.catalystQuality or 0) / catalystQualitySlider.maxQuality
 		if item.catalystQuality then
@@ -1980,23 +1990,21 @@ function ItemsTabClass:SetDisplayItem(item)
 	end
 end
 
-function ItemsTabClass:SetDisplayItemCatalystQuality(quality)
+function ItemsTabClass:SetDisplayItemCatalystQuality(quality, catalyst)
 	local item = self.displayItem
 	local slider = self.controls.displayItemCatalystQualitySlider
 	if quality then
 		quality = m_min(m_max(quality, 0), slider.maxQuality or 40)
 	end
-	item.catalystQuality = quality
-	slider.val = (quality or 0) / (slider.maxQuality or 40)
-	self.controls.displayItemCatalystQualityEdit:SetText(quality or 0)
-	if item.crafted then
-		for i = 1, item.affixLimit do
-			local drop = self.controls["displayItemAffix"..i]
-			drop.selFunc(drop.selIndex, drop.list[drop.selIndex])
-		end
+	local ok, prepared = pcall(LoadModule("Modules/CatalystReport").Prepare, item:BuildRaw(), catalyst or item.catalyst, quality)
+	if not ok then
+		self:SetDisplayItem(item)
+		main:OpenMessagePopup("Catalyst comparison unavailable", tostring(prepared):gsub("^.-:%d+: ", ""))
+		return
 	end
-	item:BuildAndParseRaw()
-	self:UpdateDisplayItemTooltip()
+	item.catalyst, item.catalystQuality = prepared.catalyst, prepared.catalystQuality
+	item:ParseRaw(prepared:BuildRaw())
+	self:SetDisplayItem(item)
 end
 
 function ItemsTabClass:UpdateDisplayItemTooltip()
@@ -2005,6 +2013,7 @@ function ItemsTabClass:UpdateDisplayItemTooltip()
 	self:AddItemTooltip(self.displayItemTooltip, self.displayItem)
 	self.displayItemTooltip.center = true
 	self.controls.augmentReport:SetItem(self.displayItem)
+	self.controls.catalystReport:SetItem(self.displayItem)
 end
 
 function ItemsTabClass:UpdateClusterJewelControls()

@@ -1,6 +1,6 @@
 -- Isolated background calculation. No saved builds/settings or output files are
 -- accessed: the complete live build arrives as an in-memory XML snapshot.
-local root, xmlText, itemRaw, slotName, candidateJSON, considerExisting, socketIndex = ...
+local root, xmlText, itemRaw, slotName, candidateJSON, considerExisting, socketIndex, reportType, quality = ...
 root = root:gsub('\\', '/'):gsub('/$', '')
 package.path = root .. '/?.lua;' .. package.path
 local open = io.open
@@ -224,4 +224,7 @@ local build = main.modes.BUILD
 local report = LoadModule('Modules/AugmentReport')
 local json = require('dkjson')
 local candidates = candidateJSON and json.decode(candidateJSON) or nil
+if reportType == 'catalyst' then
+	return json.encode(LoadModule('Modules/CatalystReport').Calculate(build, itemRaw, slotName, quality, candidates))
+end
 return json.encode(report.Calculate(build, itemRaw, slotName, candidates, considerExisting, socketIndex))
