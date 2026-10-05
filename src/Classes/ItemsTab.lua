@@ -1373,7 +1373,14 @@ function ItemsTabClass:Draw(viewPort, inputEvents)
 			self.controls.augmentReport.x = m_max(12, x + ttW + 12 - runeX - runeW)
 			local catalystX = self.controls.displayItemCatalyst:GetPos()
 			local catalystW = self.controls.displayItemCatalyst:GetSize()
-			self.controls.catalystReport.x = m_max(12, x + ttW + 12 - catalystX - catalystW)
+			local catalystEditorRight = x + ttW
+			for i = 1, 9 do
+				local affix = self.controls["displayItemAffix"..i]
+				if affix:IsShown() then
+					catalystEditorRight = m_max(catalystEditorRight, affix:GetPos() + affix:GetSize())
+				end
+			end
+			self.controls.catalystReport.x = m_max(12, catalystEditorRight + 12 - catalystX - catalystW)
 			maxY = m_max(maxY, y + ttH + 4)
 			maxX = m_max(maxX, x + ttW + 80)
 		end
