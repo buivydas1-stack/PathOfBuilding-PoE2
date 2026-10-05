@@ -3959,6 +3959,13 @@ function ItemsTabClass:AddItemTooltip(tooltip, item, slot, dbMode, maxWidth)
 		return
 	end
 	local calcFunc, calcBase = self.build.calcsTab:GetMiscCalculator()
+	local function addItemComparison(output, header)
+		local count = self.build:AddStatComparesToTooltip(tooltip, calcBase, output, header)
+		if count == 0 then
+			tooltip:AddLine(14, header)
+			tooltip:AddLine(14, "^7No stat changes")
+		end
+	end
 	if base.flask then
 		-- Special handling for flasks
 		local stats = { }
@@ -4149,7 +4156,7 @@ function ItemsTabClass:AddItemTooltip(tooltip, item, slot, dbMode, maxWidth)
 		else
 			header = "^7Activating this flask will give you:"
 		end
-		self.build:AddStatComparesToTooltip(tooltip, calcBase, output, header)
+		addItemComparison(output, header)
 	elseif base.charm then
 		-- Special handling for charms
 		local stats = { }
@@ -4184,7 +4191,7 @@ function ItemsTabClass:AddItemTooltip(tooltip, item, slot, dbMode, maxWidth)
 		else
 			header = "^7Activating this charm will give you:"
 		end
-		self.build:AddStatComparesToTooltip(tooltip, calcBase, output, header)
+		addItemComparison(output, header)
 	else
 		self:UpdateSockets()
 		-- Build sorted list of slots to compare with
@@ -4217,11 +4224,7 @@ function ItemsTabClass:AddItemTooltip(tooltip, item, slot, dbMode, maxWidth)
 					compareSlot.label or compareSlot.slotName,
 					selItem and "\n(replacing " .. colorCodes[selItem.rarity] .. selItem.name .. "^7)" or "")
 			end
-			local count = self.build:AddStatComparesToTooltip(tooltip, calcBase, output, header)
-			if count == 0 and item.type == "Jewel" and not selItem then
-				tooltip:AddLine(14, header)
-				tooltip:AddLine(14, "^7No stat changes")
-			end
+			addItemComparison(output, header)
 		end
 
 		-- if we have a specific slot to compare to, and the user has "Show

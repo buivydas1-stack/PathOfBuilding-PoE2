@@ -32,6 +32,37 @@ tab.slots["Ring 2"]:SetSelItemId(0)
 check(candidate, {"Ring 1", "Ring 2"})
 tab.slots["Ring 2"]:SetSelItemId(second.id)
 check(first, {"Ring 1", "Ring 2"})
+-- A pasted copy is a replacement, even when it has exactly the equipped stats.
+local function capture(item, slot)
+	local tooltip, lines = new("Tooltip"), {}
+	local addLine = tooltip.AddLine
+	tooltip.AddLine = function(self, size, text, ...)
+		lines[#lines + 1] = text
+		return addLine(self, size, text, ...)
+	end
+	tab:AddItemTooltip(tooltip, item, slot)
+	return table.concat(lines, "\n")
+end
+local text = capture(new("Item", first:BuildRaw()))
+assert(text:find("Equipping this item in Ring 1", 1, true) and text:find("Equipping this item in Ring 2", 1, true), "Both ring headings must remain visible")
+local _, unchanged = text:gsub("No stat changes", "")
+assert(unchanged == 1, "Only the identical Ring 1 replacement must be labelled unchanged")
+assert(text:find("Life", 1, true), "Ring 2 changes must still appear")
+main.slotOnlyTooltips = true
+text = capture(new("Item", first:BuildRaw()), "Ring 1")
+assert(text:find("No stat changes", 1, true) and not text:find("Ring 2", 1, true), "Affected-slot-only comparison must show the unchanged result")
+tab.showStatDifferences = false
+text = capture(new("Item", first:BuildRaw()), "Ring 1")
+assert(not text:find("No stat changes", 1, true), "Disabled comparisons must remain hidden")
+tab.showStatDifferences = true
+local helmet = new("Item", "Rarity: Rare\nSame Helmet\nGold Circlet\n--------\n+20 to maximum Life")
+tab:AddItem(helmet, true); tab.slots.Helmet:SetSelItemId(helmet.id)
+build.buildFlag = true; runCallback("OnFrame"); runCallback("OnFrame")
+text = capture(new("Item", helmet:BuildRaw()), "Helmet")
+assert(text:find("Equipping this item in Helmet", 1, true) and text:find("No stat changes", 1, true), "Non-ring unchanged replacements must remain visible")
+text = capture(helmet, "Helmet")
+assert(text:find("Removing this item", 1, true) and not text:find("No stat changes", 1, true), "Equipped item removal must still show real changes")
+main.slotOnlyTooltips = false
 -- Limited uniques return before the benefit sorter; they also need stable slot order.
 first.rarity = "UNIQUE"; second.rarity = "UNIQUE"
 first.name = "Limited Ring"; second.name = "Limited Ring"
