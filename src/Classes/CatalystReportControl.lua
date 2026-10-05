@@ -10,7 +10,7 @@ local ReportClass = newClass("CatalystReportControl", "AugmentReportControl", fu
 		local item = self.itemsTab.displayItem
 		return item and (item.type == "Jewel" or item.type == "Ring")
 	end
-	self.controls.socket.enabled = function() return #self.controls.socket.list > 0 end
+	self.controls.socket.enabled = function() return not self.controls.itemScore.state and #self.controls.socket.list > 0 end
 	self.controls.socket.selFunc = function(_, selected)
 		if self.itemsTab.displayItem and self.itemsTab.displayItem.type == "Ring" then self.ringSlot = selected.slotName end
 		self:Update()
@@ -18,10 +18,10 @@ local ReportClass = newClass("CatalystReportControl", "AugmentReportControl", fu
 	self.controls.socket.tooltipText = "Slot to use for build comparisons, including occupied jewel sockets. Replaces only the selected slot and keeps the other items equipped."
 	self.controls.status = new("LabelControl", {"TOPLEFT", self, "BOTTOMLEFT"}, {0, 4, 0, 16}, function() return "^7" .. (self.statusLabel or "") end)
 	self.controls.status.shown = self.controls.socket.shown
-	self.controls.itemScore = new("CheckBoxControl", {"TOPLEFT", self, "TOPLEFT"}, {500, -78, 16}, "Rank by item modifiers", function()
+	self.controls.itemScore = new("CheckBoxControl", {"TOPLEFT", self, "TOPLEFT"}, {500, -78, 16}, "Rank by modifier gains", function()
 		self.sortColumn, self.descending = 2, true
 		self:Refresh()
-	end, "Checked: sum each modifier's percentage gain after rounding, counting each modifier once. Unchecked: rank by the selected build metric.", true)
+	end, "Checked: rank by summed percentage improvements to this item's modifiers after rounding. Unchecked: rank by improvement to the selected build metric.", true)
 	self.controls.qualityLabel = new("LabelControl", {"TOPLEFT", self, "TOPLEFT"}, {520, -78, 0, 20}, "^7Quality:")
 	self.controls.quality = new("EditControl", {"TOPLEFT", self, "TOPLEFT"}, {585, -78, 50, 20}, "20", nil, "%D", 3, function()
 		self:Update()
