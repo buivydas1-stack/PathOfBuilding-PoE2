@@ -4217,7 +4217,11 @@ function ItemsTabClass:AddItemTooltip(tooltip, item, slot, dbMode, maxWidth)
 					compareSlot.label or compareSlot.slotName,
 					selItem and "\n(replacing " .. colorCodes[selItem.rarity] .. selItem.name .. "^7)" or "")
 			end
-			self.build:AddStatComparesToTooltip(tooltip, calcBase, output, header)
+			local count = self.build:AddStatComparesToTooltip(tooltip, calcBase, output, header)
+			if count == 0 and item.type == "Jewel" and not selItem then
+				tooltip:AddLine(14, header)
+				tooltip:AddLine(14, "^7No stat changes")
+			end
 		end
 
 		-- if we have a specific slot to compare to, and the user has "Show
