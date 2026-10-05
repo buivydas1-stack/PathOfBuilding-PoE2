@@ -197,8 +197,77 @@ assert(not socketResult.buildUnavailable, socketResult.buildUnavailable)
 near(row(socketResult, "Refined Skittering Catalyst").values.Speed, oracle(report.Prepare(jewelRaw, 11, 20), slot).Speed, "Allocated jewel speed")
 print("PASS: active allocated jewel replacement matches a complete calculation")
 
-tab:CreateDisplayItemFromRaw(raw, true)
+-- Pasted jewels can choose occupied allocated sockets; removed sockets cannot
+-- leave a stale dropdown index pointing at an unavailable replacement.
+local secondSocket
+for _, node in pairs(build.spec.nodes) do
+	if node ~= socket and node.type == "Socket" and node.path and not node.ascendancyName and not node.charmSocket and not node.sinister then secondSocket = node; break end
+end
+assert(secondSocket)
+build.spec:AllocNode(secondSocket); tab:UpdateSockets()
+for _, nodeId in ipairs(tab.activeSocketList) do tab.sockets[nodeId]:SetSelItemId(jewel.id) end
+build.buildFlag = true; runCallback("OnFrame"); runCallback("OnFrame")
+tab:CreateDisplayItemFromRaw(jewelRaw, true)
 local control = tab.controls.catalystReport
+control:Update()
+assert(#control.controls.socket.list >= 2 and control:GetComparisonSlot(), "Occupied jewel sockets must remain selectable")
+local firstSlot = control:GetComparisonSlot()
+control.controls.socket:SetSel(2)
+local chosenSlot = control:GetComparisonSlot()
+assert(chosenSlot ~= firstSlot and control.controls.socket.list[1].label ~= control.controls.socket.list[2].label)
+local chosenResult = report.Calculate(build, jewelRaw, chosenSlot, 20, { ["Refined Skittering Catalyst"] = true })
+near(chosenResult.rows[1].values.Speed, oracle(report.Prepare(jewelRaw, 11, 20), chosenSlot).Speed, "Chosen occupied jewel socket")
+control.result = chosenResult
+control.controls.socket:SetSel(1)
+assert(not control.result, "Changing the comparison socket must invalidate cached results")
+local removed = tab.slots[chosenSlot]
+removed.inactive = true
+control:UpdateComparisonSlots(tab.displayItem)
+assert(control:GetComparisonSlot() == firstSlot, "Removed socket must fall back to a valid selection")
+removed.inactive = false
+print("PASS: occupied jewel socket selection, distinct labels, replacement parity and stale-slot fallback")
+
+-- Ring quality is measured with the edited ring in the chosen slot and the
+-- other equipped ring retained. Different other rings must give different
+-- baselines, and selecting Ring 2 must reach both the calculator and the UI.
+local firstRing = new("Item", "Rarity: Rare\nFirst Ring Fixture\nGold Ring\n--------\n+50 to maximum Life")
+local secondRing = new("Item", "Rarity: Rare\nSecond Ring Fixture\nGold Ring\n--------\n+150 to maximum Life")
+tab:AddItem(firstRing, true); tab:AddItem(secondRing, true)
+tab.slots["Ring 1"]:SetSelItemId(firstRing.id); tab.slots["Ring 2"]:SetSelItemId(secondRing.id)
+build.buildFlag = true; runCallback("OnFrame"); runCallback("OnFrame")
+local ringRaw = "Rarity: Rare\nCatalyst Ring Fixture\nGold Ring\n--------\n+100 to maximum Life\n+25% to Lightning Resistance"
+tab:CreateDisplayItemFromRaw(ringRaw, true); control:Update()
+assert(#control.controls.socket.list == 2 and control:GetComparisonSlot() == "Ring 1")
+local ringResults = { }
+for index = 1, 2 do
+	control.controls.socket:SetSel(index)
+	local target = "Ring " .. index
+	assert(control:GetComparisonSlot() == target)
+	local result = report.Calculate(build, control.itemRaw, control:GetComparisonSlot(), 20, { ["Flesh Catalyst"] = true })
+	local expected = oracle(report.Prepare(ringRaw, result.rows[1].id, 20), target)
+	near(result.baseline.Life, oracle(report.Prepare(ringRaw), target).Life, target .. " other-ring retention")
+	near(result.rows[1].values.Life, expected.Life, target .. " complete Life")
+	near(result.rows[1].values.TotalEHP, expected.TotalEHP, target .. " complete EHP")
+	ringResults[index] = result
+end
+assert(ringResults[1].baseline.Life > ringResults[2].baseline.Life, "The other ring's Life must affect the comparison baseline")
+assert(tab.slots["Ring 1"].selItemId == firstRing.id and tab.slots["Ring 2"].selItemId == secondRing.id, "Ring comparisons changed equipped items")
+control.result = ringResults[2]
+control.controls.socket:SetSel(1)
+assert(not control.result, "Changing the ring slot must invalidate cached results")
+control.controls.socket:SetSel(2)
+tab:CreateDisplayItemFromRaw(ringRaw, true); control:Update()
+assert(control:GetComparisonSlot() == "Ring 2", "New rings must remember the last selected ring slot")
+tab:SetDisplayItem(firstRing); control:Update()
+assert(control:GetComparisonSlot() == "Ring 1", "Equipped ring must start with its own slot")
+tab:CreateDisplayItemFromRaw(ringRaw, true); control:Update()
+assert(control:GetComparisonSlot() == "Ring 2", "Opening equipped Ring 1 must not overwrite the remembered choice")
+assert(control.label == nil and control.statusLabel and control.controls.calculate.y == 24, "Selector must not overlap report status")
+control:Fail("Fixture unavailable")
+assert(control.label == nil and control.statusLabel:find("unavailable", 1, true))
+print("PASS: both ring slots, other-ring retention, complete-calculation parity, remembered slot and equipped-ring default")
+
+tab:CreateDisplayItemFromRaw(raw, true)
 local metrics = { }
 for _, stat in ipairs(control.controls.stat.list) do metrics[stat.stat] = true end
 assert(metrics.Spirit and metrics.Str and metrics.Dex and metrics.Int and metrics.FullDPS and metrics.TotalEHP, "Build ranking must cover more than EHP")

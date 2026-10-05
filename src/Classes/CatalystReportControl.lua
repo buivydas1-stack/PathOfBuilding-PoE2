@@ -3,7 +3,21 @@ local report = LoadModule("Modules/CatalystReport")
 local ReportClass = newClass("CatalystReportControl", "AugmentReportControl", function(self, anchor, rect, itemsTab)
 	self.AugmentReportControl(anchor, rect, itemsTab)
 	self.controls.title.label = "^7Catalyst recommendations"
-	self.controls.existing.shown, self.controls.socket.shown = false, false
+	self.controls.existing.shown = false
+	self.controls.socket.x, self.controls.socket.y, self.controls.socket.width = 0, -28, 240
+	self.controls.socket:SetList({ })
+	self.controls.socket.shown = function()
+		local item = self.itemsTab.displayItem
+		return item and (item.type == "Jewel" or item.type == "Ring")
+	end
+	self.controls.socket.enabled = function() return #self.controls.socket.list > 0 end
+	self.controls.socket.selFunc = function(_, selected)
+		if self.itemsTab.displayItem and self.itemsTab.displayItem.type == "Ring" then self.ringSlot = selected.slotName end
+		self:Update()
+	end
+	self.controls.socket.tooltipText = "Slot to use for build comparisons, including occupied jewel sockets. Replaces only the selected slot and keeps the other items equipped."
+	self.controls.status = new("LabelControl", {"TOPLEFT", self, "BOTTOMLEFT"}, {0, 4, 0, 16}, function() return self.statusLabel end)
+	self.controls.status.shown = self.controls.socket.shown
 	self.controls.itemScore = new("CheckBoxControl", {"TOPLEFT", self, "TOPLEFT"}, {500, -78, 16}, "Rank by item modifiers", function()
 		self.sortColumn, self.descending = 2, true
 		self:Refresh()
@@ -37,12 +51,50 @@ end
 
 function ReportClass:SetItem(item)
 	self.itemRaw = item and item:CanUseCatalysts() and item:BuildRaw() or nil
+	self:UpdateComparisonSlots(item)
+end
+
+function ReportClass:UpdateComparisonSlots(item)
+	local options, selected = { }, self.controls.socket.list[self.controls.socket.selIndex or 0]
+	local preferred = self.slotItem == item and selected and selected.slotName or item and self.itemsTab:GetComparisonSlotNameForItem(item)
+	if item and item.type == "Ring" and self.slotItem ~= item then
+		local equipped = self.itemsTab:GetEquippedSlotForItem(item)
+		preferred = equipped and equipped.slotName or self.ringSlot or "Ring 1"
+	end
+	if item and (item.type == "Jewel" or item.type == "Ring") then
+		for _, slot in ipairs(self.itemsTab.orderedSlots) do
+			local eligible = item.type == "Ring" and slot.slotName:match("^Ring %d$") or
+				item.type == "Jewel" and (slot.parentSlot or slot.nodeId and self.itemsTab.build.spec.allocNodes[slot.nodeId])
+			if eligible and not slot.inactive and slot:IsShown() and
+				self.itemsTab:IsItemValidForSlot(item, slot.slotName) then
+				local label = slot.nodeId and ("Jewel " .. slot.label) or slot.slotName
+				table.insert(options, { label = "Compare: " .. label, slotName = slot.slotName })
+			end
+		end
+	end
+	self.controls.socket:SetList(options)
+	self.controls.socket.selIndex = 1
+	for index, option in ipairs(options) do
+		if option.slotName == preferred then self.controls.socket:SetSel(index, true); break end
+	end
+	self.slotItem, self.slotRevision = item, self.itemsTab.build.outputRevision
+end
+
+function ReportClass:GetComparisonSlot()
+	local item = self.itemsTab.displayItem
+	if not item then return end
+	if item.type == "Jewel" or item.type == "Ring" then
+		local selected = self.controls.socket.list[self.controls.socket.selIndex or 0]
+		return selected and selected.slotName
+	end
+	return self.itemsTab:GetComparisonSlotNameForItem(item)
 end
 
 function ReportClass:Update()
 	local item = self.itemsTab.displayItem
+	if self.slotRevision ~= self.itemsTab.build.outputRevision then self:UpdateComparisonSlots(item) end
 	local raw = item and self.itemRaw
-	local slot = raw and self.itemsTab:GetComparisonSlotNameForItem(item)
+	local slot = raw and self:GetComparisonSlot()
 	local quality = self:GetQuality()
 	local key = raw and quality and (self.itemsTab.build.outputRevision .. "\n" .. tostring(slot) .. "\n" .. quality .. "\n" .. raw)
 	if key ~= self.key then
@@ -66,7 +118,13 @@ function ReportClass:Calculate()
 		end)
 		if ok then return result else return nil, tostring(result) end
 	]]
-	self:StartWorker(script, xml, self.itemRaw, self.itemsTab:GetComparisonSlotNameForItem(self.itemsTab.displayItem), self:GetQuality())
+	self:StartWorker(script, xml, self.itemRaw, self:GetComparisonSlot(), self:GetQuality())
+	self:Refresh()
+end
+
+function ReportClass:Fail(err)
+	self.AugmentReportControl.Fail(self, err)
+	self:Refresh()
 end
 
 function ReportClass:Refresh()
@@ -98,6 +156,10 @@ function ReportClass:Refresh()
 	else
 		self.label = self.failed and "Comparison unavailable (hover Calculate for reason)" or self.worker and "Calculating in background..." or "Click Calculate to compare catalysts"
 	end
+	local selector = self.controls.socket:IsShown()
+	self.statusLabel = self.label
+	if selector then self.label = nil end
+	self.controls.calculate.y = selector and 24 or 4
 	self:Sort()
 	self.controls.scrollBarV:SetContentDimension(#self.list * self.rowHeight, self:GetRowRegion().height)
 end

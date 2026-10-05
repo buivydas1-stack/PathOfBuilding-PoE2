@@ -1385,7 +1385,7 @@ function ItemsTabClass:Draw(viewPort, inputEvents)
 		if self.controls.catalystReport:IsShown() then
 			local x, y = self.controls.catalystReport:GetPos()
 			maxX = m_max(maxX, x + 654)
-			maxY = m_max(maxY, y + 308)
+			maxY = m_max(maxY, y + (self.controls.catalystReport.controls.socket:IsShown() and 328 or 308))
 		end
 		local contentHeight = maxY - self.y
 		local contentWidth = maxX - self.x
