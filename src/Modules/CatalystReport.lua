@@ -85,24 +85,39 @@ end
 -- Find rolls that reproduce those numbers with the existing quality/effects,
 -- then use the same item formatter at the requested quality. Never guess rolls.
 local function recoverPrintedLine(item, line, implicit, oldId, oldQuality, newId, quality, effects)
-	local target, outcomes = numbers(printed(line)), { }
+	local text = printed(line)
+	local target, outcomes = numbers(text), { }
 	for _, affix in ipairs(item:GetCatalystAffixes(line, implicit)) do
 		local effect = effects[affix.mod.type] or 0
 		local scalar = item:GetCatalystScalar(affix.mod, oldId, oldQuality) + effect
 		local nextScalar = item:GetCatalystScalar(affix.mod, newId, quality) + effect
-		local low, high = 0, 1
-		for _ = 1, 40 do
-			local range = (low + high) / 2
-			local current = numbers(itemLib.applyRange(affix.line, range, scalar))
-			local comparison = 0
-			if #current ~= #target then break end
-			for index, value in ipairs(current) do
-				if value ~= target[index] then comparison = value < target[index] and -1 or 1; break end
+		local minimum = numbers(itemLib.applyRange(affix.line, 0, scalar))
+		local maximum = numbers(itemLib.applyRange(affix.line, 1, scalar))
+		local recovered = { }
+		if #minimum == #target and #maximum == #target then
+			-- A copied damage range can roll each endpoint independently; a
+			-- single crafting-slider position need not reproduce both values.
+			for index, value in ipairs(target) do
+				local low, high = 0, 1
+				local increasing = maximum[index] >= minimum[index]
+				for _ = 1, 40 do
+					local range = (low + high) / 2
+					local current = numbers(itemLib.applyRange(affix.line, range, scalar))[index]
+					if current == value then
+						recovered[index] = numbers(itemLib.applyRange(affix.line, range, nextScalar))[index]
+						break
+					elseif (current < value) == increasing then low = range else high = range end
+				end
+				if recovered[index] == nil then break end
 			end
-			if comparison == 0 then
-				outcomes[itemLib.applyRange(affix.line, range, nextScalar)] = true
-				break
-			elseif comparison < 0 then low = range else high = range end
+		end
+		if #recovered == #target then
+			local index = 0
+			local outcome = text:gsub("%-?%d+%.?%d*", function()
+				index = index + 1
+				return tostring(recovered[index])
+			end)
+			outcomes[outcome] = true
 		end
 	end
 	local outcome = next(outcomes)

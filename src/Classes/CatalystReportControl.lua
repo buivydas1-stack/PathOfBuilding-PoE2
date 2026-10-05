@@ -16,7 +16,7 @@ local ReportClass = newClass("CatalystReportControl", "AugmentReportControl", fu
 		self:Update()
 	end
 	self.controls.socket.tooltipText = "Slot to use for build comparisons, including occupied jewel sockets. Replaces only the selected slot and keeps the other items equipped."
-	self.controls.status = new("LabelControl", {"TOPLEFT", self, "BOTTOMLEFT"}, {0, 4, 0, 16}, function() return self.statusLabel end)
+	self.controls.status = new("LabelControl", {"TOPLEFT", self, "BOTTOMLEFT"}, {0, 4, 0, 16}, function() return "^7" .. (self.statusLabel or "") end)
 	self.controls.status.shown = self.controls.socket.shown
 	self.controls.itemScore = new("CheckBoxControl", {"TOPLEFT", self, "TOPLEFT"}, {500, -78, 16}, "Rank by item modifiers", function()
 		self.sortColumn, self.descending = 2, true
@@ -158,7 +158,7 @@ function ReportClass:Refresh()
 	end
 	local selector = self.controls.socket:IsShown()
 	self.statusLabel = self.label
-	if selector then self.label = nil end
+	self.label = not selector and ("^7" .. self.label) or nil
 	self.controls.calculate.y = selector and 24 or 4
 	self:Sort()
 	self.controls.scrollBarV:SetContentDimension(#self.list * self.rowHeight, self:GetRowRegion().height)

@@ -143,6 +143,24 @@ local qualityRing = report.ItemResult("Item Class: Rings\nRarity: Rare\nQuality 
 near(row(qualityRing, "Esh's Catalyst").score, 5 / 27 * 100, "Existing copied implicit quality")
 print("PASS: normal game copies recover existing quality and jewel local effects without double scaling")
 
+-- Damage endpoints can have independent rolls. Existing-quality recovery must
+-- not require their minimum and maximum to share one affix-slider position.
+local blightNail = "Item Class: Rings\nRarity: Rare\nBlight Nail\nGold Ring\n--------\nQuality (Lightning Modifiers): +20% (augmented)\n--------\n14% increased Rarity of Items found (implicit)\n--------\nAdds 2 to 79 Lightning damage to Attacks\n+103 to maximum Life\n+31 to Dexterity\n+40% to Cold Resistance\n15% increased Rarity of Items found\n24% increased Lightning Damage"
+local blightResult, blightBase = report.ItemResult(blightNail, 20)
+assert(#blightResult.rows == 13)
+local blightEsh = row(blightResult, "Esh's Catalyst")
+assert(#blightEsh.changes == 2 and blightEsh.changes[1].before == "Adds 2 to 66 Lightning damage to Attacks" and
+	blightEsh.changes[1].after == "Adds 2 to 79 Lightning damage to Attacks")
+near(blightEsh.score, 13 / 68 * 100 + 20, "Blight Nail damage range plus Lightning Damage")
+local blightForty = report.ItemResult(blightNail, 40)
+assert(row(blightForty, "Esh's Catalyst").changes[1].after == "Adds 2 to 92 Lightning damage to Attacks")
+tab:CreateDisplayItemFromRaw(blightNail, true)
+local blightFull = report.Calculate(build, tab.controls.catalystReport.itemRaw, "Ring 1", 20)
+assert(#blightFull.rows == 13 and not blightFull.buildUnavailable)
+tab.controls.displayItemCatalystQualityEdit.changeFunc("40")
+assert(tab.displayItem.explicitModLines[1].line == "Adds 2 to 92 Lightning damage to Attacks", "Quality editor must recover independent endpoints")
+print("PASS: pictured Blight Nail ring, existing-quality independent damage rolls, all report rows and quality editing")
+
 local unsupported = report.ItemResult("Rarity: Rare\nUnsupported Fixture\nGold Ring\n--------\n{tags:caster}10% increased Unmodelled Fixture Power", 20)
 assert(row(unsupported, "Sibilant Catalyst").changes[1].unsupported, "Unsupported build effects must be identified")
 local badCopy = "Item Class: Rings\nRarity: Rare\nUnknown Roll\nTopaz Ring\n--------\nQuality (Lightning Modifiers): +20% (augmented)\n--------\n+999% to Lightning Resistance"
@@ -340,3 +358,14 @@ for _, value in ipairs(expected.rows) do
 	for stat, amount in pairs(value.values) do near(actual.values[stat], amount, value.name .. " worker " .. stat) end
 end
 print("PASS: real worker XML snapshot, item scores and complete build output transport parity")
+
+local blightExpected = report.Calculate(build, blightNail, "Ring 1", 20)
+local blightWorker = json.decode(assert(loadfile("Modules/AugmentReportWorker.lua"))(".", snapshot, blightNail, "Ring 1", nil, nil, nil, "catalyst", 20))
+assert(#blightWorker.rows == 13)
+for _, value in ipairs(blightExpected.rows) do
+	local actual = row(blightWorker, value.name)
+	near(actual.score, value.score, value.name .. " Blight Nail worker score")
+	near(actual.values.Life, value.values.Life, value.name .. " Blight Nail worker Life")
+	near(actual.values.TotalEHP, value.values.TotalEHP, value.name .. " Blight Nail worker EHP")
+end
+print("PASS: pictured ring produces every catalyst score and build value in the real worker")
