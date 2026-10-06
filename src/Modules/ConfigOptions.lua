@@ -1223,7 +1223,7 @@ Huge sets the radius to 11.
 	{ var = "conditionKilledPoisonedLast2Seconds", type = "check", label = "Killed a poisoned enemy in the last 2 Seconds?", ifCond = "KilledPoisonedLast2Seconds", implyCond = "KilledRecently", tooltip = "This also implies that you have Killed Recently.", apply = function(val, modList, enemyModList)
 		modList:NewMod("Condition:KilledPoisonedLast2Seconds", "FLAG", true, "Config", { type = "Condition", var = "Combat" })
 	end },
-	{ var = "conditionKilledShockedLast3Seconds", type = "check", label = "Killed a ^xADAA47Shocked ^7enemy in the last 3 Seconds?", ifCond = "KilledShockedLast3Seconds", implyCondList = { "KilledRecently", "KilledLast3Seconds" }, tooltip = "This also implies that you have Killed Recently.", apply = function(val, modList, enemyModList)
+	{ var = "conditionKilledShockedLast3Seconds", type = "check", label = "Killed a ^xADAA47Shocked ^7enemy in last 3s?", ifCond = "KilledShockedLast3Seconds", implyCondList = { "KilledRecently", "KilledLast3Seconds" }, tooltip = "Have you killed a Shocked enemy in the last 3 seconds?\nThis also implies that you have Killed Recently.", apply = function(val, modList, enemyModList)
 		modList:NewMod("Condition:KilledShockedLast3Seconds", "FLAG", true, "Config", { type = "Condition", var = "Combat" })
 	end },
 	{ var = "conditionKilledTauntedEnemyRecently", type = "check", label = "Killed a taunted enemy recently?", ifCond = "KilledTauntedEnemyRecently", implyCondList = {"KilledRecently", "TauntedEnemyRecently" }, tooltip = "This also implies that you have killed and taunted recently.", apply = function(val, modList, enemyModList)
