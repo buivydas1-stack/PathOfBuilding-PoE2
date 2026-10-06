@@ -23,7 +23,7 @@ local ReportClass = newClass("CatalystReportControl", "AugmentReportControl", fu
 		self:Refresh()
 	end, "Checked: rank by summed percentage improvements to this item's modifiers after rounding. Unchecked: rank by improvement to the selected build metric.", true)
 	self.controls.qualityLabel = new("LabelControl", {"TOPLEFT", self, "TOPLEFT"}, {520, -78, 0, 20}, "^7Quality:")
-	self.controls.quality = new("EditControl", {"TOPLEFT", self, "TOPLEFT"}, {585, -78, 50, 20}, "20", nil, "%D", 3, function()
+	self.controls.quality = new("EditControl", {"TOPLEFT", self, "TOPLEFT"}, {585, -78, 72, 20}, "20", nil, "%D", 3, function()
 		self:Update()
 	end)
 	self.controls.quality.tooltipText = "Target catalyst quality for every candidate. The comparison starts without catalyst quality."

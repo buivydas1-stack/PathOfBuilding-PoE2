@@ -681,7 +681,7 @@ holding Shift will put it in the second.]])
 		self:SetDisplayItemCatalystQuality(m_floor(val * slider.maxQuality + 0.5))
 	end)
 	self.controls.displayItemCatalystQualitySlider.shown = self.controls.displayItemCatalystQualityLabel.shown
-	self.controls.displayItemCatalystQualityEdit = new("EditControl", {"LEFT",self.controls.displayItemCatalystQualitySlider,"RIGHT"}, {6, 0, 50, 20}, nil, nil, "%D", 2, function(buf)
+	self.controls.displayItemCatalystQualityEdit = new("EditControl", {"LEFT",self.controls.displayItemCatalystQualitySlider,"RIGHT"}, {6, 0, 64, 20}, nil, nil, "%D", 2, function(buf)
 		local quality = tonumber(buf)
 		if quality then self:SetDisplayItemCatalystQuality(quality) end
 	end)
