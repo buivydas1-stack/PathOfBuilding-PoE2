@@ -9,6 +9,7 @@ local t_insert = table.insert
 local t_remove = table.remove
 local m_min = math.min
 local m_max = math.max
+local rodCountEstimate = LoadModule("Modules/RodCountEstimate")
 
 local groupSlotDropList = {
 	{ label = "None" },
@@ -585,6 +586,11 @@ function SkillsTabClass:Draw(viewPort, inputEvents)
 
 	do
 		local maxX = self.controls.gemCountHeader:GetPos() + self.controls.gemCountHeader:GetSize() + 25
+		for _, slot in ipairs(self.gemSlots) do
+			if slot.rodEstimate and slot.rodEstimate:IsShown() then
+				maxX = m_max(maxX, slot.rodEstimate:GetPos() + slot.rodEstimate:GetSize() + 25)
+			end
+		end
 		local contentWidth = maxX - self.x
 		self.controls.scrollBarH:SetContentDimension(contentWidth, viewPort.width)
 	end
@@ -1127,6 +1133,30 @@ function SkillsTabClass:CreateGemSlot(index)
 
 	self.controls["gemSlot"..index.."CorruptLevel"] = slot.corruptLevel
 
+	-- Optional estimate: applying it is an ordinary, undoable Count edit.
+	slot.rodEstimate = new("ButtonControl", {"LEFT", slot.corruptLevel, "RIGHT"}, {18, 0, 180, 20}, "Use estimate", function()
+		local value = self:GetRodCountEstimate(index)
+		if value then
+			local gem = self.displayGroup.gemList[index]
+			gem.count = value
+			slot.count:SetText(value)
+			self:ProcessSocketGroup(self.displayGroup)
+			self:AddUndoState()
+			self.build.buildFlag = true
+		end
+	end)
+	slot.rodEstimate.shown = function()
+		local gem = self.displayGroup and self.displayGroup.gemList[index]
+		return gem and gem.gemData and gem.gemData.grantedEffect.id == "LightningRodPlayer"
+	end
+	slot.rodEstimate.enabled = function() return self:GetRodCountEstimate(index) ~= nil end
+	slot.rodEstimate.label = function()
+		local value = self:GetRodCountEstimate(index)
+		return value and string.format("Use estimate: %.1f", value) or "Estimate unavailable"
+	end
+	slot.rodEstimate.tooltipText = rodCountEstimate.tooltip
+	self.controls["gemSlot"..index.."RodEstimate"] = slot.rodEstimate
+
 	-- Parser/calculator error message
 	slot.errMsg = new("LabelControl", {"LEFT",slot.count,"RIGHT"}, {2, 2, 0, 16}, function()
 		local gemInstance = self.displayGroup and self.displayGroup.gemList[index]
@@ -1174,6 +1204,18 @@ function SkillsTabClass:CreateGemSlot(index)
 end
 
 -- Update the gem slot controls to reflect the currently displayed socket group
+function SkillsTabClass:GetRodCountEstimate(index)
+	local gem = self.displayGroup and self.displayGroup.gemList[index]
+	if not gem or not gem.gemData or gem.gemData.grantedEffect.id ~= "LightningRodPlayer" then return end
+	local cache = self.rodEstimateCache
+	if not cache or cache.revision ~= self.build.outputRevision or cache.gem ~= gem or cache.group ~= self.displayGroup then
+		local value = rodCountEstimate.calculate(self.build, self.build.calcsTab.calcs, gem)
+		cache = { revision = self.build.outputRevision, gem = gem, group = self.displayGroup, value = value }
+		self.rodEstimateCache = cache
+	end
+	return cache.value
+end
+
 function SkillsTabClass:UpdateGemSlots()
 	if not self.displayGroup then
 		return

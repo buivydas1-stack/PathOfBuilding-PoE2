@@ -35,6 +35,7 @@
     "Modules/Calcs.lua",
     "Modules/CalcOffence.lua",
     "Modules/CalcActiveSkill.lua",
+    "Modules/RodCountEstimate.lua",
     "Modules/CalcPerform.lua",
     "Modules/CalcSections.lua",
     "Modules/CalcDefence.lua",
