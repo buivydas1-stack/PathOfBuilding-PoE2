@@ -2052,18 +2052,23 @@ function calcs.initEnv(build, mode, override, specEnv)
 					group.displayLabel = group.label
 				else
 					group.displayLabel = nil
+					local allNames, enabledNames = {}, {}
 					for _, gemInstance in ipairs(group.gemList) do
 						local grantedEffect = gemInstance.gemData and gemInstance.gemData.grantedEffect or gemInstance.grantedEffect
 						local gemName = gemInstance.gemData and gemInstance.gemData.name
-						if grantedEffect and not grantedEffect.support and gemInstance.enabled then
+						if grantedEffect and not grantedEffect.support then
+							local name
 							if grantedEffect.name:match("^Companion:") or grantedEffect.name:match("^Spectre:") then
-								group.displayLabel = (group.displayLabel and group.displayLabel..", " or "") .. gemInstance.nameSpec
+								name = gemInstance.nameSpec
 							else
-								group.displayLabel = (group.displayLabel and group.displayLabel..", " or "") .. (gemName or grantedEffect.name)
+								name = gemName or grantedEffect.name
 							end
+							t_insert(allNames, name)
+							if gemInstance.enabled then t_insert(enabledNames, name) end
 						end
 					end
-					group.displayLabel = group.displayLabel or "<No active skills>"
+					local names = group.enabled and group.slotEnabled and #enabledNames > 0 and enabledNames or allNames
+					group.displayLabel = #names > 0 and table.concat(names, ", ") or "<No active skills>"
 				end
 
 				-- Save the active skill list for display in the socket group tooltip

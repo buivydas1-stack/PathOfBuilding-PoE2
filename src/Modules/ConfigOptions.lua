@@ -1008,6 +1008,9 @@ Huge sets the radius to 11.
 	{ var = "multiplierRage", type = "count", label = "^xFF9922Rage:", ifFlag = "Condition:CanGainRage", tooltip = "Base Maximum ^xFF9922Rage ^7is 30, and inherently grants 1% More Attack Damage per 1 ^xFF9922Rage^7\nYou lose 5 ^xFF9922Rage ^7every second if you have not been Hit or gained ^xFF9922Rage ^7in the last 4 seconds.", apply = function(val, modList, enemyModList)
 		modList:NewMod("Multiplier:RageStack", "BASE", val, "Config", { type = "IgnoreCond" }, { type = "Condition", var = "Combat" }, { type = "Condition", var = "CanGainRage" })
 	end },
+	{ var = "assumeMaximumRage", type = "check", label = "Assume maximum Rage", ifFlag = "Condition:CanGainRage", tooltip = "Uses this build's calculated maximum Rage instead of the manual Rage value.\nThe maximum is recalculated when previewing passive additions, removals or item changes.\nYou can clear the manual Rage input. This assumes you sustain maximum Rage; it does not grant a source of Rage.", apply = function(val, modList, enemyModList)
+		modList:NewMod("AssumeMaximumRage", "FLAG", true, "Config", { type = "Condition", var = "Combat" })
+	end },
 	{ var = "multiplierCombo", type = "count", label = "Combo:", ifMult = "ComboStacks", tooltip = "Some skills and effects require a certain Combo count to use.\nCombo is built by successfully Striking Enemies.", apply = function(val, modList, enemyModList)
 		modList:NewMod("Multiplier:ComboStacks", "BASE", val, "Config", { type = "IgnoreCond" }, { type = "Condition", var = "Combat" })
 	end },
