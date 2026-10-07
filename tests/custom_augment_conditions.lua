@@ -19,6 +19,7 @@ build.skillsTab:PasteSocketGroup("Lightning Arrow 20/0 1")
 build.skillsTab.socketGroupList[1].includeInFullDPS = true
 build.skillsTab:PasteSocketGroup("Voltaic Mark 20/0 1")
 local mark = build.skillsTab.socketGroupList[2]
+build.configTab.input.voltaicMarkApplied = true
 equip("Rarity: Rare\nCondition Bow\nCrude Bow\n--------\nAdds 100 to 200 Physical Damage", "Weapon 1")
 local helmet = equip("Rarity: Rare\nCondition Helmet\nRusted Greathelm\n--------\nSockets: S S\n--------\n+100 to maximum Life", "Helmet")
 frame()

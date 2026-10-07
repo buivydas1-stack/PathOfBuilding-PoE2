@@ -513,6 +513,10 @@ local configSettings = {
 	{ var = "meatShieldEnemyNearYou", type = "check", label = "Is the enemy near you?", ifSkill = "Meat Shield", apply = function(val, modList, enemyModList)
 		modList:NewMod("Condition:MeatShieldEnemyNearYou", "FLAG", true, "Config")
 	end },
+	{ label = "Mirage Archer:", ifSkill = "Mirage Archer" },
+	{ var = "mirageArcherUptime", type = "countAllowZero", label = "Mirage Archer uptime (%):", ifSkill = "Mirage Archer", defaultState = 90, tooltip = "Average uptime of the Mirage Archer skills included in Full DPS (0 to 100%).\nTheir damage and attack speed while active still come from their gems and supports.\nThis does not simulate Lightning Rod activations or time spent replacing rods.", apply = function(val, modList, enemyModList)
+		modList:NewMod("MirageArcherUptime", "OVERRIDE", m_max(0, m_min(val, 100)), "Config")
+	end },
 	{ label = "Momentum:", ifSkill = "Momentum" },
 	{ var = "momentumDamage", type = "check", label = "Moved 2m during Skill use?", ifSkill = "Momentum", ifFlag = "CanPerformSkillWhileMoving", apply = function(val, modList, enemyModList)
 		modList:NewMod("Condition:Moved2m", "FLAG", true, "Config")
@@ -761,6 +765,13 @@ local configSettings = {
 	{ var = "whirlwindBuffLightning", type = "check", label = "Whirlwind gained ^xADAA47Lightning^7 Element:", ifSkill = { "Whirlwind Lance", "Whirling Slash" }, tooltip = "Whirlwind has passed over ^xADAA47Lightning^7 Ground.", apply = function(val, modList, enemyModList)
 		modList:NewMod("Condition:WhirlwindBuffLightning", "FLAG", true, "Config", { type = "Condition", var = "Combat" })
 		enemyModList:NewMod("Condition:Shocked", "FLAG", true, "Config", { type = "Condition", var = "Effective" })
+	end },
+	{ label = "Voltaic Mark:", ifSkill = "Voltaic Mark" },
+	{ var = "voltaicMarkApplied", type = "check", label = "Is Voltaic Mark applied to the enemy?", ifSkill = "Voltaic Mark", tooltip = "Enables Voltaic Mark's increased Electrocution buildup against the target.\nApplying the Mark alone does not grant its damage buff.\nEternal Mark preserves the Mark on its first activation.", apply = function(val, modList, enemyModList)
+		enemyModList:NewMod("Condition:VoltaicMarkApplied", "FLAG", true, "Config")
+	end },
+	{ var = "voltaicMarkBuffActive", type = "check", label = "Is Voltaic Mark's damage buff active?", ifSkill = "Voltaic Mark", tooltip = "Enables the extra Lightning damage granted after Electrocuting the Marked target.\nThe buff can remain after the Mark is consumed, so this is independent of whether the enemy is still Marked.\nMarking another target removes the buff. Include in Full DPS does not control buffs.", apply = function(val, modList, enemyModList)
+		modList:NewMod("Condition:VoltaicMarkBuffActive", "FLAG", true, "Config")
 	end },
 	{ label = "Wind Dancer:", ifSkill = "Wind Dancer" },
 	{ var = "windDancerStacks", type = "countAllowZero", label = "# of Wind Dancer Stacks:", ifSkill = "Wind Dancer", apply = function(val, modList, enemyModList)

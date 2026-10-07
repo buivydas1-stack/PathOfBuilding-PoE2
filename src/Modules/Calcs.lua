@@ -355,6 +355,11 @@ function calcs.calcFullDPS(build, mode, override, specEnv)
 			local activeSkillCount, enabled
 			if not cachedPasses then
 				activeSkillCount, enabled = calcs.getActiveSkillCount(activeSkill)
+				if activeSkill.skillTypes[SkillType.SupportedByMirageArcher] then
+					-- Uptime averages clone damage without changing its attack rate while active.
+					activeSkillCount = activeSkillCount * (fullEnv.modDB:Override(nil, "MirageArcherUptime") or 100) / 100
+					enabled = enabled and activeSkillCount > 0
+				end
 			end
 			if cachedPasses then
 				-- This skill's own mod list and the coupling surface are unchanged since the

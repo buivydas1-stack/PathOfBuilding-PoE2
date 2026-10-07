@@ -52,6 +52,7 @@ assert(math.abs(rod.FullDPS-equivalent.FullDPS)<1e-7,"Rod gain must use generic 
 build.configTab.input.customMods=nil
 local unmarked=calc(true,20,true).ElectrocuteBuildupAvg
 build.skillsTab:PasteSocketGroup("Voltaic Mark 20/0 1")
+build.configTab.input.voltaicMarkApplied=true
 local marked=calc(true,20,true).ElectrocuteBuildupAvg
 assert(marked>unmarked,"Voltaic Mark must increase rod-enabled buildup")
 build.itemsTab.activeItemSet["Weapon 1"].selItemId=bow.id

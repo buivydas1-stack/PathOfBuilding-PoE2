@@ -10460,10 +10460,10 @@ skills["VoltaicMarkPlayer"] = {
 			statDescriptionScope = "voltaic_mark",
 			statMap = {
 				["thaumaturgist_mark_hit_damage_electrocute_multiplier_+%"] = {
-					mod("ElectrocuteBuildup", "INC", nil, 0, 0, { type = "GlobalEffect", effectType = "Curse" }),
+					mod("ElectrocuteBuildup", "INC", nil, 0, 0, { type = "GlobalEffect", effectType = "Curse", effectEnemyCond = "VoltaicMarkApplied" }),
 				},
 				["thaumaturgist_mark_damage_buff_damage_%_to_gain_as_lightning"] = {
-					mod("DamageGainAsLightning", "BASE", nil, 0, 0, { type = "GlobalEffect", effectType = "Buff" }),
+					mod("DamageGainAsLightning", "BASE", nil, 0, 0, { type = "GlobalEffect", effectType = "Buff", effectCond = "VoltaicMarkBuffActive" }),
 				},
 			},
 			baseFlags = {
