@@ -1112,7 +1112,8 @@ function TreeTabClass:ResizePowerReport(width)
 	local list = self.controls.powerReportList
 	list.width = math.min(700, math.max(1, width - 148))
 	list.controls.filterSelect.width = math.min(200, math.max(100, list.width - 118))
-	for column, fraction in ipairs({ 0.15, 0.45, 0.16, 0.05, 0.16 }) do
+	local fractions = list.singleNotables and { 0.15, 0.50, 0.16, 0.16 } or { 0.15, 0.45, 0.16, 0.05, 0.16 }
+	for column, fraction in ipairs(fractions) do
 		list.colList[column].width = list.width * fraction
 	end
 end
