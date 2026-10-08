@@ -308,6 +308,7 @@ will automatically apply to the skill.]]
 	self.controls.gemCorruptHeader = new("LabelControl", {"BOTTOMLEFT", self.gemSlots[1].corruptLevel, "TOPLEFT"}, {0, -2, 0, 16}, "^7Corrupt:")
 	self.controls.gemEnableHeader = new("LabelControl", {"BOTTOMLEFT", self.gemSlots[1].enabled, "TOPLEFT"}, {-16, -2, 0, 16}, "^7Enabled:")
 	self.controls.gemCountHeader = new("LabelControl", {"BOTTOMLEFT", self.gemSlots[1].count, "TOPLEFT"}, {18, -2, 0, 16}, "^7Count:")
+	self.controls.supportReport = new("SupportReportControl", {"TOPLEFT", self.anchorGroupDetail, "TOPLEFT"}, {0, 128, 760, 320}, self)
 end)
 
 function SkillsTabClass:GetCorruptIndex(gemInstance)
@@ -583,6 +584,8 @@ function SkillsTabClass:Draw(viewPort, inputEvents)
 	self.controls.scrollBarH.width = viewPort.width
 	self.controls.scrollBarH.x = viewPort.x
 	self.controls.scrollBarH.y = viewPort.y + viewPort.height - 18
+	self.controls.supportReport:Update()
+	if self.controls.supportReport:IsShown() then self.controls.supportReport:Layout(viewPort) end
 
 	do
 		local maxX = self.controls.gemCountHeader:GetPos() + self.controls.gemCountHeader:GetSize() + 25
@@ -592,6 +595,10 @@ function SkillsTabClass:Draw(viewPort, inputEvents)
 			end
 		end
 		local contentWidth = maxX - self.x
+		if self.controls.supportReport:IsShown() then
+			local reportX = self.controls.supportReport:GetPos()
+			contentWidth = m_max(contentWidth, reportX + self.controls.supportReport:GetSize() + 20 - self.x)
+		end
 		self.controls.scrollBarH:SetContentDimension(contentWidth, viewPort.width)
 	end
 	self.x = self.x - self.controls.scrollBarH.offset

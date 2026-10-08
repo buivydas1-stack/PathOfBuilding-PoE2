@@ -227,4 +227,7 @@ local candidates = candidateJSON and json.decode(candidateJSON) or nil
 if reportType == 'catalyst' then
 	return json.encode(LoadModule('Modules/CatalystReport').Calculate(build, itemRaw, slotName, quality, candidates))
 end
+if reportType == 'support' then
+	return json.encode(LoadModule('Modules/SupportReport').Calculate(build, assert(json.decode(quality)), candidates))
+end
 return json.encode(report.Calculate(build, itemRaw, slotName, candidates, considerExisting, socketIndex))
