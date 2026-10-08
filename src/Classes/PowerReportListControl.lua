@@ -21,6 +21,9 @@ local PowerReportListClass = newClass("PowerReportListControl", "ListControl", f
 		{ width = width * 0.16, label = "Per Point", sortable = true },
 	}
 	self.colLabels = true
+	self.normalColList = self.colList
+	self.notableColList = { self.colList[1], self.colList[2], self.colList[3], self.colList[5] }
+	self.metricColumn = self.colList[5]
 	self.nodeSelectCallback = nodeSelectCallback
 	self.nodeIgnoreCallback = nodeIgnoreCallback
 	self.ignoredNodes = ignoredNodes or { }
@@ -54,13 +57,22 @@ end
 
 function PowerReportListClass:SetReport(stat, report, singleNotables)
 	local enteringNotables = singleNotables and not self.singleNotables
+	if (singleNotables or false) ~= (self.singleNotables or false) and self.sortColumn then
+		if singleNotables then
+			self.sortColumn = self.sortColumn == 4 and 3 or self.sortColumn == 5 and 4 or self.sortColumn
+		elseif self.sortColumn == 4 then
+			self.sortColumn = 5
+		end
+	end
 	self.singleNotables = singleNotables
+	self.colList = singleNotables and self.notableColList or self.normalColList
+	self.colList[2].width = self.width * (singleNotables and 0.50 or 0.45)
 	self.colList[1].label = singleNotables and "Action" or "Type"
 	if enteringNotables then self.controls.filterSelect:SetSel(4) end
 	self.combinedReport = stat and stat.combinedReport or false
 	self.percentReport = singleNotables and stat and (stat.stat == "FullDPS" or stat.stat == "TotalEHP" or stat.combinedReport)
 	self.powerColumn.label = self.combinedReport and "Full DPS %" or self.percentReport and (stat.stat == "TotalEHP" and "EHP %" or "Full DPS %") or stat and stat.label or ""
-	self.colList[5].label = self.combinedReport and "EHP %" or self.percentReport and "% / Point" or "Per Point"
+	self.metricColumn.label = self.combinedReport and "EHP %" or self.percentReport and "% / Point" or "Per Point"
 	self.originalList = report or {}
 	self.reportReady = stat and stat.stat and report ~= nil
 
@@ -97,6 +109,7 @@ end
 
 function PowerReportListClass:ReSort(colIndex)
 	self.sortColumn = colIndex
+	if self.singleNotables and colIndex == 4 then colIndex = 5 end
 	-- Reverse power sort for allocated because it uses negative numbers
 	local compare = self.allocated and 
 		function(a, b) return a < b end
@@ -205,6 +218,7 @@ function PowerReportListClass:OnSelClick(index, report, doubleClick)
 end
 
 function PowerReportListClass:GetRowValue(column, index, report)
+	if self.singleNotables and column == 4 then column = 5 end
 	return column == 1 and (self.singleNotables and report.action or report.type)
 		or column == 2 and report.name
 		or column == 3 and report.powerStr
