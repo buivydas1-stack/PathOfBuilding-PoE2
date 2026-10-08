@@ -308,6 +308,12 @@ local TreeTabClass = newClass("TreeTab", "ControlHost", function(self, build)
 	self.controls.powerReportList.controls.ignored = new("ButtonControl", { "RIGHT", self.controls.powerReportList.controls.filterSelect, "LEFT" }, { -8, 0, 110, 20 },
 		function() return "Ignored ("..self:GetIgnoredPowerNodeCount()..")" end,
 		function() self:OpenIgnoredPowerNodes() end)
+	self.controls.powerReportExport = new("ButtonControl", { "BOTTOMLEFT", self.controls.powerReportList, "BOTTOMRIGHT" }, { 8, 0, 130, 20 },
+		"Export CSV...", function() self:ExportPowerReport() end)
+	self.controls.powerReportExport.enabled = function()
+		return self.controls.powerReportList.reportReady and not self.build.calcsTab.powerBuilder and not self.build.calcsTab.powerBuildFlag
+	end
+	self.controls.powerReportExport.tooltipText = "Export all rows in the current filtered, sorted list, including rows below the scroll area. Ignored nodes are omitted."
 	-- Progress callback from the CalcsTab power builder coroutine
 	self.powerBuilderToastActive = false
 	self.lastProgressToastUpdate = 0
@@ -413,6 +419,7 @@ function TreeTabClass:Draw(viewPort, inputEvents)
 	self:ProcessControlsInput(inputEvents, viewPort)
 
 	-- Determine positions if one line of controls doesn't fit in the screen width
+	self:ResizePowerReport(viewPort.width)
 	local linesHeight = 24
 	local rightMargin = 10
 	local widthFirstLineControls = self.controls.specSelect.width + 8
@@ -1099,6 +1106,49 @@ function TreeTabClass:ApplyPowerStatOrder()
 		t_insert(self.notablePowerStatList, stat)
 		if not stat.combinedReport then t_insert(self.normalPowerStatList, stat) end
 	end
+end
+
+function TreeTabClass:ResizePowerReport(width)
+	local list = self.controls.powerReportList
+	list.width = math.min(700, math.max(1, width - 148))
+	list.controls.filterSelect.width = math.min(200, math.max(100, list.width - 118))
+	for column, fraction in ipairs({ 0.15, 0.45, 0.16, 0.05, 0.16 }) do
+		list.colList[column].width = list.width * fraction
+	end
+end
+
+function TreeTabClass:ExportPowerReport()
+	local csv = self.controls.powerReportList:GetCSV()
+	local controls = { }
+	controls.label = new("LabelControl", nil, { 0, 20, 0, 16 }, "^7CSV file path (including filename):")
+	controls.path = new("EditControl", nil, { 0, 42, 560, 20 }, self.lastPowerReportExportPath or (main.userPath .. "PowerReport.csv"))
+	local function save(path)
+		local file, err = io.open(path, "wb")
+		if not file then main:OpenMessagePopup("Export CSV", "Could not open file:\n" .. tostring(err)); return end
+		local written, writeError = file:write(csv)
+		local closed, closeError = file:close()
+		if not written or not closed then
+			main:OpenMessagePopup("Export CSV", "Could not save file:\n" .. tostring(writeError or closeError))
+			return
+		end
+		self.lastPowerReportExportPath = path
+		main:ClosePopup()
+		main:OpenMessagePopup("Export CSV", "Saved CSV to:\n" .. path)
+	end
+	controls.save = new("ButtonControl", nil, { -45, 80, 80, 20 }, "Save", function()
+		local path = controls.path.buf
+		if not path:lower():match("%.csv$") then path = path .. ".csv" end
+		local existing = io.open(path, "rb")
+		if existing then
+			existing:close()
+			main:OpenConfirmPopup("Export CSV", "Replace existing file?\n" .. path, "Replace", function() save(path) end)
+		else
+			save(path)
+		end
+	end)
+	controls.save.enabled = function() return controls.path.buf:match("%S") ~= nil end
+	controls.cancel = new("ButtonControl", nil, { 45, 80, 80, 20 }, "Cancel", function() main:ClosePopup() end)
+	main:OpenPopup(580, 110, "Export Power Report CSV", controls, "save", "path", "cancel")
 end
 
 function TreeTabClass:ReorderPowerStat(target)

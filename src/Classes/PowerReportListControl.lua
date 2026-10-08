@@ -39,6 +39,19 @@ local PowerReportListClass = newClass("PowerReportListControl", "ListControl", f
 		end)
 end)
 
+function PowerReportListClass:GetProperty(name)
+	local value = self.ListControl.GetProperty(self, name)
+	if name == "label" and value and self.controls.ignored then
+		local available = self.width - self.controls.filterSelect.width - self.controls.ignored.width - 16
+		if available <= 0 then return "" end
+		if DrawStringWidth(16, self.font, value) > available then
+			local index = DrawStringCursorIndex(16, self.font, value, math.max(0, available - DrawStringWidth(16, self.font, "...")), 0)
+			return value:sub(1, index - 1) .. "..."
+		end
+	end
+	return value
+end
+
 function PowerReportListClass:SetReport(stat, report, singleNotables)
 	local enteringNotables = singleNotables and not self.singleNotables
 	self.singleNotables = singleNotables
@@ -49,6 +62,7 @@ function PowerReportListClass:SetReport(stat, report, singleNotables)
 	self.powerColumn.label = self.combinedReport and "Full DPS %" or self.percentReport and (stat.stat == "TotalEHP" and "EHP %" or "Full DPS %") or stat and stat.label or ""
 	self.colList[5].label = self.combinedReport and "EHP %" or self.percentReport and "% / Point" or "Per Point"
 	self.originalList = report or {}
+	self.reportReady = stat and stat.stat and report ~= nil
 
 	if stat and stat.stat then
 		self.label = report and "Click to focus; right-click to ignore" or "Building Tree..."
@@ -60,6 +74,25 @@ function PowerReportListClass:SetReport(stat, report, singleNotables)
 	if self.sortColumn then
 		self:ReSort(self.sortColumn)
 	end
+end
+
+-- Export the filtered list, including off-screen rows, in its current sort order.
+function PowerReportListClass:GetCSV()
+	local function field(value)
+		local text = tostring(value or ""):gsub("%^[0-9]", ""):gsub("%^x%x%x%x%x%x%x", "")
+		if text:find('[,"\r\n]') then text = '"' .. text:gsub('"', '""') .. '"' end
+		return text
+	end
+	local lines, cells = { }, { }
+	for column, info in ipairs(self.colList) do cells[column] = field(info.label) end
+	t_insert(lines, table.concat(cells, ","))
+	for index, report in ipairs(self.list) do
+		if not self.ignoredNodes[report.id] then
+			for column in ipairs(self.colList) do cells[column] = field(self:GetRowValue(column, index, report)) end
+			t_insert(lines, table.concat(cells, ","))
+		end
+	end
+	return table.concat(lines, "\r\n") .. "\r\n"
 end
 
 function PowerReportListClass:ReSort(colIndex)
