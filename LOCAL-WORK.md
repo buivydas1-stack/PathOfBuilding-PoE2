@@ -1,8 +1,10 @@
 # Local PoB2 handoff
 
-## GitHub publication held — 2026-10-03
+## GitHub publication authorized — 2026-10-08
 
-The user explicitly instructed: "Don't push to github unless i say so." This supersedes the release on 2026-10-02 and all standing publication authorization. Preserve local commits; do not push until the user explicitly releases this hold. Local commits and authorized application deployment remain allowed. Ask before mouse control; deployment authorization does not authorize desktop mouse control.
+The user released existing holds and authorized automatic publication after a completed task or coherent batch passes relevant validation. First verify that the active installation runs the latest local custom application payload. Reuse valid completed checks; do not repeat broad verification solely for publication. Publish to the existing personal fork and `codex/pob2-customizations`, verify the remote commit, and report publication status separately. Hold publication only for important unverified behavior or a later explicit task-specific hold. Report newer official releases separately; publication does not require an upstream upgrade. Earlier hold statements below are dated delivery history, superseded by this instruction. Preserve local commits and unrelated work. Deployment authorization does not authorize desktop mouse control.
+
+Publication verification on 2026-10-08: the running installation's application commit is `878914e3904c8f75cf9bede33e0cf600b97ebcd5`, the newest local application change. All 48 application files match the verified latest stage by SHA-256 and the current source by text content (the working checkout uses different line endings). The executable matches the trusted runtime hash and the active process responds. Installed functional checks pass for the Rod Count estimate, maximum Rage/disabled labels, and Voltaic Mark/Mirage uptime. These are the three previously held commits since remote `be7b7d38`. The current official stable release remains v0.23.1. No application code changed for this publication; saved builds/settings were not accessed.
 
 Continue from the current local HEAD on `codex/pob2-customizations` in `D:\Codex\PoE2\PathOfBuilding-PoE2`. Preserve local commits and unrelated edits; do not reset to GitHub or replace the checkout.
 
