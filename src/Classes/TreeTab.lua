@@ -1121,7 +1121,9 @@ function TreeTabClass:ExportPowerReport()
 	local csv = self.controls.powerReportList:GetCSV()
 	local controls = { }
 	controls.label = new("LabelControl", nil, { 0, 20, 0, 16 }, "^7CSV file path (including filename):")
-	controls.path = new("EditControl", nil, { 0, 42, 560, 20 }, self.lastPowerReportExportPath or (main.userPath .. "PowerReport.csv"))
+	local homePath = os.getenv("USERPROFILE") or os.getenv("HOME")
+	local defaultPath = homePath and (homePath .. "/Downloads/PowerReport.csv") or (main.userPath .. "PowerReport.csv")
+	controls.path = new("EditControl", nil, { 0, 42, 560, 20 }, self.lastPowerReportExportPath or defaultPath)
 	local function save(path)
 		local file, err = io.open(path, "wb")
 		if not file then main:OpenMessagePopup("Export CSV", "Could not open file:\n" .. tostring(err)); return end
