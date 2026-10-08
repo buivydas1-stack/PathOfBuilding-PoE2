@@ -1123,7 +1123,9 @@ function TreeTabClass:ExportPowerReport()
 	controls.label = new("LabelControl", nil, { 0, 20, 0, 16 }, "^7CSV file path (including filename):")
 	local homePath = os.getenv("USERPROFILE") or os.getenv("HOME")
 	local defaultPath = homePath and (homePath .. "/Downloads/PowerReport.csv") or (main.userPath .. "PowerReport.csv")
-	controls.path = new("EditControl", nil, { 0, 42, 560, 20 }, self.lastPowerReportExportPath or defaultPath)
+	local separator = package.config:sub(1, 1)
+	local initialPath = (self.lastPowerReportExportPath or defaultPath):gsub("[/\\]", separator)
+	controls.path = new("EditControl", nil, { 0, 42, 560, 20 }, initialPath)
 	local function save(path)
 		local file, err = io.open(path, "wb")
 		if not file then main:OpenMessagePopup("Export CSV", "Could not open file:\n" .. tostring(err)); return end
@@ -1138,7 +1140,7 @@ function TreeTabClass:ExportPowerReport()
 		main:OpenMessagePopup("Export CSV", "Saved CSV to:\n" .. path)
 	end
 	controls.save = new("ButtonControl", nil, { -45, 80, 80, 20 }, "Save", function()
-		local path = controls.path.buf
+		local path = controls.path.buf:gsub("[/\\]", separator)
 		if not path:lower():match("%.csv$") then path = path .. ".csv" end
 		local existing = io.open(path, "rb")
 		if existing then
