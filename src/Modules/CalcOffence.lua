@@ -5746,6 +5746,34 @@ function calcs.offence(env, actor, activeSkill)
 			end
 		end
 
+		-- Maim chance per landed attack hit, including conditional critical-hit sources.
+		local maimChance = {}
+		local maimSources, seenMaimSources = {}, {}
+		for _, critical in ipairs({ false, true }) do
+			local maimCfg = copyTable(cfg, true)
+			maimCfg.skillCond.CriticalStrike = critical
+			maimChance[critical] = isAttack and skillFlags.hit and not skillModList:Flag(maimCfg, "CannotMaim")
+				and m_max(0, m_min(100, skillModList:Sum("BASE", maimCfg, "MaimChance") * calcLib.mod(skillModList, maimCfg, "MaimChance"))) or 0
+			if breakdown then
+				for _, row in ipairs(skillModList:Tabulate(nil, maimCfg, "MaimChance", "CannotMaim")) do
+					if not seenMaimSources[row.mod] then
+						t_insert(maimSources, row)
+						seenMaimSources[row.mod] = true
+					end
+				end
+			end
+		end
+		output.MaimChance = maimChance[false] + (maimChance[true] - maimChance[false]) * output.CritChance / 100
+		if breakdown then
+			breakdown.MaimChance = {
+				modList = maimSources,
+				s_format("%.2f%% ^8(chance on non-critical hit)", maimChance[false]),
+				s_format("%.2f%% ^8(chance on critical hit)", maimChance[true]),
+				s_format("%.2f%% ^8(critical hit chance)", output.CritChance),
+				s_format("= %.2f%% ^8(chance per landed hit; does not estimate uptime)", output.MaimChance),
+			}
+		end
+
 		-- Calculate knockback chance/distance
 		output.KnockbackChance = m_min(100, output.KnockbackChanceOnHit * (1 - output.CritChance / 100) + output.KnockbackChanceOnCrit * output.CritChance / 100 + enemyDB:Sum("BASE", nil, "SelfKnockbackChance"))
 		if output.KnockbackChance > 0 then
@@ -5883,6 +5911,7 @@ function calcs.offence(env, actor, activeSkill)
 
 	-- Combine secondary effect stats
 	if isAttack then
+		combineStat("MaimChance", "AVERAGE")
 		for _, ailment in ipairs({"Bleed", "Poison", "Ignite"}) do
 			combineStat(ailment.."Chance", "AVERAGE")
 			combineStat(ailment.."DPS", "CHANCE_AILMENT", ailment.."Chance")

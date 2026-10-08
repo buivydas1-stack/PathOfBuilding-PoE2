@@ -536,6 +536,15 @@ return {
 ["global_chance_to_blind_on_hit_%"] = {
 	mod("BlindChance", "BASE", nil),
 },
+["maim_on_hit_%"] = {
+	mod("MaimChance", "BASE", nil),
+},
+["global_maim_on_hit"] = {
+	mod("MaimChance", "BASE", 100),
+},
+["cannot_inflict_maim"] = {
+	flag("CannotMaim"),
+},
 ["global_chance_to_daze_on_hit_%"] = {
 	mod("DazeChance", "BASE", nil),
 },

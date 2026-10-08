@@ -1047,6 +1047,8 @@ function ItemClass:ParseRaw(raw, rarity, highQuality)
 				else
 					catalystScalar = getCatalystScalar(self.catalyst, modLine, self.catalystQuality)
 				end
+				-- Detailed in-game copies append an empty value range to named allocations.
+				line = line:gsub("^(Allocates .-)%(%)(%s*)$", "%1%2")
 				-- In advanced item text this crafted jewel affix has an empty name and
 				-- zero spawn weight, so the usual name lookup cannot identify it.
 				if raw:find("{ ", 1, true) and self.crafted and self.type == "Jewel" and modLine.crafted then

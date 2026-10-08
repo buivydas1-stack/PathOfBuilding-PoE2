@@ -143,3 +143,5 @@ Tree and Items comparison tooltips now put changed **Full DPS** and **Effective 
 Chance and ailment-buildup comparison rows include before/after percentages, for example (10% > 11%), alongside the existing delta. This applies to node and item comparisons; calculations are unchanged.
 
 - Projectile comparisons now show Average Projectile Count with fractional before/after values and total Surpassing Projectile Chance. Calcs exposes both totals and modifier sources. Existing projectile and DPS formulas are unchanged.
+
+- Detailed in-game item copies normalize empty ranges on named passive allocations, so Megalomaniac enchantments resolve like market copies. Calcs → Other Effects shows Maim Chance for the selected skill, capped at 100%, with source and critical-hit breakdowns. Maim support and attack restrictions are included; this does not set the enemy-Maimed configuration or model uptime. Verified with tests/custom_megalomaniac_maim.lua.

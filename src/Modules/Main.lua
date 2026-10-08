@@ -129,6 +129,10 @@ function main:Init()
 	else
 		-- Load mod cache
 		LoadModule("Data/ModCache", modLib.parseModCache)
+		-- The shipped cache predates offensive maim support.
+		for line in pairs(modLib.parseModCache) do
+			if line:lower():find("maim", 1, true) then modLib.parseModCache[line] = nil end
+		end
 	end
 
 	--[[ this does not work properly anymore see PR #7675

@@ -872,6 +872,9 @@ local modNameList = {
 	["duration of bleeding on you"] = "SelfBleedDuration",
 	["magnitude of bleeding on you"] = "SelfBleedEffect",
 	["to blind enemies on hit"] = { "BlindChance" },
+	["to maim on hit"] = "MaimChance",
+	["to maim enemies on hit"] = "MaimChance",
+	["to maim"] = "MaimChance",
 	["curse magnitudes"] = { "CurseEffect" },
 	["aura magnitudes"] = { "AuraEffect" },
 	-- Other negative effects
@@ -2516,6 +2519,7 @@ local specialModList = {
 	} end,
 	["attack projectiles always inflict bleeding and maim, and knock back enemies"] = {
 		mod("BleedChance", "BASE", 100, nil, bor(ModFlag.Attack, ModFlag.Projectile)),
+		mod("MaimChance", "BASE", 100, nil, bor(ModFlag.Attack, ModFlag.Projectile)),
 		mod("EnemyKnockbackChance", "BASE", 100, nil, bor(ModFlag.Attack, ModFlag.Projectile)),
 	},
 	["projectiles cannot pierce, fork or chain"] = {
@@ -2687,6 +2691,11 @@ local specialModList = {
 	["cannot be light stunned"] = { flag("StunImmune") },
 	["you cannot be hindered"] = { flag("HinderImmune") },
 	["you cannot be maimed"] = { flag("MaimImmune") },
+	["cannot inflict maim"] = { flag("CannotMaim") },
+	["attacks have (%d+)%% chance to maim on hit"] = function(num) return { mod("MaimChance", "BASE", num, nil, ModFlag.Attack) } end,
+	["(%d+)%% chance for attacks to maim on hit against poisoned enemies"] = function(num) return { mod("MaimChance", "BASE", num, nil, ModFlag.Attack, { type = "ActorCondition", actor = "enemy", var = "Poisoned" }) } end,
+	["maim on hit"] = { mod("MaimChance", "BASE", 100) },
+	["maim on critical hit"] = { mod("MaimChance", "BASE", 100, { type = "Condition", var = "CriticalStrike" }) },
 	["you cannot be impaled"] = { flag("ImpaleImmune") },
 	["cannot dodge roll or sprint"] = { flag("Condition:CannotDodgeRoll"), flag("Condition:CannotSprint") },
 	["you cannot sprint"] = { flag("Condition:CannotSprint") },
