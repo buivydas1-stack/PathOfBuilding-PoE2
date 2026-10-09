@@ -3,6 +3,38 @@
 local shared = LoadModule("Modules/AugmentReport")
 local report = { }
 
+-- These uniques are inherently corrupted, including imported copies that omit
+-- that property. Do not infer a blanket restriction from Unique rarity or base.
+local corruptedJewels = {
+	["Megalomaniac"] = true, ["Voices"] = true, ["Split Personality"] = true,
+	["From Nothing"] = true, ["Prism of Belief"] = true,
+	["Flesh Crucible"] = true, ["The Adorned"] = true,
+}
+
+function report.UnavailableReason(item)
+	if not item or item.type ~= "Jewel" then return end
+	if (item.rarity == "UNIQUE" or item.rarity == "RELIC") and corruptedJewels[item.title] then
+		return "This unique jewel is always corrupted; catalysts cannot be applied."
+	end
+	if item.corrupted then return "Catalysts cannot be applied to a corrupted jewel." end
+	if item.mirrored then return "Catalysts cannot be applied to a mirrored jewel." end
+	if item.base.subType == "Timeless" then
+		-- Undying Hate can have additional Desecrated modifiers. Keep those
+		-- comparisons available rather than disabling every Timeless Jewel.
+		for _, field in ipairs({ "implicitModLines", "explicitModLines", "enchantModLines", "runeModLines" }) do
+			for _, line in ipairs(item[field]) do
+				if item:CheckModLineVariant(line) then
+					local text = line.line
+					if not text:match("^Remembrancing ") and not text:match("^Glorifying the defilement of ")
+						and not text:match("^Passives in radius are Conquered by ") and text ~= "Historic"
+						and text ~= "Desecration makes this item unstable" then return end
+				end
+			end
+		end
+		return "Timeless jewel seeds and conquered passives cannot be scaled by catalysts."
+	end
+end
+
 local function printed(line, scalar)
 	return itemLib.applyRange(line.line, line.range or main.defaultItemAffixQuality,
 		scalar or line.valueScalar or 1, line.corruptedRange)

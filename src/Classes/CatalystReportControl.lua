@@ -8,7 +8,8 @@ local ReportClass = newClass("CatalystReportControl", "AugmentReportControl", fu
 		{ sortable = true, textHeight = 17 },
 		{ sortable = true, textHeight = 17 },
 	}
-	self.controls.title.label = "^7Catalyst recommendations"
+	self.controls.title.label = function() return (self.unavailableReason and "^8" or "^7") .. "Catalyst recommendations" end
+	self.enabled = function() return not self.unavailableReason end
 	self.controls.existing.shown = false
 	self.controls.socket.x, self.controls.socket.y, self.controls.socket.width = 0, -28, 240
 	self.controls.socket:SetList({ })
@@ -16,15 +17,15 @@ local ReportClass = newClass("CatalystReportControl", "AugmentReportControl", fu
 		local item = self.itemsTab.displayItem
 		return item and (item.type == "Jewel" or item.type == "Ring")
 	end
-	self.controls.socket.enabled = function() return #self.controls.socket.list > 0 end
+	self.controls.socket.enabled = function() return not self.unavailableReason and #self.controls.socket.list > 0 end
 	self.controls.socket.selFunc = function(_, selected)
 		if self.itemsTab.displayItem and self.itemsTab.displayItem.type == "Ring" then self.ringSlot = selected.slotName end
 		self:Update()
 	end
 	self.controls.socket.tooltipText = "Slot to use for build comparisons, including occupied jewel sockets. Replaces only the selected slot and keeps the other items equipped."
-	self.controls.status = new("LabelControl", {"TOPLEFT", self, "BOTTOMLEFT"}, {0, 4, 0, 16}, function() return "^7" .. (self.statusLabel or "") end)
+	self.controls.status = new("LabelControl", {"TOPLEFT", self, "BOTTOMLEFT"}, {0, 4, 0, 16}, function() return (self.unavailableReason and "^8" or "^7") .. (self.statusLabel or "") end)
 	self.controls.status.shown = self.controls.socket.shown
-	self.controls.qualityLabel = new("LabelControl", {"TOPLEFT", self, "TOPLEFT"}, {520, -78, 0, 20}, "^7Quality:")
+	self.controls.qualityLabel = new("LabelControl", {"TOPLEFT", self, "TOPLEFT"}, {520, -78, 0, 20}, function() return (self.unavailableReason and "^8" or "^7") .. "Quality:" end)
 	self.controls.quality = new("EditControl", {"TOPLEFT", self, "TOPLEFT"}, {585, -78, 72, 20}, "20", nil, "%D", 3, function()
 		self:Update()
 	end)
@@ -39,10 +40,15 @@ local ReportClass = newClass("CatalystReportControl", "AugmentReportControl", fu
 	self.controls.filter.selFunc = function() self:Refresh() end
 	self.controls.search.changeFunc = function() self:Refresh() end
 	self.controls.calculate.onClick = function() self:Calculate() end
-	self.controls.stat.enabled = true
+	for _, name in ipairs({ "stat", "filter", "search", "quality" }) do
+		self.controls[name].enabled = function() return not self.unavailableReason end
+	end
+	for _, name in ipairs({ "buttonUp", "buttonDown" }) do
+		self.controls.quality.controls[name].enabled = function() return not self.unavailableReason end
+	end
 	self.controls.stat.tooltipText = "Build stat to display alongside modifier gains. Click a column header to sort; click again to reverse. Compares the same item without catalyst quality against each catalyst at the target quality."
 	self.controls.filter.tooltipText = "Gains and losses refer to the selected build stat, independently of the sorting column."
-	self.controls.calculate.enabled = function() return self.itemRaw and not self.worker and self:GetQuality() ~= nil end
+	self.controls.calculate.enabled = function() return not self.unavailableReason and self.itemRaw and not self.worker and self:GetQuality() ~= nil end
 	self.shown = function() return self.itemsTab.displayItem and self.itemsTab.displayItem:CanUseCatalysts() end
 	self:Refresh()
 end)
@@ -54,7 +60,9 @@ end
 
 function ReportClass:SetItem(item)
 	self.itemRaw = item and item:CanUseCatalysts() and item:BuildRaw() or nil
+	self.unavailableReason = report.UnavailableReason(item)
 	self:UpdateComparisonSlots(item)
+	self:Update()
 end
 
 function ReportClass:UpdateComparisonSlots(item)
@@ -96,12 +104,13 @@ end
 function ReportClass:Update()
 	local item = self.itemsTab.displayItem
 	if self.slotRevision ~= self.itemsTab.build.outputRevision then self:UpdateComparisonSlots(item) end
-	local raw = item and self.itemRaw
+	local raw = item and not self.unavailableReason and self.itemRaw
 	local slot = raw and self:GetComparisonSlot()
 	local quality = self:GetQuality()
 	local key = raw and quality and (self.itemsTab.build.outputRevision .. "\n" .. tostring(slot) .. "\n" .. quality .. "\n" .. raw)
-	if key ~= self.key then
+	if key ~= self.key or self.unavailableReason ~= self.previousUnavailableReason then
 		self:Cancel()
+		self.previousUnavailableReason = self.unavailableReason
 		self.key, self.result, self.failed = key, nil, nil
 		self:Refresh()
 	end
@@ -132,10 +141,14 @@ end
 
 function ReportClass:Refresh()
 	self.tooltip:Clear()
-	if not self.failed then self.controls.calculate.tooltipText = nil end
+	if not self.failed then self.controls.calculate.tooltipText = self.unavailableReason end
 	local metric = self.stat.stat == "TotalEHP" and "EHP" or self.stat.stat == "FullDPS" and "Full DPS"
 	self.colList[3].label = metric and (metric .. " gain") or "Stat change"
 	self.colList[4].label = metric and (metric .. " increase (%)") or "Stat change (%)"
+	self.colList[1].label, self.colList[2].label = "Catalyst", "Sum of modifier gains (%)"
+	if self.unavailableReason then
+		for _, column in ipairs(self.colList) do column.label = "^8" .. column.label end
+	end
 	for column = 2, 4 do
 		self.colList[column].width = math.max(column == 2 and 180 or 100, DrawStringWidth(12, "VAR", self.colList[column].label) + 20)
 	end
@@ -143,7 +156,9 @@ function ReportClass:Refresh()
 		return self:GetRowRegion().width - self.colList[2].width - self.colList[3].width - self.colList[4].width
 	end
 	self.list, self.selIndex, self.selValue = { }, nil, nil
-	if self.result then
+	if self.unavailableReason then
+		self.label = "Catalyst comparison disabled (hover Calculate for reason)"
+	elseif self.result then
 		local search, filter = (self.controls.search.buf or ""):lower(), self.controls.filter.selIndex
 		for _, row in ipairs(self.result.rows) do
 			local delta, benefit, percent, value
@@ -166,7 +181,7 @@ function ReportClass:Refresh()
 	end
 	local selector = self.controls.socket:IsShown()
 	self.statusLabel = self.label
-	self.label = not selector and ("^7" .. self.label) or nil
+	self.label = not selector and ((self.unavailableReason and "^8" or "^7") .. self.label) or nil
 	self.controls.calculate.y = selector and 24 or 4
 	self:Sort()
 	self.controls.scrollBarV:SetContentDimension(#self.list * self.rowHeight, self:GetRowRegion().height)
@@ -201,7 +216,7 @@ function ReportClass:Draw(viewPort, noTooltip)
 	self.ListControl.Draw(self, viewPort, noTooltip)
 	local x, y = self:GetPos()
 	local column = self.colList[self.sortColumn]
-	if column and column._width then
+	if not self.unavailableReason and column and column._width then
 		SetDrawColor(1, 1, 1)
 		main:DrawArrow(x + column._offset + column._width - 7, y + 10, 6, 6, self.descending and "DOWN" or "UP")
 	end

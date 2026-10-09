@@ -369,6 +369,74 @@ assert(control.result and not control.worker)
 LaunchSubScript, AbortSubScript, GetScriptPath = oldLaunch, oldAbort, oldPath
 print("PASS: explicit Calculate button, shared background worker dispatch, cached selection changes, cancellation and stale delivery")
 
+-- Paste restrictions must clear cached/running comparisons immediately, while
+-- retaining the panel and restoring usable jewels without restarting the app.
+local function uniqueJewel(name, base, mods)
+	return "Rarity: Unique\n" .. name .. "\n" .. base .. "\n--------\n" .. (mods or "")
+end
+local megalomaniac = uniqueJewel("Megalomaniac", "Diamond", "Allocates Pure Power\nAllocates Heavy Blade\nAllocates Heartbreaking")
+for _, name in ipairs({ "Megalomaniac", "Voices", "Split Personality", "From Nothing", "Prism of Belief", "Flesh Crucible", "The Adorned" }) do
+	local item = new("Item", uniqueJewel(name, "Diamond", "Allocates Pure Power"))
+	assert(not item.corrupted and report.UnavailableReason(item), name .. " must also be blocked when imported without Corrupted")
+	item.rarity = "RELIC"; assert(report.UnavailableReason(item), "Relic versions retain their restriction")
+end
+assert(report.UnavailableReason(new("Item", jewelRaw .. "\nCorrupted")))
+assert(report.UnavailableReason(new("Item", jewelRaw .. "\nMirrored")))
+local heroic = uniqueJewel("Heroic Tragedy", "Timeless Jewel", "Remembrancing 1234 songworthy deeds by the line of Vorana\nPassives in radius are Conquered by the Kalguur\nHistoric")
+local undying = uniqueJewel("Undying Hate", "Timeless Jewel", "Glorifying the defilement of 1234 souls in tribute to Kulemak\nPassives in radius are Conquered by the Abyssals\nHistoric\nDesecration makes this item unstable")
+assert(report.UnavailableReason(new("Item", heroic)))
+assert(report.UnavailableReason(new("Item", undying)))
+local desecrated = undying .. "\n{desecrated}12% increased Physical Damage"
+assert(not report.UnavailableReason(new("Item", desecrated)), "Additional Desecrated modifiers must keep the calculator available")
+local inactive = new("Item", heroic .. "\nVariant: Default\nVariant: Extra modifier\nSelected Variant: 1\n{variant:2}12% increased Physical Damage")
+assert(report.UnavailableReason(inactive), "An inactive variant must not enable a seed-only comparison")
+inactive.variant = 2
+assert(not report.UnavailableReason(inactive))
+for _, rawText in ipairs({ jewelRaw, jewelRaw:gsub("\nEmerald\n", "\nTime-Lost Emerald\n"),
+	uniqueJewel("Grand Spectrum", "Ruby", "2% increased Maximum Life per socketed Grand Spectrum"),
+	uniqueJewel("Controlled Metamorphosis", "Diamond", "-10% to all Elemental Resistances"),
+	uniqueJewel("Against the Darkness", "Time-Lost Diamond", "Small Passive Skills in Radius also grant +5 to Strength"),
+	raw .. "\nCorrupted", ringRaw .. "\nMirrored" }) do
+	assert(not report.UnavailableReason(new("Item", rawText)), "Do not broaden the jewel restriction to other comparisons")
+end
+
+tab:CreateDisplayItemFromRaw(raw, true)
+control.controls.quality:SetText("20", true)
+local launchBefore, abortBefore, pathBefore = LaunchSubScript, AbortSubScript, GetScriptPath
+local dispatches, cancellations = 0, 0
+GetScriptPath = function() return "." end
+LaunchSubScript = function() dispatches = dispatches + 1; return 100 + dispatches end
+AbortSubScript = function() cancellations = cancellations + 1 end
+control:Calculate()
+local stalePaste = launch.subScripts[101].callback
+tab:CreateDisplayItemFromRaw(megalomaniac, true)
+assert(cancellations == 1 and not control.worker and not control.result and not control.key and #control.list == 0)
+assert(control:IsShown() and not control:IsEnabled() and control.statusLabel:find("disabled", 1, true))
+assert(control.controls.calculate.tooltipText:find("corrupted", 1, true))
+for _, name in ipairs({ "socket", "stat", "filter", "search", "quality", "calculate" }) do
+	assert(not control.controls[name]:IsEnabled(), "Disabled jewel must disable " .. name)
+end
+local target = control.controls.quality.buf
+control.controls.quality.controls.buttonUp:Click(); control.controls.quality.controls.buttonDown:Click()
+assert(control.controls.quality.buf == target, "Disabled quality buttons must not change the target")
+for _, column in ipairs(control.colList) do assert(column.label:sub(1, 2) == "^8") end
+control.controls.calculate:Click(); control:Calculate()
+assert(dispatches == 1, "Disabled comparisons must never dispatch a worker")
+stalePaste(require("dkjson").encode(calculated))
+assert(not control.result and #control.list == 0, "A completed old calculation cannot repopulate the grey table")
+tab:CreateDisplayItemFromRaw(heroic, true)
+assert(control.controls.calculate.tooltipText:find("Timeless", 1, true), "Changing disabled item must refresh the reason")
+tab:CreateDisplayItemFromRaw(desecrated, true)
+assert(control:IsEnabled() and control.controls.calculate:IsEnabled() and not control.controls.calculate.tooltipText)
+tab:CreateDisplayItemFromRaw(jewelRaw, true)
+assert(control:IsEnabled() and control.controls.stat:IsEnabled() and control.controls.quality:IsEnabled())
+assert(control.controls.socket:IsEnabled() == (#control.controls.socket.list > 0))
+assert(control.controls.quality.controls.buttonUp:IsEnabled() and control.controls.quality.controls.buttonDown:IsEnabled())
+assert(control.key and control.controls.calculate:IsEnabled() and not control.unavailableReason)
+for _, column in ipairs(control.colList) do assert(column.label:sub(1, 2) ~= "^8") end
+LaunchSubScript, AbortSubScript, GetScriptPath = launchBefore, abortBefore, pathBefore
+print("PASS: special/corrupted/mirrored jewel restrictions, seed-only Timeless jewels, Desecrated exceptions, grey controls, immediate cancellation, stale delivery and re-enabling")
+
 -- The real worker must transport the same item score and every build value.
 local json = require("dkjson")
 local snapshot = build:SaveDB("catalyst worker fixture")
