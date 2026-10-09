@@ -546,6 +546,7 @@ holding Shift will put it in the second.]])
 
 	-- Section: Enchant / Anoint / Corrupt
 	self.controls.displayItemSectionEnchant = new("Control", {"TOPLEFT",self.controls.displayItemSectionSockets,"BOTTOMLEFT"}, {0, 0, 0, function()
+		if self.controls.displayItemStickyAnointStatus:IsShown() then return 48 end
 		return (self.controls.displayItemAnoint:IsShown() or self.controls.displayItemCorrupt:IsShown() or self.controls.displayItemRuneforge:IsShown()) and 28 or 0
 	end})
 	self.controls.displayItemAnoint = new("ButtonControl", {"TOPLEFT",self.controls.displayItemSectionEnchant,"TOPLEFT"}, {0, 0, 100, 20}, "Anoint...", function()
@@ -575,7 +576,22 @@ holding Shift will put it in the second.]])
 		return self.displayItem and isAnointable(self.displayItem) and
 			self.displayItem.canHaveFourEnchants and #self.displayItem.enchantModLines > 2
 	end
-	self.controls.displayItemCorrupt = new("ButtonControl", {"TOPLEFT",self.controls.displayItemAnoint4,"TOPRIGHT",true}, {8, 0, 100, 20}, "Corrupt...", function()
+	self.controls.displayItemStickyAnointLabel = new("LabelControl", {"TOPLEFT",self.controls.displayItemAnoint4,"TOPRIGHT",true}, {8, 0, 88, 20}, "Sticky anoint:")
+	self.controls.displayItemStickyAnointLabel.shown = function()
+		return self.displayItem and self.displayItem.base.type == "Amulet"
+	end
+	self.controls.displayItemStickyAnoint = new("DropDownControl", {"TOPLEFT",self.controls.displayItemStickyAnointLabel,"TOPRIGHT",true}, {4, 0, 250, 20}, { { label = "Off" } }, function(index, value)
+		self:SetStickyAnoint(value.nodeId, value.nodeName)
+	end, "Replaces the anoint on pasted, modifiable amulets. Type to search. Off restores normal paste behavior. Equipped items are unchanged; save the build to remember this choice.")
+	self.controls.displayItemStickyAnoint.shown = self.controls.displayItemStickyAnointLabel.shown
+	self.controls.displayItemStickyAnoint:CheckDroppedWidth(true)
+	self.controls.displayItemStickyAnointStatus = new("LabelControl", {"TOPLEFT",self.controls.displayItemSectionEnchant,"TOPLEFT"}, {0, 24, 550, 16}, function()
+		return "^8" .. (self:GetStickyAnointIgnoreReason() or "")
+	end)
+	self.controls.displayItemStickyAnointStatus.shown = function()
+		return self:GetStickyAnointIgnoreReason() ~= nil
+	end
+	self.controls.displayItemCorrupt = new("ButtonControl", {"TOPLEFT",self.controls.displayItemStickyAnoint,"TOPRIGHT",true}, {8, 0, 100, 20}, "Corrupt...", function()
 		self:CorruptDisplayItem()
 	end)
 	self.controls.displayItemCorrupt.shown = function()
@@ -1133,9 +1149,14 @@ holding Shift will put it in the second.]])
 
 	self:PopulateSlots()
 	self.lastSlot = self.slots[baseSlots[#baseSlots]]
+	self:RefreshStickyAnointList()
 end)
 
 function ItemsTabClass:Load(xml, dbFileName)
+	self.stickyAnointNodeId = tonumber(xml.attrib.stickyAnointNodeId)
+	self.stickyAnointName = xml.attrib.stickyAnointName
+	self.pastedAnointLines = nil
+	self:RefreshStickyAnointList()
 	self.activeItemSetId = 0
 	self.itemSets = { }
 	self.itemSetOrderList = { }
@@ -1261,6 +1282,8 @@ function ItemsTabClass:Save(xml)
 		activeItemSet = tostring(self.activeItemSetId),
 		useSecondWeaponSet = tostring(self.activeItemSet.useSecondWeaponSet),
 		showStatDifferences = tostring(self.showStatDifferences),
+		stickyAnointNodeId = self.stickyAnointNodeId and tostring(self.stickyAnointNodeId),
+		stickyAnointName = self.stickyAnointName,
 	}
 	for _, id in ipairs(self.itemOrderList) do
 		local item = self.items[id]
@@ -1343,6 +1366,10 @@ function ItemsTabClass:Save(xml)
 end
 
 function ItemsTabClass:Draw(viewPort, inputEvents)
+	if self.stickyAnointTree ~= self.build.spec.tree then
+		self:RefreshStickyAnointList()
+		self:ApplyStickyAnointToPreview()
+	end
 	self.controls.augmentReport:Update()
 	self.controls.catalystReport:Update()
 	local comparisonRevealHeld = main:IsComparisonRevealHeld()
@@ -1419,7 +1446,7 @@ function ItemsTabClass:Draw(viewPort, inputEvents)
 			if event.key == "v" and IsKeyDown("CTRL") then
 				local newItem = Paste()
 				if newItem then
-					self:CreateDisplayItemFromRaw(newItem, true)
+					self:CreateDisplayItemFromRaw(newItem, true, true)
 				end
 				if self.displayItem and IsKeyDown("SHIFT") then
 					self:AddDisplayItem()
@@ -1895,8 +1922,77 @@ function ItemsTabClass:CopyAnointsAndAugments(newItem, copyAugments, overwrite, 
 	end
 end
 
--- Attempt to create a new item from the given item raw text and sets it as the new display item
-function ItemsTabClass:CreateDisplayItemFromRaw(itemRaw, normalise)
+function ItemsTabClass:GetStickyAnointNode()
+	local tree = self.build.spec and self.build.spec.tree
+	local node = tree and self.stickyAnointNodeId and tree.nodes[self.stickyAnointNodeId]
+	if node and node.recipe and #node.recipe > 0 and node.dn == self.stickyAnointName then
+		return node
+	end
+end
+
+function ItemsTabClass:RefreshStickyAnointList()
+	local tree = self.build.spec and self.build.spec.tree
+	if not tree then return end -- Items controls are created before the passive spec.
+	self.stickyAnointTree = tree
+	local list = { }
+	for id, node in pairs(self.stickyAnointTree.nodes) do
+		if node.recipe and #node.recipe > 0 then
+			t_insert(list, { label = node.dn, nodeId = id, nodeName = node.dn })
+		end
+	end
+	table.sort(list, function(a, b) return a.label < b.label end)
+	t_insert(list, 1, { label = "Off" })
+	if self.stickyAnointNodeId and not self:GetStickyAnointNode() then
+		t_insert(list, 2, { label = "Unavailable: " .. (self.stickyAnointName or tostring(self.stickyAnointNodeId)), nodeId = self.stickyAnointNodeId, nodeName = self.stickyAnointName })
+	end
+	local control = self.controls.displayItemStickyAnoint
+	control:SetList(list)
+	control.selIndex = 1
+	if self.stickyAnointNodeId then control:SelByValue(self.stickyAnointNodeId, "nodeId") end
+	control:CheckDroppedWidth(true)
+end
+
+function ItemsTabClass:GetStickyAnointIgnoreReason()
+	local item = self.displayItem
+	if not self.stickyAnointNodeId or not item or item.base.type ~= "Amulet" then return end
+	if item.corrupted then return "Ignored: corrupted" end
+	if item.mirrored then return "Ignored: mirrored" end
+	if item.sanctified then return "Ignored: sanctified" end
+	if not self:GetStickyAnointNode() then return "Ignored: anoint unavailable on this tree" end
+end
+
+-- Restore only the original enchantments; keep other preview edits, such as catalysts.
+function ItemsTabClass:ApplyStickyAnointToItem(item, originalLines)
+	if not item or not originalLines or item.base.type ~= "Amulet" then return end
+	if item.corrupted or item.mirrored or item.sanctified then return end
+	item.enchantModLines = copyTable(originalLines)
+	local node = self:GetStickyAnointNode()
+	if node then
+		local slot = #item.enchantModLines + 1
+		for index, mod in ipairs(item.enchantModLines) do
+			if mod.line:match("^Allocates ") then slot = index; break end
+		end
+		item.enchantModLines[slot] = { enchant = true, line = "Allocates " .. node.dn }
+	end
+	item:BuildAndParseRaw()
+	return true
+end
+
+function ItemsTabClass:ApplyStickyAnointToPreview()
+	local item = self.displayItem
+	if not self:ApplyStickyAnointToItem(item, self.pastedAnointLines) then return end
+	self:SetDisplayItem(item)
+end
+
+function ItemsTabClass:SetStickyAnoint(nodeId, nodeName)
+	if self.stickyAnointNodeId == nodeId and self.stickyAnointName == nodeName then return end
+	self.stickyAnointNodeId, self.stickyAnointName = nodeId, nodeName
+	self:ApplyStickyAnointToPreview()
+	self:AddUndoState()
+end
+
+-- Clipboard pastes opt in explicitly; manual text edits and database items do not.
+function ItemsTabClass:CreateDisplayItemFromRaw(itemRaw, normalise, fromPaste)
 	local newItem = new("Item", itemRaw)
 	if newItem.base then
 		if newItem.type == "Jewel" and newItem.crafted and itemRaw:find("{ ", 1, true)
@@ -1922,12 +2018,16 @@ function ItemsTabClass:CreateDisplayItemFromRaw(itemRaw, normalise)
 			newItem:NormaliseQuality()
 			newItem:BuildModList()
 		end
+		local originalLines = fromPaste and newItem.base.type == "Amulet" and copyTable(newItem.enchantModLines) or nil
+		if originalLines and self.stickyAnointNodeId then self:ApplyStickyAnointToItem(newItem, originalLines) end
 		self:SetDisplayItem(newItem)
+		self.pastedAnointLines = originalLines
 	end
 end
 
 -- Sets the display item to the given item
 function ItemsTabClass:SetDisplayItem(item)
+	if item ~= self.displayItem then self.pastedAnointLines = nil end
 	self.displayItem = item
 	if item then
 		-- Update the display item controls
@@ -4321,6 +4421,7 @@ end
 
 function ItemsTabClass:CreateUndoState()
 	local state = { }
+	state.stickyAnointNodeId, state.stickyAnointName = self.stickyAnointNodeId, self.stickyAnointName
 	state.activeItemSetId = self.activeItemSetId
 	state.items = { }
 	for k, v in pairs(self.items) do
@@ -4337,6 +4438,8 @@ function ItemsTabClass:CreateUndoState()
 end
 
 function ItemsTabClass:RestoreUndoState(state)
+	self.stickyAnointNodeId, self.stickyAnointName = state.stickyAnointNodeId, state.stickyAnointName
+	self:RefreshStickyAnointList()
 	self.items = state.items
 	wipeTable(self.itemOrderList)
 	for k, v in pairs(state.itemOrderList) do
@@ -4353,4 +4456,5 @@ function ItemsTabClass:RestoreUndoState(state)
 	self.activeItemSetId = state.activeItemSetId
 	self.activeItemSet = self.itemSets[self.activeItemSetId]
 	self:PopulateSlots()
+	self:ApplyStickyAnointToPreview()
 end
