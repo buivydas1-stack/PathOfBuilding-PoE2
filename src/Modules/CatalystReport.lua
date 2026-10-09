@@ -102,7 +102,18 @@ function report.ModifierChanges(before, after)
 end
 
 local function localEffects(item)
-	local effects = { Prefix = 0, Suffix = 0 }
+	local effects = { Prefix = 0, Suffix = 0, Resistance = 0 }
+	for _, field in ipairs({ "implicitModLines", "explicitModLines", "enchantModLines" }) do
+		for _, line in ipairs(item[field]) do
+			if item:CheckModLineVariant(line) then
+				for _, mod in ipairs(line.modList or { }) do
+					if mod.name == "LocalExplicitResistanceEffect" and mod.type == "INC" then
+						effects.Resistance = effects.Resistance + mod.value / 100
+					end
+				end
+			end
+		end
+	end
 	if item.type == "Jewel" then
 		for _, line in ipairs(item.explicitModLines) do
 			local value, kind = line.line:match("^(%d+)%% increased Effect of (Prefix)es")
@@ -113,6 +124,16 @@ local function localEffects(item)
 	return effects
 end
 
+local function affixEffect(effects, mod, implicit)
+	local effect = effects[mod.type] or 0
+	if not implicit then
+		for _, tag in ipairs(mod.modTags or { }) do
+			if tag == "resistance" then return effect + effects.Resistance end
+		end
+	end
+	return effect
+end
+
 -- A normal game copy contains already-catalysed printed numbers without tags.
 -- Find rolls that reproduce those numbers with the existing quality/effects,
 -- then use the same item formatter at the requested quality. Never guess rolls.
@@ -120,7 +141,7 @@ local function recoverPrintedLine(item, line, implicit, oldId, oldQuality, newId
 	local text = printed(line)
 	local target, outcomes = numbers(text), { }
 	for _, affix in ipairs(item:GetCatalystAffixes(line, implicit)) do
-		local effect = effects[affix.mod.type] or 0
+		local effect = affixEffect(effects, affix.mod, implicit)
 		local scalar = item:GetCatalystScalar(affix.mod, oldId, oldQuality) + effect
 		local nextScalar = item:GetCatalystScalar(affix.mod, newId, quality) + effect
 		local minimum = numbers(itemLib.applyRange(affix.line, 0, scalar))
@@ -177,12 +198,12 @@ function report.Prepare(raw, catalyst, quality)
 		end
 	end
 	item:InferCatalystTags()
-	if not craft and ((oldId and oldQuality and oldQuality > 0) or effects.Prefix > 0 or effects.Suffix > 0) then
+	if not craft and ((oldId and oldQuality and oldQuality > 0) or effects.Prefix > 0 or effects.Suffix > 0 or effects.Resistance ~= 0) then
 		for line, implicit in pairs(inferred) do
 			if not line.unscalable and #line.modTags > 0 then
 				local affected = item:GetCatalystScalar(line, oldId, oldQuality) ~= 1
 				for _, affix in ipairs(item:GetCatalystAffixes(line, implicit)) do
-					if (effects[affix.mod.type] or 0) > 0 then affected = true end
+					if affixEffect(effects, affix.mod, implicit) ~= 0 then affected = true end
 				end
 				if affected then recoverPrintedLine(item, line, implicit, oldId, oldQuality, catalyst, quality, effects) end
 			end

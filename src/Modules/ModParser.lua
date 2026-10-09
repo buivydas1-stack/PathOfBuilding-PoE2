@@ -910,6 +910,7 @@ local modNameList = {
 	["effect of socketed augment items"] = "SocketedAugmentItemEffect",
 	["effect of prefixes"] = "LocalJewelPrefixEffect",
 	["effect of suffixes"] = "LocalJewelSuffixEffect",
+	["explicit resistance modifier magnitudes"] = "LocalExplicitResistanceEffect",
 	["to inflict fire exposure on hit"] = "FireExposureChance",
 	["to apply fire exposure on hit"] = "FireExposureChance",
 	["to inflict cold exposure on hit"] = "ColdExposureChance",

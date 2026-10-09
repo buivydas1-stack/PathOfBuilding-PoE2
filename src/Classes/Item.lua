@@ -1984,7 +1984,7 @@ function ItemClass:Craft()
 	local statOrder = { }
 	-- Crafting starts from unscaled affix rolls. Imported jewels already contain the
 	-- increased prefix/suffix values in their item text, so only scale here.
-	local prefixEffect, suffixEffect = 0, 0
+	local prefixEffect, suffixEffect, resistanceEffect = 0, 0, 0
 	if self.type == "Jewel" then
 		for _, list in ipairs({self.prefixes, self.suffixes}) do
 			for _, affix in ipairs(list) do
@@ -1995,6 +1995,33 @@ function ItemClass:Craft()
 						prefixEffect = prefixEffect + effect
 					else
 						suffixEffect = suffixEffect + effect
+					end
+				end
+			end
+		end
+	end
+	-- Game copies already contain the resulting numbers; crafting uses base rolls.
+	for _, lines in ipairs({ savedMods, self.implicitModLines, self.enchantModLines }) do
+		for _, line in ipairs(lines) do
+			if self:CheckModLineVariant(line) then
+				for _, effect in ipairs(line.modList or { }) do
+					if effect.name == "LocalExplicitResistanceEffect" and effect.type == "INC" then
+						resistanceEffect = resistanceEffect + effect.value
+					end
+				end
+			end
+		end
+	end
+	for _, list in ipairs({self.prefixes, self.suffixes}) do
+		for _, affix in ipairs(list) do
+			local mod = self.affixes[affix.modId]
+			for _, line in ipairs(mod or { }) do
+				if line:find("Explicit Resistance Modifier magnitudes", 1, true) then
+					local parsed = modLib.parseMod(itemLib.applyRange(line, affix.range or 0.5))
+					for _, effect in ipairs(parsed or { }) do
+						if effect.name == "LocalExplicitResistanceEffect" and effect.type == "INC" then
+							resistanceEffect = resistanceEffect + effect.value
+						end
 					end
 				end
 			end
@@ -2019,6 +2046,11 @@ function ItemClass:Craft()
 					rangeScalar = rangeScalar + prefixEffect / 100
 				elseif mod.type == "Suffix" then
 					rangeScalar = rangeScalar + suffixEffect / 100
+				end
+				if not affix.unscalable then
+					for _, tag in ipairs(mod.modTags or { }) do
+						if tag == "resistance" then rangeScalar = rangeScalar + resistanceEffect / 100; break end
+					end
 				end
 				for i, line in ipairs(mod) do
 					line = itemLib.applyRange(line, affix.range or 0.5, rangeScalar)
@@ -2193,6 +2225,7 @@ function ItemClass:BuildModListForSlotNum(baseList, slotNum)
 		calcLocal(modList, "LocalJewelPrefixEffect", "INC", 0)
 		calcLocal(modList, "LocalJewelSuffixEffect", "INC", 0)
 	end
+	calcLocal(modList, "LocalExplicitResistanceEffect", "INC", 0)
 	local craftedQuality = calcLocal(modList,"Quality","BASE",0) or 0
 	if craftedQuality ~= self.craftedQuality then
 		if self.craftedQuality then
