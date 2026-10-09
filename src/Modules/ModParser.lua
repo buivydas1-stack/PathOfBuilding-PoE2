@@ -3693,6 +3693,7 @@ local specialModList = {
 	} end,
 	["increases and reductions to companion damage also apply to you"] = { flag("CompanionDamageAppliesToPlayer") },
 	["increases and reductions to mana regeneration rate also apply to rage regeneration rate"] = { flag("ManaRegenAppliesToRageRegen") },
+	["increases and reductions to life regeneration rate also apply to mana regeneration rate"] = { flag("LifeRegenAppliesToManaRegen") },
 	["increases and reductions to minion attack speed also affects? you"] = { flag("MinionAttackSpeedAppliesToPlayer"), mod("ImprovedMinionAttackSpeedAppliesToPlayer", "MAX", 100) },
 	["increases and reductions to cast speed apply to attack speed at (%d+)%% of their value"] =  function(num) return { flag("CastSpeedAppliesToAttacks"), mod("ImprovedCastSpeedAppliesToAttacks", "MAX", num) } end,
 	["increases and reductions to cast speed apply to attack speed"] =  function(num) return { flag("CastSpeedAppliesToAttacks"), mod("ImprovedCastSpeedAppliesToAttacks", "MAX", 100) } end,

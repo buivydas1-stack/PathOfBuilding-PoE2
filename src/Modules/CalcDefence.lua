@@ -1087,6 +1087,20 @@ function calcs.defence(env, actor)
 		end
 	end
 
+	if modDB:Flag(nil, "LifeRegenAppliesToManaRegen") then
+		-- Kurgal's Gaze shares increases/reductions, not base regeneration,
+		-- more/less regeneration or general life recovery modifiers.
+		for _, value in ipairs(modDB:Tabulate("INC", nil, "LifeRegen")) do
+			local mod = value.mod
+			modDB:NewMod("ManaRegen", "INC", mod.value, mod.source, mod.flags, mod.keywordFlags, unpack(mod))
+			-- Furious Wellspring's ordinary mana conversion ran before defence.
+			-- Include just these newly shared modifiers in the same chain.
+			if modDB:Flag(nil, "ManaRegenAppliesToRageRegen") then
+				modDB:NewMod("RageRegen", "INC", mod.value, mod.source, mod.flags, mod.keywordFlags, unpack(mod))
+			end
+		end
+	end
+
 	if modDB:Flag(nil, "ManaRegenAppliesToEnergyShieldRecharge") then
 		-- Mana Regen conversion from Waveshaper
 		for i, value in ipairs(modDB:Tabulate("INC",  { }, "ManaRegen")) do

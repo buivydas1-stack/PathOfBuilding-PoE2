@@ -207,6 +207,12 @@ function ReportClass:AddValueTooltip(tooltip, _, entry)
 		end
 		tooltip:AddLine(14, "^7" .. self.stat.label .. ": " .. number(self.result.baseline[self.stat.stat]) .. " -> " .. number(entry.value))
 		local comparison = report.ComparisonOutput(self.result.baselineComparison, entry.row.comparison)
+		if main:IsComparisonRevealHeld() then
+			local delta, _, percent, value = report.Compare(self.result.baselineComparison, comparison, { stat = "ManaRegen" })
+			tooltip:AddLine(14, "^7Total mana regeneration: " .. number(self.result.baselineComparison.ManaRegen) .. " -> " .. number(value) .. " mana/s")
+			local color = delta and (delta > 0 and main.colorPositive or delta < 0 and main.colorNegative) or "^7"
+			tooltip:AddLine(14, color .. "Total mana regeneration change: " .. number(delta, true) .. " mana/s (" .. number(percent, true) .. (percent and "%" or "") .. ")")
+		end
 		self.itemsTab.build:AddStatComparesToTooltip(tooltip, self.result.baselineComparison, comparison, "^7Stat changes:")
 	end
 end
