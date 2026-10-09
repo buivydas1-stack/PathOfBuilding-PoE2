@@ -291,21 +291,43 @@ for _, stat in ipairs(control.controls.stat.list) do metrics[stat.stat] = true e
 assert(metrics.Spirit and metrics.Str and metrics.Dex and metrics.Int and metrics.FullDPS and metrics.TotalEHP, "Build ranking must cover more than EHP")
 control:Update()
 control.result = calculated; control:Refresh()
-assert(control.controls.itemScore.state and control.list[1].row.name == "Esh's Catalyst")
+assert(not control.controls.itemScore and control.controls.stat:IsEnabled() and control.list[1].row.name == "Esh's Catalyst")
 local cached, generation = control.result, control.generation
 for index, stat in ipairs(control.controls.stat.list) do if stat.stat == "TotalEHP" then control.controls.stat:SetSel(index); break end end
-control.controls.itemScore.state = false; control.controls.itemScore.changeFunc()
-assert(control.result == cached and control.generation == generation and control.list[1].row.name == "Flesh Catalyst", "Mode changes must reuse cached results")
-control.controls.itemScore.state = true; control.controls.itemScore.changeFunc()
+assert(control.colList[3].label == "EHP gain" and control.colList[4].label == "EHP increase (%)")
+assert(control.list[1].row.name == "Esh's Catalyst" and control.list[1].delta == 0, "Modifier ranking must still display real EHP changes")
+control:ReSort(4)
+assert(control.result == cached and control.generation == generation and control.list[1].row.name == "Flesh Catalyst", "Header sorting must reuse cached results")
+local gain = control.list[1]
+near(gain.delta, gain.row.values.TotalEHP - calculated.baseline.TotalEHP, "Displayed absolute EHP gain")
+near(gain.percent, gain.delta / calculated.baseline.TotalEHP * 100, "Displayed percentage EHP gain")
+assert(control:GetRowValue(2, 1, gain):find("%%") and control:GetRowValue(4, 1, gain):find("%%"))
+assert(not control:GetRowValue(3, 1, gain):find("%%"))
+control:ReSort(4); assert(not control.descending and control.list[#control.list].row.name == "Flesh Catalyst")
+control:ReSort(2)
 assert(control.list[1].row.name == "Esh's Catalyst")
 control.controls.search:SetText("life", true)
 assert(#control.list == 1 and control.list[1].row.name == "Flesh Catalyst")
 control.controls.search:SetText("", true)
-control.controls.filter:SetSel(2); assert(#control.list == 5)
+control.controls.filter:SetSel(2)
+assert(#control.list > 0)
+for _, entry in ipairs(control.list) do assert(entry.benefit > 0, "Gains filter must use EHP even when sorting by modifiers") end
 control.controls.filter:SetSel(1)
 local tooltip = new("Tooltip")
 control:AddValueTooltip(tooltip, 1, control.list[1])
 assert(#tooltip.lines > 4)
+-- Item scores remain usable without a build comparison; unavailable values sort
+-- last in either direction and a zero baseline has no defined percentage.
+control.result = { baseline = { TotalEHP = 0 }, quality = 20, rows = {
+	{ name = "Available", score = 10, changes = { }, lines = { }, values = { TotalEHP = 100 } },
+	{ name = "Unavailable", score = 20, changes = { }, lines = { } },
+} }
+control:Refresh(); control:ReSort(3)
+assert(control.list[1].row.name == "Available" and control:GetRowValue(4, 1, control.list[1]) == "N/A")
+assert(control:GetRowValue(3, 2, control.list[2]) == "N/A")
+control:ReSort(3); assert(control.list[1].row.name == "Available")
+control:ReSort(2); assert(control.list[1].row.name == "Unavailable")
+control.result = calculated; control:Refresh()
 control.controls.quality:SetText("40", true); control:Update()
 assert(not control.result and control.generation > generation, "Quality changes invalidate results")
 control.result = calculated
@@ -313,7 +335,7 @@ build.outputRevision = build.outputRevision + 1; control:Update()
 assert(not control.result, "Build changes invalidate results")
 tab:SetDisplayItem(nil); control:Update()
 assert(not control.key and not control:IsShown(), "Closing the editor must clear the report without an error")
-print("PASS: item/build sorting, cached mode switch, search, filters, tooltips and cache invalidation")
+print("PASS: simultaneous modifier/EHP values, cached header sorting, unavailable/zero baselines, search, build filters, tooltips and cache invalidation")
 
 -- Exercise explicit scheduling and stale completion on the real Calculate
 -- button; only the OS thread launcher is mocked here.
@@ -333,8 +355,9 @@ control.controls.calculate:Click(); assert(launched == 1 and control.worker == 1
 local stale = launch.subScripts[1].callback
 for _ = 1, 10 do control:Update() end
 assert(launched == 1)
-control.controls.itemScore.state = false; control.controls.itemScore.changeFunc()
-assert(control.worker == 1, "Mode changes must not cancel a calculation")
+control:ReSort(4)
+control.controls.stat:SetSel(1)
+assert(control.worker == 1, "Sort and metric changes must not cancel a calculation")
 control.controls.quality:SetText("40", true); control:Update()
 assert(aborted == 1 and not control.worker)
 stale(require("dkjson").encode(calculated))
@@ -344,7 +367,7 @@ control:Calculate()
 launch.subScripts[2].callback(require("dkjson").encode(calculated))
 assert(control.result and not control.worker)
 LaunchSubScript, AbortSubScript, GetScriptPath = oldLaunch, oldAbort, oldPath
-print("PASS: explicit Calculate button, shared background worker dispatch, mode reuse, cancellation and stale delivery")
+print("PASS: explicit Calculate button, shared background worker dispatch, cached selection changes, cancellation and stale delivery")
 
 -- The real worker must transport the same item score and every build value.
 local json = require("dkjson")

@@ -2,6 +2,12 @@ local shared = LoadModule("Modules/AugmentReport")
 local report = LoadModule("Modules/CatalystReport")
 local ReportClass = newClass("CatalystReportControl", "AugmentReportControl", function(self, anchor, rect, itemsTab)
 	self.AugmentReportControl(anchor, rect, itemsTab)
+	self.colList = {
+		{ label = "Catalyst", sortable = true },
+		{ label = "Sum of modifier gains (%)", sortable = true, textHeight = 17 },
+		{ sortable = true, textHeight = 17 },
+		{ sortable = true, textHeight = 17 },
+	}
 	self.controls.title.label = "^7Catalyst recommendations"
 	self.controls.existing.shown = false
 	self.controls.socket.x, self.controls.socket.y, self.controls.socket.width = 0, -28, 240
@@ -10,7 +16,7 @@ local ReportClass = newClass("CatalystReportControl", "AugmentReportControl", fu
 		local item = self.itemsTab.displayItem
 		return item and (item.type == "Jewel" or item.type == "Ring")
 	end
-	self.controls.socket.enabled = function() return not self.controls.itemScore.state and #self.controls.socket.list > 0 end
+	self.controls.socket.enabled = function() return #self.controls.socket.list > 0 end
 	self.controls.socket.selFunc = function(_, selected)
 		if self.itemsTab.displayItem and self.itemsTab.displayItem.type == "Ring" then self.ringSlot = selected.slotName end
 		self:Update()
@@ -18,10 +24,6 @@ local ReportClass = newClass("CatalystReportControl", "AugmentReportControl", fu
 	self.controls.socket.tooltipText = "Slot to use for build comparisons, including occupied jewel sockets. Replaces only the selected slot and keeps the other items equipped."
 	self.controls.status = new("LabelControl", {"TOPLEFT", self, "BOTTOMLEFT"}, {0, 4, 0, 16}, function() return "^7" .. (self.statusLabel or "") end)
 	self.controls.status.shown = self.controls.socket.shown
-	self.controls.itemScore = new("CheckBoxControl", {"TOPLEFT", self, "TOPLEFT"}, {500, -78, 16}, "Rank by modifier gains", function()
-		self.sortColumn, self.descending = 2, true
-		self:Refresh()
-	end, "Checked: rank by summed percentage improvements to this item's modifiers after rounding. Unchecked: rank by improvement to the selected build metric.", true)
 	self.controls.qualityLabel = new("LabelControl", {"TOPLEFT", self, "TOPLEFT"}, {520, -78, 0, 20}, "^7Quality:")
 	self.controls.quality = new("EditControl", {"TOPLEFT", self, "TOPLEFT"}, {585, -78, 72, 20}, "20", nil, "%D", 3, function()
 		self:Update()
@@ -32,13 +34,14 @@ local ReportClass = newClass("CatalystReportControl", "AugmentReportControl", fu
 	-- catalyst control so refresh/calculate dispatch to this report's methods.
 	self.controls.stat.selFunc = function(_, value)
 		self.stat = value
-		self.sortColumn, self.descending = 2, true
 		self:Refresh()
 	end
 	self.controls.filter.selFunc = function() self:Refresh() end
 	self.controls.search.changeFunc = function() self:Refresh() end
 	self.controls.calculate.onClick = function() self:Calculate() end
-	self.controls.stat.enabled = function() return not self.controls.itemScore.state end
+	self.controls.stat.enabled = true
+	self.controls.stat.tooltipText = "Build stat to display alongside modifier gains. Click a column header to sort; click again to reverse. Compares the same item without catalyst quality against each catalyst at the target quality."
+	self.controls.filter.tooltipText = "Gains and losses refer to the selected build stat, independently of the sorting column."
 	self.controls.calculate.enabled = function() return self.itemRaw and not self.worker and self:GetQuality() ~= nil end
 	self.shown = function() return self.itemsTab.displayItem and self.itemsTab.displayItem:CanUseCatalysts() end
 	self:Refresh()
@@ -130,19 +133,21 @@ end
 function ReportClass:Refresh()
 	self.tooltip:Clear()
 	if not self.failed then self.controls.calculate.tooltipText = nil end
-	local itemMode = self.controls.itemScore.state
-	self.colList[1].label = "Catalyst"
-	self.colList[2].label = itemMode and "Item score" or "Change"
-	self.colList[3].label = itemMode and "Modifiers" or "Change %"
-	self.colList[4].label = itemMode and "Quality" or "Result"
+	local metric = self.stat.stat == "TotalEHP" and "EHP" or self.stat.stat == "FullDPS" and "Full DPS"
+	self.colList[3].label = metric and (metric .. " gain") or "Stat change"
+	self.colList[4].label = metric and (metric .. " increase (%)") or "Stat change (%)"
+	for column = 2, 4 do
+		self.colList[column].width = math.max(column == 2 and 180 or 100, DrawStringWidth(12, "VAR", self.colList[column].label) + 20)
+	end
+	self.colList[1].width = function()
+		return self:GetRowRegion().width - self.colList[2].width - self.colList[3].width - self.colList[4].width
+	end
 	self.list, self.selIndex, self.selValue = { }, nil, nil
 	if self.result then
 		local search, filter = (self.controls.search.buf or ""):lower(), self.controls.filter.selIndex
 		for _, row in ipairs(self.result.rows) do
 			local delta, benefit, percent, value
-			if itemMode then
-				delta, benefit, percent, value = row.score, row.score, #row.changes, self.result.quality
-			elseif row.values then
+			if row.values then
 				delta, benefit, percent, value = shared.Compare(self.result.baseline, row.values, self.stat)
 			end
 			local text = (row.name .. " " .. table.concat(row.lines, " ")):lower()
@@ -152,7 +157,10 @@ function ReportClass:Refresh()
 			end
 		end
 		self.label = "No catalyst baseline | " .. self.result.quality .. "% quality | " .. #self.list .. " / " .. #self.result.rows
-		if not itemMode and self.result.buildUnavailable then self.label = "Build comparison unavailable (hover Calculate for reason)"; self.controls.calculate.tooltipText = self.result.buildUnavailable end
+		if self.result.buildUnavailable then
+			self.label = self.label .. " | Build gains unavailable"
+			self.controls.calculate.tooltipText = self.result.buildUnavailable
+		end
 	else
 		self.label = self.failed and "Comparison unavailable (hover Calculate for reason)" or self.worker and "Calculating in background..." or "Click Calculate to compare catalysts"
 	end
@@ -165,29 +173,42 @@ function ReportClass:Refresh()
 end
 
 function ReportClass:Sort()
-	if not self.controls.itemScore.state then self.AugmentReportControl.Sort(self); return end
 	local column, descending = self.sortColumn, self.descending
 	local function key(entry)
-		return column == 1 and entry.row.name or column == 3 and #entry.row.changes or column == 4 and entry.value or entry.row.score
+		if column == 1 then return entry.row.name end
+		if column == 2 then return entry.row.score end
+		if column == 3 then return entry.benefit end
+		return entry.percent and (self.stat.transform and -entry.percent or entry.percent)
 	end
 	table.sort(self.list, function(a, b)
 		local av, bv = key(a), key(b)
 		if av == bv then return a.row.name < b.row.name end
+		if av == nil then return false elseif bv == nil then return true end
 		return descending and av > bv or not descending and av < bv
 	end)
 end
 
-function ReportClass:GetRowValue(column, row, entry)
-	if not self.controls.itemScore.state then return self.AugmentReportControl.GetRowValue(self, column, row, entry) end
+function ReportClass:GetRowValue(column, _, entry)
 	if column == 1 then return entry.row.name end
-	if column == 3 then return tostring(#entry.row.changes) end
-	if column == 4 then return entry.value .. "%" end
-	local color = entry.row.score > 0 and main.colorPositive or entry.row.score < 0 and main.colorNegative or "^7"
-	return color .. formatNumSep(string.format("%.2f", entry.row.score))
+	local value = column == 2 and entry.row.score or column == 3 and entry.delta or entry.percent
+	if value == nil then return "N/A" end
+	local benefit = column == 2 and entry.row.score or entry.benefit
+	local color = benefit and (benefit > 0 and main.colorPositive or benefit < 0 and main.colorNegative) or "^7"
+	return color .. formatNumSep(string.format("%+.2f", value)) .. (column ~= 3 and "%" or "")
+end
+
+function ReportClass:Draw(viewPort, noTooltip)
+	self.ListControl.Draw(self, viewPort, noTooltip)
+	local x, y = self:GetPos()
+	local column = self.colList[self.sortColumn]
+	if column and column._width then
+		SetDrawColor(1, 1, 1)
+		main:DrawArrow(x + column._offset + column._width - 7, y + 10, 6, 6, self.descending and "DOWN" or "UP")
+	end
 end
 
 function ReportClass:AddValueTooltip(tooltip, _, entry)
-	if not tooltip:CheckForUpdate(entry, main:IsComparisonRevealHeld(), self.stat, self.controls.itemScore.state) then return end
+	if not tooltip:CheckForUpdate(entry, main:IsComparisonRevealHeld(), self.stat) then return end
 	tooltip:AddLine(16, "^7" .. entry.row.name .. " at " .. self.result.quality .. "% quality")
 	tooltip:AddLine(14, "^7Starts with the same item without catalyst quality.")
 	for _, change in ipairs(entry.row.changes) do
@@ -198,7 +219,8 @@ function ReportClass:AddValueTooltip(tooltip, _, entry)
 	end
 	if #entry.row.changes == 0 then tooltip:AddLine(14, "^7No modifier changes.") end
 	tooltip:AddSeparator(8)
-	tooltip:AddLine(14, "^7Item score: " .. formatNumSep(string.format("%.2f", entry.row.score)) .. " points.")
+	tooltip:AddLine(14, "^7Sum of modifier gains: " .. formatNumSep(string.format("%+.2f%%", entry.row.score)))
+	tooltip:AddLine(14, "^7Changed modifiers: " .. #entry.row.changes)
 	tooltip:AddLine(14, "^7Sum of modifier percentage gains; each modifier counts once.")
 	tooltip:AddLine(14, "^7A ranking score, not the item's overall percentage improvement.")
 	if self.result.buildUnavailable then
@@ -207,6 +229,10 @@ function ReportClass:AddValueTooltip(tooltip, _, entry)
 		tooltip:AddSeparator(8)
 		tooltip:AddLine(14, "^7Same edited item equipped in " .. self.result.slot .. ".")
 		tooltip:AddLine(14, "^7Uses current skills, gear and Configuration.")
+		if entry.value then
+			tooltip:AddLine(14, "^7" .. self.stat.label .. ": " .. formatNumSep(string.format("%.2f", self.result.baseline[self.stat.stat])) .. " -> " .. formatNumSep(string.format("%.2f", entry.value)))
+			tooltip:AddLine(14, "^7Percentage change is relative to this build stat with the same item at no catalyst quality.")
+		end
 		local output = shared.ComparisonOutput(self.result.baselineComparison, entry.row.comparison)
 		self.itemsTab.build:AddStatComparesToTooltip(tooltip, self.result.baselineComparison, output, "^7Build stat changes:")
 	end
