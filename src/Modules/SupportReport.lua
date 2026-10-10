@@ -8,7 +8,7 @@ function report.GetStats()
 	local stats = shared.GetStats()
 	table.insert(stats, 2, { stat = "ManaCost", label = "Mana Cost", transform = function(v) return -v end })
 	table.insert(stats, 3, { stat = "ManaPerSecondCost", label = "Mana Cost per second", transform = function(v) return -v end })
-	return stats
+	return LoadModule("Modules/PowerStatOrder").Apply(stats)
 end
 
 function report.Snapshot(output)

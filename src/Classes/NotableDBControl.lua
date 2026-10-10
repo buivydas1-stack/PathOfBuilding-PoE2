@@ -155,6 +155,7 @@ function NotableDBClass:BuildSortOrder()
 	end
 	wipeTable(self.sortOrder)
 	if self.controls.sort then
+		LoadModule("Modules/PowerStatOrder").Bind(self.controls.sort)
 		self.controls.sort.selIndex = 1
 		self.controls.sort:SelByValue(self.sortMode, "sortMode")
 		self.sortDetail = self.controls.sort.list[self.controls.sort.selIndex]

@@ -1,6 +1,7 @@
 -- The calculation runs in an isolated Lua thread. Drawing, sorting, filtering
 -- and hovering use only completed numeric snapshots.
 local report = LoadModule("Modules/AugmentReport")
+local statOrder = LoadModule("Modules/PowerStatOrder")
 local json = require("dkjson")
 local ReportClass = newClass("AugmentReportControl", "ListControl", function(self, anchor, rect, itemsTab)
 	self.ListControl(anchor, rect, 18, "VERTICAL", false)
@@ -30,6 +31,7 @@ local ReportClass = newClass("AugmentReportControl", "ListControl", function(sel
 	self.controls.filter = new("DropDownControl", {"TOPLEFT", self, "TOPLEFT"}, {246, -54, 145, 20}, {"All changes", "Gains only", "Losses only"}, function()
 		self:Refresh()
 	end)
+	statOrder.Bind(self.controls.stat)
 	self.controls.search = new("EditControl", {"TOPLEFT", self, "TOPLEFT"}, {397, -54, 241, 20}, "", "Filter name / modifier", nil, nil, function() self:Refresh() end)
 	self.controls.calculate = new("ButtonControl", {"TOPLEFT", self, "BOTTOMLEFT"}, {0, 4, 270, 20}, "Calculate augment recommendations", function() self:Calculate() end)
 	self.controls.calculate.enabled = function() return self.itemRaw and not self.worker end

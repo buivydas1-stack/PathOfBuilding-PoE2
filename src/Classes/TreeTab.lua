@@ -20,9 +20,7 @@ local s_gsub = string.gsub
 local s_byte = string.byte
 local dkjson = require "dkjson"
 
-local function powerStatId(stat)
-	return stat.stat or (stat.combinedOffDef and "OffenceDefence")
-end
+local statOrder = LoadModule("Modules/PowerStatOrder")
 
 -- Helper function to find toast index by content pattern
 -- TODO: remove this when when we can control toast notifications better
@@ -281,9 +279,8 @@ local TreeTabClass = newClass("TreeTab", "ControlHost", function(self, build)
 	t_insert(self.notablePowerStatList, 3, { stat = "FullDPSAndEHP", label = "Full DPS / EHP", combinedReport = true })
 	self.powerStatList = self.normalPowerStatList
 	self:ApplyPowerStatOrder()
-	self.controls.treeHeatMapStatSelect.reorderFunc = function(_, target)
-		self:ReorderPowerStat(target)
-	end
+	self.controls.treeHeatMapStatSelect.list = self.powerStatList
+	statOrder.Bind(self.controls.treeHeatMapStatSelect, { self.notablePowerStatList, self.normalPowerStatList })
 
 	-- Show/Hide Power Report Button
 	self.controls.powerReport = new("ButtonControl", { "LEFT", self.controls.treeHeatMapStatSelect, "RIGHT" }, { 8, 0, 150, 20 },
@@ -1085,25 +1082,9 @@ function TreeTabClass:OpenMasteryPopup(node, viewPort)
 end
 
 function TreeTabClass:ApplyPowerStatOrder()
-	local byId, ordered = { }, { }
-	for _, stat in ipairs(self.notablePowerStatList) do byId[powerStatId(stat)] = stat end
-	for _, id in ipairs(main.powerStatOrder or { }) do
-		if byId[id] then
-			t_insert(ordered, byId[id])
-			byId[id] = nil
-		end
-	end
-	for _, stat in ipairs(self.notablePowerStatList) do
-		local id = powerStatId(stat)
-		if byId[id] then
-			t_insert(ordered, stat)
-			byId[id] = nil
-		end
-	end
-	wipeTable(self.notablePowerStatList)
+	statOrder.Apply(self.notablePowerStatList)
 	wipeTable(self.normalPowerStatList)
-	for _, stat in ipairs(ordered) do
-		t_insert(self.notablePowerStatList, stat)
+	for _, stat in ipairs(self.notablePowerStatList) do
 		if not stat.combinedReport then t_insert(self.normalPowerStatList, stat) end
 	end
 end
@@ -1157,29 +1138,7 @@ function TreeTabClass:ExportPowerReport()
 end
 
 function TreeTabClass:ReorderPowerStat(target)
-	local visible = self.controls.treeHeatMapStatSelect.list
-	local moved = visible[target]
-	if not moved then return end
-	local order = { }
-	for _, stat in ipairs(self.notablePowerStatList) do
-		if powerStatId(stat) ~= powerStatId(moved) then t_insert(order, stat) end
-	end
-	local neighbor = visible[target + 1]
-	local insertAt = #order + 1
-	if neighbor then
-		for index, stat in ipairs(order) do
-			if powerStatId(stat) == powerStatId(neighbor) then insertAt = index; break end
-		end
-	elseif visible[target - 1] then
-		for index, stat in ipairs(order) do
-			if powerStatId(stat) == powerStatId(visible[target - 1]) then insertAt = index + 1; break end
-		end
-	end
-	t_insert(order, insertAt, moved)
-	main.powerStatOrder = { }
-	for _, stat in ipairs(order) do t_insert(main.powerStatOrder, powerStatId(stat)) end
-	self:ApplyPowerStatOrder()
-	main:SaveSettings()
+	statOrder.Reorder(self.controls.treeHeatMapStatSelect, target)
 end
 
 function TreeTabClass:SetPowerCalc(powerStat, keepHeatMap)
@@ -2155,6 +2114,7 @@ function TreeTabClass:FindTimelessJewel()
 
 	controls.fallbackWeightsLabel = new("LabelControl", {"TOPRIGHT", nil, "TOPLEFT"}, {405, 225, 0, 16}, "^7Fallback Weight Mode:")
 	local fallbackWeightsList = { }
+	local fallbackLegacyIndex = { }
 	for _, stat in ipairs(data.powerStatList) do
 		if not stat.ignoreForItems and stat.label ~= "Name" then
 			t_insert(fallbackWeightsList, {
@@ -2162,12 +2122,15 @@ function TreeTabClass:FindTimelessJewel()
 				stat = stat.stat,
 				transform = stat.transform,
 			})
+			fallbackLegacyIndex[stat.stat] = #fallbackWeightsList
 		end
 	end
-	controls.fallbackWeightsList = new("DropDownControl", {"LEFT", controls.fallbackWeightsLabel, "RIGHT"}, {10, 0, 200, 18}, fallbackWeightsList, function(index)
-		timelessData.fallbackWeightMode.idx = index
+	controls.fallbackWeightsList = new("DropDownControl", {"LEFT", controls.fallbackWeightsLabel, "RIGHT"}, {10, 0, 200, 18}, fallbackWeightsList, function(_, value)
+		-- Saved builds use the original data index, independent of display order.
+		timelessData.fallbackWeightMode.idx = fallbackLegacyIndex[value.stat]
 	end)
 	controls.fallbackWeightsList.selIndex = timelessData.fallbackWeightMode.idx or 1
+	statOrder.Bind(controls.fallbackWeightsList)
 	controls.fallbackWeightsButton = new("ButtonControl", {"LEFT", controls.fallbackWeightsList, "RIGHT"}, {5, 0, 66, 18}, "Generate", function()
 		setupFallbackWeights()
 		controls.searchListFallbackButton.label = "^4Fallback Nodes"

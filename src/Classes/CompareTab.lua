@@ -1032,6 +1032,7 @@ function CompareTabClass:InitControls()
 		end
 	end)
 	self.controls.comparePowerStatSelect.shown = powerReportShown
+	LoadModule("Modules/PowerStatOrder").Bind(self.controls.comparePowerStatSelect)
 	self.controls.comparePowerStatSelect.tooltipFunc = function(tooltip, mode, index, value)
 		tooltip:Clear()
 		if mode == "OUT" or self.controls.comparePowerStatSelect.dropped then

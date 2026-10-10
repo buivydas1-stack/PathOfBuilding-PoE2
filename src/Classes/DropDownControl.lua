@@ -219,6 +219,7 @@ end
 
 function DropDownClass:ReorderRow(source, target)
 	if not self.reorderFunc or self:IsSearchActive() or not self.list[source] or not self.list[target] or source == target then return false end
+	if self.reorderAllowed and not self.reorderAllowed(source, target) then return false end
 	local selected = self.list[self.selIndex]
 	local moved = t_remove(self.list, source)
 	t_insert(self.list, target, moved)

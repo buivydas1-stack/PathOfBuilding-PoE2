@@ -20,14 +20,7 @@ function report.GetStats()
 			table.insert(stats, stat)
 		end
 	end
-	local order = { }
-	for index, key in ipairs(main.powerStatOrder or { }) do order[key] = index end
-	local fallback = { }
-	for index, stat in ipairs(stats) do fallback[stat.stat] = index end
-	table.sort(stats, function(a, b)
-		return (order[a.stat] or (1000 + fallback[a.stat])) < (order[b.stat] or (1000 + fallback[b.stat]))
-	end)
-	return stats
+	return LoadModule("Modules/PowerStatOrder").Apply(stats)
 end
 
 function report.EmptyItem(raw)

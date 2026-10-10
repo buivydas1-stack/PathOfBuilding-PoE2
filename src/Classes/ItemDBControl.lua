@@ -215,6 +215,7 @@ function ItemDBClass:BuildSortOrder()
 	end
 	wipeTable(self.sortOrder)
 	if self.controls.sort then
+		LoadModule("Modules/PowerStatOrder").Bind(self.controls.sort)
 		self.controls.sort:CheckDroppedWidth(true)
 		self.controls.sort.selIndex = 1
 		self.controls.sort:SelByValue(self.sortMode, "sortMode")

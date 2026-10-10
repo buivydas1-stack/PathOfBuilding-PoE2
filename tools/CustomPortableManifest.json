@@ -10,6 +10,8 @@
 	"Modules/AugmentReportWorker.lua",
 	"Classes/SupportReportControl.lua",
 	"Modules/SupportReport.lua",
+	"Modules/PowerStatOrder.lua",
+	"Classes/NotableDBControl.lua",
 	"Classes/CatalystReportControl.lua",
 	"Modules/CatalystReport.lua",
     "Data/Runeforging.lua",

@@ -3233,6 +3233,7 @@ function ItemsTabClass:CorruptDisplayItem() -- todo implement vaal orb new outco
 		sortEnchantList(value.stat)
 		rebuildEnchantControls()
 	end)
+	LoadModule("Modules/PowerStatOrder").Bind(controls.sort)
 	for i = 1, 8 do
 		if i == 1 then
 			controls.enchant1Label = new("LabelControl", {"TOPRIGHT",nil,"TOPLEFT"}, {95, 55, 0, 16}, function()
@@ -3508,6 +3509,7 @@ function ItemsTabClass:AddCustomModifierToDisplayItem()
 	controls.sort = new("DropDownControl", {"TOPLEFT",nil,"TOPLEFT"}, {355, 20, 240, 18}, sortList, function(index, value)
 		applySort(value.stat, true)
 	end)
+	LoadModule("Modules/PowerStatOrder").Bind(controls.sort)
 	controls.sort.shown = function()
 		return sourceList[controls.source.selIndex].sourceId ~= "CUSTOM"
 	end
