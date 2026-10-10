@@ -189,7 +189,7 @@ end
 
 function ReportClass:GetRowValue(column, _, entry)
 	local color = entry.benefit and (entry.benefit > 0 and main.colorPositive or entry.benefit < 0 and main.colorNegative) or "^7"
-	return column == 1 and entry.row.name or color .. (column == 2 and number(entry.delta, true) or column == 3 and (number(entry.percent, true) .. (entry.percent and "%" or "")) or number(entry.value))
+	return column == 1 and (entry.row.name .. (entry.row.estimated and " (average)" or "")) or color .. (column == 2 and number(entry.delta, true) or column == 3 and (number(entry.percent, true) .. (entry.percent and "%" or "")) or number(entry.value))
 end
 
 function ReportClass:AddValueTooltip(tooltip, _, entry)
@@ -200,6 +200,8 @@ function ReportClass:AddValueTooltip(tooltip, _, entry)
 		tooltip:AddLine(14, "^7Same edited item equipped in " .. self.result.slot .. ".")
 		tooltip:AddLine(14, self.result.considerExisting and ("^7Replaces socket #" .. self.result.socketIndex .. "; keeps all other augments.") or "^7Adds one augment; all other sockets start empty.")
 		tooltip:AddLine(14, "^7Uses current skills, gear and Configuration.")
+		if entry.row.unavailable then tooltip:AddLine(14, "^7Comparison: N/A. " .. entry.row.unavailable); return end
+		if entry.row.estimated then tooltip:AddLine(14, "^7Estimate: average rolls of equivalent Aldur affixes; actual rolls can differ.") end
 		if entry.row.inactiveEffects and #entry.row.inactiveEffects > 0 then
 			tooltip:AddLine(14, "^7Inactive under current skills, gear and Configuration:")
 			for _, line in ipairs(entry.row.inactiveEffects) do tooltip:AddLine(14, "^7" .. line) end

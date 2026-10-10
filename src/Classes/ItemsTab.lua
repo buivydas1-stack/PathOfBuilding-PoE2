@@ -785,12 +785,7 @@ holding Shift will put it in the second.]])
 				for _, line in ipairs(value.lines) do
 					tooltip:AddLine(14, "^7"..line)
 				end
-				-- Adding Comparison
-				local compLines = { type = "Rune" }
-				for _, line in ipairs(value.lines) do
-					t_insert(compLines, line)
-				end
-				self:AddModComparisonTooltip(tooltip, compLines)
+				self:AddRuneComparisonTooltip(tooltip, i, value.name)
 			end
 		end
 		drop.shown = function()
@@ -875,6 +870,8 @@ holding Shift will put it in the second.]])
 				affix.modId = value.modList[index]
 				affix.range = verifyRange(range, index, drop)
 			end
+			local old = self.displayItem[drop.outputTable][drop.outputIndex]
+			if old and old.modId == affix.modId then affix = copyTable(old, true) end
 			self.displayItem[drop.outputTable][drop.outputIndex] = affix
 			self.displayItem:Craft()
 			self:UpdateDisplayItemTooltip()
@@ -2097,11 +2094,11 @@ function ItemsTabClass:SetDisplayItem(item)
 	end
 end
 
-function ItemsTabClass:SetDisplayItemCatalystQuality(quality, catalyst)
+function ItemsTabClass:SetDisplayItemCatalystQuality(quality, catalyst, calculatedQuality)
 	local item = self.displayItem
 	local slider = self.controls.displayItemCatalystQualitySlider
 	if quality then
-		quality = m_min(m_max(quality, 0), slider.maxQuality or 40)
+		quality = m_min(m_max(quality, 0), calculatedQuality and 100 or slider.maxQuality or 40)
 	end
 	local ok, prepared = pcall(LoadModule("Modules/CatalystReport").Prepare, item:BuildRaw(), catalyst or item.catalyst, quality)
 	if not ok then
@@ -2379,6 +2376,12 @@ function ItemsTabClass:UpdateAffixControl(control, item, type, outputTable, outp
 			end
 		end
 	end
+	local copiedAffix = item[outputTable][outputIndex]
+	local selected = control.list[control.selIndex]
+	if copiedAffix.copied and copiedAffix.copiedRange == copiedAffix.range and not selected.haveRange then
+		local copiedLabel = table.concat(copiedAffix.copied, "/")
+		if copiedLabel ~= selected.label then selected.label = copiedLabel .. " (copied roll)" end
+	end
 	if control.list[control.selIndex].haveRange then
 		control.slider.divCount = #control.list[control.selIndex].modList
 		local index = isValueInArray(control.list[control.selIndex].modList, selAffix)
@@ -2479,6 +2482,30 @@ function ItemsTabClass:AddModComparisonTooltip(tooltip, mod)
 	local outputBase = calcFunc({ repSlotName = slotName, repItem = self.displayItem })
 	local outputNew = calcFunc({ repSlotName = slotName, repItem = newItem })
 	self.build:AddStatComparesToTooltip(tooltip, outputBase, outputNew, "\nAdding this mod will give: ")
+end
+
+function ItemsTabClass:AddRuneComparisonTooltip(tooltip, socketIndex, name)
+	local slotName = self:GetComparisonSlotNameForItem(self.displayItem)
+	local candidate = new("Item", self.displayItem:BuildRaw())
+	candidate.runes[socketIndex] = name
+	candidate:UpdateRunes()
+	candidate:BuildAndParseRaw()
+	candidate:BuildModList()
+	if self.displayItem.aldurUnavailable or candidate.aldurUnavailable then
+		tooltip:AddLine(14, "^7Stat comparison: N/A. " .. (candidate.aldurUnavailable or self.displayItem.aldurUnavailable))
+		return
+	end
+	if self.displayItem.aldurEstimate or candidate.aldurEstimate then
+		tooltip:AddLine(14, "^7Estimate: average rolls of equivalent Aldur affixes.")
+	end
+	local calculate = self.build.calcsTab:GetMiscCalculator()
+	local before = calculate({ repSlotName = slotName, repItem = self.displayItem }, true, { noEnvReuse = true })
+	local after = calculate({ repSlotName = slotName, repItem = candidate }, true, { noEnvReuse = true })
+	local header = "\nReplacing socket #" .. socketIndex .. " will give: "
+	if self.build:AddStatComparesToTooltip(tooltip, before, after, header) == 0 then
+		tooltip:AddLine(14, header)
+		tooltip:AddLine(14, "^7No stat changes")
+	end
 end
 
 -- Returns the first slot in which the given item is equipped
@@ -3891,7 +3918,7 @@ function ItemsTabClass:AddItemTooltip(tooltip, item, slot, dbMode, maxWidth)
 		end
 	end
 	local hiddenBonded = false
-	for _, modList in ipairs{item.enchantModLines, item.runeModLines, item.implicitModLines, item.explicitModLines} do
+	for _, modList in ipairs{item.enchantModLines, item.runeModLines, item.implicitModLines, item.aldurModLines or item.explicitModLines} do
 		if modList[1] then
 			for _, modLine in ipairs(modList) do
 				local variantCount = item:GetModLineVariantCount(modLine)
@@ -3959,6 +3986,8 @@ function ItemsTabClass:AddItemTooltip(tooltip, item, slot, dbMode, maxWidth)
 	if hiddenBonded then
 		tooltip:AddLine(fontSizeSmall, colorCodes.TIP .. "Hold " .. main.comparisonRevealKey .. " to show inactive Bonded modifiers.")
 	end
+	if item.aldurEstimate then tooltip:AddLine(fontSizeSmall, colorCodes.TIP .. "Aldur estimate: average rolls of equivalent affixes.") end
+	if item.aldurUnavailable then tooltip:AddLine(fontSizeSmall, colorCodes.NEGATIVE .. "Aldur comparison unavailable: " .. item.aldurUnavailable) end
 
 	-- Cluster jewel notables/keystone
 	if item.clusterJewel then
@@ -4060,6 +4089,10 @@ function ItemsTabClass:AddItemTooltip(tooltip, item, slot, dbMode, maxWidth)
 	end
 	local calcFunc, calcBase = self.build.calcsTab:GetMiscCalculator()
 	local function addItemComparison(output, header)
+		if item.aldurUnavailable then
+			tooltip:AddLine(14, "^7Stat comparison: N/A. " .. item.aldurUnavailable)
+			return
+		end
 		local count = self.build:AddStatComparesToTooltip(tooltip, calcBase, output, header)
 		if count == 0 then
 			tooltip:AddLine(14, header)

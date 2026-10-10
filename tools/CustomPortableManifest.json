@@ -13,6 +13,8 @@
 	"Classes/CatalystReportControl.lua",
 	"Modules/CatalystReport.lua",
     "Data/Runeforging.lua",
+	"Data/AldurConversions.lua",
+	"Modules/Aldur.lua",
     "Classes/PowerReportListControl.lua",
     "Classes/TreeTab.lua",
     "Classes/DropDownControl.lua",

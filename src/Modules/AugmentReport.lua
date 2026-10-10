@@ -157,6 +157,7 @@ function report.Calculate(build, raw, slotName, candidateNames, considerExisting
 	socketIndex = considerExisting and (socketIndex or 1) or 1
 	assert(item.base and socketIndex >= 1 and socketIndex <= item.itemSocketCount, "Choose an existing augment socket.")
 	item:BuildModList()
+	assert(not item.aldurUnavailable, item.aldurUnavailable)
 	assert(not considerExisting or not build.itemsTab:IsSocketBoundRune(item, item.runes[socketIndex]), "The augment in this socket is socket-bound and cannot be replaced.")
 	local override = { repSlotName = slotName, repItem = item }
 	-- Check limits with the replaced socket cleared, so its current augment does
@@ -201,7 +202,7 @@ function report.Calculate(build, raw, slotName, candidateNames, considerExisting
 				effectItem.runes[1] = augment.name
 				effectItem:UpdateRunes()
 				local inactive, inactiveEffects = report.InactiveEffects(effectItem, candidateEnv, augment.type == "Idol" and candidate.baseModList:Flag(nil, "LocalBondedIdols"))
-				table.insert(result.rows, { name = augment.name, type = augment.type, lines = augment.lines, values = report.Snapshot(output), comparison = report.ComparisonChanges(result.baselineComparison, report.ComparisonSnapshot(output)), inactive = inactive, inactiveEffects = inactiveEffects })
+				table.insert(result.rows, { name = augment.name, type = augment.type, lines = augment.lines, estimated = candidate.aldurEstimate or item.aldurEstimate, unavailable = candidate.aldurUnavailable, values = candidate.aldurUnavailable and { } or report.Snapshot(output), comparison = report.ComparisonChanges(result.baselineComparison, report.ComparisonSnapshot(output)), inactive = not candidate.aldurUnavailable and inactive, inactiveEffects = inactiveEffects })
 			end
 		end
 	end

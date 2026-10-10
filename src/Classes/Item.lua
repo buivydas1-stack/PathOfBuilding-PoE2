@@ -10,6 +10,22 @@ local m_min = math.min
 local m_max = math.max
 local m_floor = math.floor
 local runeforgingRecipes = LoadModule("Data/Runeforging")
+local aldur = LoadModule("Modules/Aldur")
+
+local function encodeCopiedRolls(lines)
+	local encoded = { }
+	for _, line in ipairs(lines or { }) do encoded[#encoded+1] = (line:gsub(".", function(c) return string.format("%02x", c:byte()) end)) end
+	return #encoded > 0 and ("{copied:" .. table.concat(encoded, ",") .. "}") or ""
+end
+
+local function decodeCopiedRolls(value)
+	local lines = { }
+	for hex in (value or ""):gmatch("[^,]+") do
+		if #hex % 2 ~= 0 or hex:find("[^%da-f]") then return nil end
+		lines[#lines+1] = hex:gsub("..", function(c) return string.char(tonumber(c, 16)) end)
+	end
+	return #lines > 0 and lines or nil
+end
 
 local dmgTypeList = {"Physical", "Lightning", "Cold", "Fire", "Chaos"}
 local catalystList = {"Flesh", "Neural", "Carapace", "Uul-Netol's", "Xoph's", "Tul's", "Esh's", "Chayula's", "Reaver", "Sibilant", "Skittering", "Adaptive", "Necrotic"}
@@ -467,7 +483,79 @@ function ItemClass:GetUniqueDBItem()
 end
 
 -- Parse raw item data and extract item name, base type, quality, and modifiers
+function ItemClass:RecoverCopiedWeaponAffixes()
+	if not self.crafted or not self.base or not (self.base.weapon or self.type == "Wand" or self.type == "Staff" or self.type == "Sceptre") then return end
+	-- Older copies stored recognised game Desecrated lines as custom fallbacks.
+	-- Recover only a complete, unambiguous affix; leave genuine custom text alone.
+	for start, line in ipairs(self.explicitModLines) do
+		if line.custom and line.desecrated then
+			local found
+			for id, mod in pairs(data.itemMods.Desecrated) do
+				local match = mod.type and self:GetModSpawnWeight(mod) > 0
+				for i, template in ipairs(mod) do
+					local other = self.explicitModLines[start+i-1]
+					match = match and other and other.custom and other.desecrated and aldur.Normalise(other.line) == aldur.Normalise(template)
+				end
+				if match then if found then found = false; break else found = id end end
+			end
+			if found then
+				local mod = data.itemMods.Desecrated[found]
+				local list = mod.type == "Prefix" and self.prefixes or self.suffixes
+				local position = #list+1
+				for i, affix in ipairs(list) do if affix.modId == "None" then position = i; break end end
+				if position <= 3 then
+					local affix = { modId = found, range = line.range or 0.5, copiedRange = line.range or 0.5, desecrated = true, copied = { } }
+					for i = 1, #mod do
+						local other = self.explicitModLines[start+i-1]
+						affix.copied[i], other.custom = other.line, nil
+					end
+					list[position] = affix
+				end
+			end
+		end
+	end
+	-- Recover exact values from pre-fix serialised items when their displayed
+	-- lines still represent individual affixes. Combined lines cannot be split.
+	local groups, sources = { }, { }
+	for _, list in ipairs({ self.prefixes, self.suffixes }) do
+		for _, affix in ipairs(list) do
+			for index, template in ipairs(self.affixes[affix.modId] or { }) do
+				local key = aldur.Normalise(template)
+				groups[key] = groups[key] or { }
+				groups[key][#groups[key]+1] = { affix = affix, index = index }
+			end
+		end
+	end
+	for _, line in ipairs(self.explicitModLines) do
+		if not line.custom then
+			local key = aldur.Normalise(line.line)
+			sources[key] = sources[key] or { }; sources[key][#sources[key]+1] = line
+		end
+	end
+	local recovered = { }
+	for key, group in pairs(groups) do
+		if sources[key] and #sources[key] == #group then
+			for i, entry in ipairs(group) do
+				local affix = entry.affix
+				if not affix.copied then
+					recovered[affix] = recovered[affix] or { }
+					recovered[affix][entry.index] = sources[key][i].line
+					affix.fractured = affix.fractured or sources[key][i].fractured
+				end
+			end
+		end
+	end
+	for affix, copied in pairs(recovered) do
+		local complete = true
+		for index in ipairs(self.affixes[affix.modId]) do complete = complete and copied[index] ~= nil end
+		if complete then affix.copied, affix.copiedRange = copied, affix.range end
+	end
+end
+
 function ItemClass:ParseRaw(raw, rarity, highQuality)
+	self.aldurForged = nil
+	self.pendingCopiedAffix = nil
+	self.pendingAffixList = nil
 	self.raw = raw
 	self.name = "?"
 	self.namePrefix = ""
@@ -608,6 +696,8 @@ function ItemClass:ParseRaw(raw, rarity, highQuality)
 			linePrefix = ""
 			linePostfix = ""
 			self.crafted = true
+			self.pendingCopiedAffix = nil
+			self.pendingAffixList = nil
 			local fullModName, modTags, increasedAmt = line:match("^{ (.-) %- (.-)  %- (%d*).*}$")
 			if not fullModName then
 				fullModName, modTags = line:match("^{ (.-) %- (.-) }$")
@@ -820,33 +910,26 @@ function ItemClass:ParseRaw(raw, rarity, highQuality)
 					self.crafted = true
 				elseif specName == "Implicit" then
 					self.implicit = true
-				elseif specName == "Prefix" then
+				elseif specName == "Aldur Forged" then
+					self.aldurForged = specVal == "true"
+				elseif specName == "Prefix" or specName == "Suffix" then
 					local desecrated = specVal:find("{desecrated}", 1, true)
 					local crafted = specVal:find("{crafted}", 1, true)
 					local unscalable = specVal:find("{unscalable}", 1, true)
-					specVal = specVal:gsub("{desecrated}", ""):gsub("{crafted}", ""):gsub("{unscalable}", "")
+					local fractured = specVal:find("{fractured}", 1, true)
+					local copied = decodeCopiedRolls(specVal:match("{copied:([%da-f,]+)}"))
+					specVal = specVal:gsub("{desecrated}", ""):gsub("{crafted}", ""):gsub("{unscalable}", ""):gsub("{fractured}", ""):gsub("{copied:[%da-f,]+}", "")
 					local range, affix = specVal:match("{range:([%d.]+)}(.+)")
 					range = range or ((affix or specVal) ~= "None" and main.defaultItemAffixQuality)
-					t_insert(self.prefixes, {
+					t_insert(specName == "Prefix" and self.prefixes or self.suffixes, {
 						modId = affix or specVal,
 						range = tonumber(range),
 						desecrated = desecrated and true or nil,
 						crafted = crafted and true or nil,
 						unscalable = unscalable and true or nil,
-					})
-				elseif specName == "Suffix" then
-					local desecrated = specVal:find("{desecrated}", 1, true)
-					local crafted = specVal:find("{crafted}", 1, true)
-					local unscalable = specVal:find("{unscalable}", 1, true)
-					specVal = specVal:gsub("{desecrated}", ""):gsub("{crafted}", ""):gsub("{unscalable}", "")
-					local range, affix = specVal:match("{range:([%d.]+)}(.+)")
-					range = range or ((affix or specVal) ~= "None" and main.defaultItemAffixQuality)
-					t_insert(self.suffixes, {
-						modId = affix or specVal,
-						range = tonumber(range),
-						desecrated = desecrated and true or nil,
-						crafted = crafted and true or nil,
-						unscalable = unscalable and true or nil,
+						fractured = fractured and true or nil,
+						copied = copied,
+						copiedRange = copied and tonumber(range),
 					})
 				elseif specName == "Implicits" then
 					implicitLines = specToNumber(specVal) or 0
@@ -1010,6 +1093,14 @@ function ItemClass:ParseRaw(raw, rarity, highQuality)
 						self.affixes = (self.base.subType and data.itemMods[self.base.type..self.base.subType])
 								or data.itemMods[self.base.type]
 								or data.itemMods.Item
+						-- Desecrated affixes live in a separate registry. Keep this item-local;
+						-- ordinary items must not gain the whole Desecrated crafting pool.
+						if raw:find("Desecrated", 1, true) or raw:find("{desecrated}", 1, true) then
+							self.affixes = copyTable(self.affixes)
+							for id, mod in pairs(data.itemMods.Desecrated) do
+								if self:GetModSpawnWeight(mod) > 0 then self.affixes[id] = mod end
+							end
+						end
 						self.corruptible = self.base.type ~= "Flask" and self.base.type ~= "Charm" and self.base.type ~= "Transcendent Limb"
 						self.requirements.str = self.base.req.str or 0
 						self.requirements.dex = self.base.req.dex or 0
@@ -1062,6 +1153,16 @@ function ItemClass:ParseRaw(raw, rarity, highQuality)
 						self.pendingAffixList = { { modId = effectId, table = affixTable } }
 					end
 				end
+				if self.pendingCopiedAffix then
+					local pending = self.pendingCopiedAffix
+					local nextLine = self.affixes[pending.modId][#pending.copied+1]
+					if nextLine and aldur.Normalise(line) == aldur.Normalise(nextLine) then
+						line = line:gsub("(%-?%d+%.?%d*)%(%-?%d+%.?%d*%-%-?%d+%.?%d*%)", "%1")
+						pending.copied[#pending.copied+1] = line
+					else
+						self.pendingCopiedAffix = nil
+					end
+				end
 				if self.pendingAffixList and #self.pendingAffixList > 0 then
 					if #self.pendingAffixList > 1 then
 						-- Probably a conqueror or Essence mod since the mod name is the same for all of them
@@ -1095,13 +1196,21 @@ function ItemClass:ParseRaw(raw, rarity, highQuality)
 							bestPrecisionDelta = delta
 						end
 					end
-					t_insert(self.pendingAffixList[1].table, {
+					local affix = {
 						modId = self.pendingAffixList[1].modId,
 						range = bestPrecisionRange >= 0 and bestPrecisionRange <= 1 and bestPrecisionRange or 0.5,
 						desecrated = modLine.desecrated,
 						crafted = modLine.crafted,
 						unscalable = modLine.unscalable,
-					})
+						fractured = modLine.fractured,
+					}
+					-- Weapon damage endpoints and multi-line affixes roll independently.
+					-- Retain copied values, including legacy rolls outside today's ranges.
+					if self.base.weapon or self.type == "Wand" or self.type == "Staff" or self.type == "Sceptre" then
+						affix.copied, affix.copiedRange = { line }, affix.range
+						self.pendingCopiedAffix = affix
+					end
+					t_insert(self.pendingAffixList[1].table, affix)
 					self.pendingAffixList = {}
 				else
 					-- Use rolling Delta/Range in case one range is 1-3 and another is 1-100 so we get the finest precision possible
@@ -1249,8 +1358,9 @@ function ItemClass:ParseRaw(raw, rarity, highQuality)
 				local values = { }
 				-- Converted game items describe the bound rune with a forging marker;
 				-- their explicit modifiers already contain the conversion result.
-				if modLine == "Forged by the Ire of Aldur" then
-					modLine = "Transforms all Fire and Cold modifiers on the item into equivalent Lightning modifiers"
+				if aldur.ForgedLines[modLine] then
+					self.aldurForged = true
+					modLine = aldur.ForgedLines[modLine]
 				end
 				-- Clipboard descriptions may wrap one augment modifier across lines.
 				local strippedModLine = modLine:gsub("\n", " "):gsub("(%d%.?%d*)", function(val)
@@ -1484,6 +1594,7 @@ function ItemClass:ParseRaw(raw, rarity, highQuality)
 	if raw:find("Item Class:", 1, true) and not raw:find("{ ", 1, true) then
 		self:InferMarketJewelAffixes()
 	end
+	self:RecoverCopiedWeaponAffixes()
 	self.affixLimit = 0
 	if self.crafted then
 		if not self.affixes then
@@ -1632,13 +1743,14 @@ function ItemClass:BuildRaw()
 	if self.unreleased then
 		t_insert(rawLines, "Unreleased: true")
 	end
+	if self.aldurForged then t_insert(rawLines, "Aldur Forged: true") end
 	if self.crafted then
 		t_insert(rawLines, "Crafted: true")
 		for i, affix in ipairs(self.prefixes or { }) do
-			t_insert(rawLines, "Prefix: " .. (affix.range and ("{range:" .. round(affix.range,3) .. "}") or "") .. (affix.desecrated and "{desecrated}" or "") .. (affix.crafted and "{crafted}" or "") .. (affix.unscalable and "{unscalable}" or "") .. affix.modId)
+			t_insert(rawLines, "Prefix: " .. (affix.range and ("{range:" .. round(affix.range,3) .. "}") or "") .. (affix.desecrated and "{desecrated}" or "") .. (affix.crafted and "{crafted}" or "") .. (affix.fractured and "{fractured}" or "") .. (affix.unscalable and "{unscalable}" or "") .. encodeCopiedRolls(affix.copiedRange == affix.range and affix.copied) .. affix.modId)
 		end
 		for i, affix in ipairs(self.suffixes or { }) do
-			t_insert(rawLines, "Suffix: " .. (affix.range and ("{range:" .. round(affix.range,3) .. "}") or "") .. (affix.desecrated and "{desecrated}" or "") .. (affix.crafted and "{crafted}" or "") .. (affix.unscalable and "{unscalable}" or "") .. affix.modId)
+			t_insert(rawLines, "Suffix: " .. (affix.range and ("{range:" .. round(affix.range,3) .. "}") or "") .. (affix.desecrated and "{desecrated}" or "") .. (affix.crafted and "{crafted}" or "") .. (affix.fractured and "{fractured}" or "") .. (affix.unscalable and "{unscalable}" or "") .. encodeCopiedRolls(affix.copiedRange == affix.range and affix.copied) .. affix.modId)
 		end
 	end
 	if self.catalyst and self.catalyst > 0 then
@@ -2053,7 +2165,7 @@ function ItemClass:Craft()
 					end
 				end
 				for i, line in ipairs(mod) do
-					line = itemLib.applyRange(line, affix.range or 0.5, rangeScalar)
+					line = affix.copied and affix.copiedRange == affix.range and rangeScalar == 1 and affix.copied[i] or itemLib.applyRange(line, affix.range or 0.5, rangeScalar)
 					local order = mod.statOrder[i]
 					if statOrder[order] then
 						-- Combine stats
@@ -2064,7 +2176,7 @@ function ItemClass:Craft()
 							return tonumber(num) + tonumber(other)
 						end)
 					else
-						local modLine = { line = line, order = order, desecrated = affix.desecrated, crafted = affix.crafted, unscalable = affix.unscalable }
+						local modLine = { line = line, order = order, desecrated = affix.desecrated, crafted = affix.crafted, unscalable = affix.unscalable, fractured = affix.fractured }
 						for l = 1, #self.explicitModLines + 1 do
 							if not self.explicitModLines[l] or self.explicitModLines[l].order > order then
 								t_insert(self.explicitModLines, l, modLine)
@@ -2456,6 +2568,7 @@ function ItemClass:BuildModList()
 		return
 	end
 	local baseList = new("ModList")
+	self.aldurModLines, self.aldurEstimate, self.aldurUnavailable = aldur.Transform(self)
 	if self.base.weapon then
 		self.weaponData = { }
 	elseif self.base.armour then
@@ -2543,7 +2656,7 @@ function ItemClass:BuildModList()
 	for _, modLine in ipairs(self.implicitModLines) do
 		processModLine(modLine)
 	end
-	for _, modLine in ipairs(self.explicitModLines) do
+	for _, modLine in ipairs(self.aldurModLines or self.explicitModLines) do
 		processModLine(modLine)
 	end
 	self.socketedSoulCoreEffectModifier = calcLocal(baseList, "SocketedSoulCoreEffect", "INC", 0) / 100

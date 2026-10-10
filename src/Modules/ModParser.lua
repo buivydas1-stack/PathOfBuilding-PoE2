@@ -2277,6 +2277,13 @@ end
 
 -- List of special modifiers
 local specialModList = {
+	["transforms all fire and cold modifiers on the item into equivalent lightning modifiers"] = { },
+	["transforms all cold and lightning modifiers on the item into equivalent fire modifiers"] = { },
+	["when socketed, transforms all fire and lightning modifiers to equivalent cold modifiers"] = { },
+	["transforms all fire, cold and lightning modifiers on the item into equivalent chaos modifiers"] = { },
+	-- A chance on a killing hit is a source of the buff, not guaranteed uptime.
+	-- The existing Onslaught checkbox models whether it is currently active.
+	["(%d+)%% chance to gain onslaught on killing hits with this weapon"] = { flag("Condition:CanGainOnslaughtFromWeapon") },
 	-- Explode mods
 	["enemies you kill have a (%d+)%% chance to explode, dealing a (.+) of their maximum life as (.+) damage"] = function(chance, _, amount, type)	-- Obliteration, Unspeakable Gifts (chaos cluster), synth implicit mod, current crusader body mod, Ngamahu Warmonger tattoo
 		return explodeFunc(chance, amount, type)

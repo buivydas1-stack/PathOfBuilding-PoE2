@@ -58,6 +58,55 @@ function ReportClass:GetQuality()
 	return value and value >= 0 and value <= 100 and math.floor(value) or nil
 end
 
+function ReportClass:ApplyEntry(entry)
+	self:Update()
+	local item = self.itemsTab.displayItem
+	if not item or self.unavailableReason or not self.result or self.worker or self.itemRaw ~= item:BuildRaw() then return end
+	local current = false
+	for _, value in ipairs(self.list) do if value == entry then current = true; break end end
+	if not current or not entry.row.id then return end
+	self.itemsTab:SetDisplayItemCatalystQuality(self.result.quality, entry.row.id, true)
+end
+
+function ReportClass:OnSelClick(_, entry, doubleClick)
+	if doubleClick then self:ApplyEntry(entry) end
+end
+
+function ReportClass:OpenApplyMenu(entry)
+	self.tooltip:Clear()
+	local x, y = GetCursorPos()
+	local popup
+	local controls = { }
+	controls.apply = new("ButtonControl", {"CENTER",nil,"CENTER"}, {0, 0, 172, 24}, "Apply to item", function()
+		main:ClosePopup()
+		self:ApplyEntry(entry)
+	end)
+	popup = main:OpenPopup(180, 32, "", controls, "apply")
+	popup.x, popup.y = math.min(x, main.screenW-180), math.min(y, main.screenH-32)
+	function popup:Draw(viewPort)
+		local menuX, menuY = self:GetPos()
+		SetDrawColor(0.5, 0.5, 0.5); DrawImage(nil, menuX, menuY, 180, 32)
+		SetDrawColor(0, 0, 0); DrawImage(nil, menuX+1, menuY+1, 178, 30)
+		self:DrawControls(viewPort)
+	end
+	local process = popup.ProcessInput
+	function popup:ProcessInput(events, viewPort)
+		for _, event in pairs(events) do
+			if event.type == "KeyDown" and event.key:match("BUTTON") and not self:IsMouseInBounds() then main:ClosePopup(); return end
+		end
+		return process(self, events, viewPort)
+	end
+	return popup
+end
+
+function ReportClass:OnKeyDown(key, doubleClick)
+	if key ~= "RIGHTBUTTON" then return self.ListControl.OnKeyDown(self, key, doubleClick) end
+	if not self:IsShown() or not self:IsEnabled() or self:GetMouseOverControl() then return end
+	local index = self:GetHoverIndex()
+	local entry = index and self.list[index]
+	if entry and self:SelectIndex(index) then self:OpenApplyMenu(entry); return self end
+end
+
 function ReportClass:SetItem(item)
 	self.itemRaw = item and item:CanUseCatalysts() and item:BuildRaw() or nil
 	self.unavailableReason = report.UnavailableReason(item)
@@ -223,8 +272,10 @@ function ReportClass:Draw(viewPort, noTooltip)
 end
 
 function ReportClass:AddValueTooltip(tooltip, _, entry)
+	if main.popups[1] then tooltip:Clear(); return end
 	if not tooltip:CheckForUpdate(entry, main:IsComparisonRevealHeld(), self.stat) then return end
 	tooltip:AddLine(16, "^7" .. entry.row.name .. " at " .. self.result.quality .. "% quality")
+	tooltip:AddLine(14, "^7Double-click to apply to item; right-click for the menu.")
 	tooltip:AddLine(14, "^7Starts with the same item without catalyst quality.")
 	for _, change in ipairs(entry.row.changes) do
 		tooltip:AddSeparator(4)
