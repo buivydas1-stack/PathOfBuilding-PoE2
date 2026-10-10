@@ -217,6 +217,7 @@ function ReportClass:AddValueTooltip(tooltip, _, entry)
 			local color = delta and (delta > 0 and main.colorPositive or delta < 0 and main.colorNegative) or "^7"
 			tooltip:AddLine(14, color .. "Total mana regeneration change: " .. number(delta, true) .. " mana/s (" .. number(percent, true) .. (percent and "%" or "") .. ")")
 		end
-		self.itemsTab.build:AddStatComparesToTooltip(tooltip, self.result.baselineComparison, comparison, "^7Stat changes:")
+		local priority = self.stat.stat == "HarmonicMaximumHitTaken" and { "FullDPS", "TotalEHP", "HarmonicMaximumHitTaken" } or nil
+		self.itemsTab.build:AddStatComparesToTooltip(tooltip, self.result.baselineComparison, comparison, "^7Stat changes:", nil, priority)
 	end
 end

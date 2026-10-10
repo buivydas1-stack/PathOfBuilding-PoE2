@@ -2292,6 +2292,13 @@ function buildMode:CompareStatList(tooltip, statList, actor, baseOutput, compare
 	local priority = {}
 	local focusComparison = self.viewMode == "TREE" or self.viewMode == "ITEMS"
 	local priorityOrder = priorityStats or (focusComparison and { "FullDPS", "TotalEHP" }) or {}
+	if focusComparison then
+		priorityOrder = copyTable(priorityOrder)
+		for _, damageType in ipairs({ "Fire", "Cold", "Lightning", "Chaos" }) do
+			t_insert(priorityOrder, damageType.."Resist")
+			t_insert(priorityOrder, damageType.."ResistOverCap")
+		end
+	end
 	for _, stat in ipairs(priorityOrder) do priority[stat] = false end
 	local suppressAltReveal = self.viewMode == "TREE" and main.comparisonRevealKey == "ALT" and IsKeyDown("SHIFT")
 	local showAll = not focusComparison or main:IsComparisonRevealHeld() and not suppressAltReveal
@@ -2356,8 +2363,12 @@ function buildMode:CompareStatList(tooltip, statList, actor, baseOutput, compare
 			for _, group in ipairs(groupOrder) do
 				for _, line in ipairs(groups[group]) do tooltip:AddLine(14, line) end
 			end
-		elseif count > (priority.FullDPS and 1 or 0) + (priority.TotalEHP and 1 or 0) then
-			tooltip:AddLine(14, colorCodes.TIP .. (suppressAltReveal and "Release Shift and hold ALT" or "Hold " .. main.comparisonRevealKey) .. " to show other stat changes.")
+		else
+			local shown = 0
+			for _, stat in ipairs(priorityOrder) do if priority[stat] then shown = shown + 1 end end
+			if count > shown then
+				tooltip:AddLine(14, colorCodes.TIP .. (suppressAltReveal and "Release Shift and hold ALT" or "Hold " .. main.comparisonRevealKey) .. " to show other stat changes.")
+			end
 		end
 	end
 	return count

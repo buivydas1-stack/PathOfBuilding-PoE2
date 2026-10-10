@@ -275,31 +275,18 @@ function ReportClass:AddValueTooltip(tooltip, _, entry)
 	if main.popups[1] then tooltip:Clear(); return end
 	if not tooltip:CheckForUpdate(entry, main:IsComparisonRevealHeld(), self.stat) then return end
 	tooltip:AddLine(16, "^7" .. entry.row.name .. " at " .. self.result.quality .. "% quality")
-	tooltip:AddLine(14, "^7Double-click to apply to item; right-click for the menu.")
-	tooltip:AddLine(14, "^7Starts with the same item without catalyst quality.")
 	for _, change in ipairs(entry.row.changes) do
 		tooltip:AddSeparator(4)
 		tooltip:AddLine(14, "^7" .. change.before .. " -> " .. change.after)
-		tooltip:AddLine(14, change.percent and ("^7Modifier gain: " .. formatNumSep(string.format("%+.2f%%", change.percent))) or "^7Percentage undefined from a zero value; excluded from score.")
 		if change.unsupported then tooltip:AddLine(14, "^1PoB does not model this modifier's build effects.") end
 	end
 	if #entry.row.changes == 0 then tooltip:AddLine(14, "^7No modifier changes.") end
-	tooltip:AddSeparator(8)
-	tooltip:AddLine(14, "^7Sum of modifier gains: " .. formatNumSep(string.format("%+.2f%%", entry.row.score)))
-	tooltip:AddLine(14, "^7Changed modifiers: " .. #entry.row.changes)
-	tooltip:AddLine(14, "^7Sum of modifier percentage gains; each modifier counts once.")
-	tooltip:AddLine(14, "^7A ranking score, not the item's overall percentage improvement.")
 	if self.result.buildUnavailable then
 		tooltip:AddLine(14, "^7" .. self.result.buildUnavailable)
 	elseif entry.row.comparison then
 		tooltip:AddSeparator(8)
-		tooltip:AddLine(14, "^7Same edited item equipped in " .. self.result.slot .. ".")
-		tooltip:AddLine(14, "^7Uses current skills, gear and Configuration.")
-		if entry.value then
-			tooltip:AddLine(14, "^7" .. self.stat.label .. ": " .. formatNumSep(string.format("%.2f", self.result.baseline[self.stat.stat])) .. " -> " .. formatNumSep(string.format("%.2f", entry.value)))
-			tooltip:AddLine(14, "^7Percentage change is relative to this build stat with the same item at no catalyst quality.")
-		end
 		local output = shared.ComparisonOutput(self.result.baselineComparison, entry.row.comparison)
-		self.itemsTab.build:AddStatComparesToTooltip(tooltip, self.result.baselineComparison, output, "^7Build stat changes:")
+		local priority = self.stat.stat == "HarmonicMaximumHitTaken" and { "FullDPS", "TotalEHP", "HarmonicMaximumHitTaken" } or nil
+		self.itemsTab.build:AddStatComparesToTooltip(tooltip, self.result.baselineComparison, output, "^7Build stat changes:", nil, priority)
 	end
 end

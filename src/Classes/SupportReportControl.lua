@@ -150,7 +150,9 @@ function ReportClass:AddValueTooltip(tooltip, _, entry)
 		if entry.benefit and math.abs(entry.benefit) < 0.000001 then tooltip:AddLine(14, "^7No modelled change for " .. self.stat.label .. ". This does not establish the gem's usefulness.") end
 		if entry.row.unsupported then tooltip:AddLine(14, colorCodes.UNSUPPORTED .. "Some gem effects are not modelled by PoB; see the highlighted effects above.") end
 		local comparison = shared.ComparisonOutput(self.result.baselineComparison, entry.row.comparison)
-		self.skillsTab.build:AddStatComparesToTooltip(tooltip, self.result.baselineComparison, comparison, "^7Stat changes:", nil, { "FullDPS", "TotalEHP" })
+		local priority = { "FullDPS", "TotalEHP" }
+		if self.stat.stat == "HarmonicMaximumHitTaken" then table.insert(priority, "HarmonicMaximumHitTaken") end
+		self.skillsTab.build:AddStatComparesToTooltip(tooltip, self.result.baselineComparison, comparison, "^7Stat changes:", nil, priority)
 	end
 end
 

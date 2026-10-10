@@ -9,6 +9,10 @@ function order.Id(entry)
 end
 
 function order.Apply(list)
+	-- Migrate the saved position, including the automatically generated minion metric.
+	for index, id in ipairs(main.powerStatOrder or { }) do
+		main.powerStatOrder[index] = id:gsub("SecondMinimalMaximumHitTaken", "HarmonicMaximumHitTaken")
+	end
 	local byId, sorted, slots = { }, { }, { }
 	for index, entry in ipairs(list) do
 		local id = order.Id(entry)

@@ -26,6 +26,22 @@ local isElemental = { Fire = true, Cold = true, Lightning = true }
 local hitSourceList = {"Attack", "Spell"}
 local dmgTypeList = {"Physical", "Lightning", "Cold", "Fire", "Chaos"}
 
+-- Scale by the smallest finite value to avoid reciprocal overflow for tiny pools.
+function calcs.harmonicMaximumHitTaken(output)
+	local smallest = m_huge
+	for _, damageType in ipairs(dmgTypeList) do
+		local value = output[damageType.."MaximumHitTaken"]
+		if type(value) ~= "number" or value ~= value or value <= 0 then return 0 end
+		smallest = m_min(smallest, value)
+	end
+	if smallest == m_huge then return m_huge end
+	local sum = 0
+	for _, damageType in ipairs(dmgTypeList) do
+		sum = sum + smallest / output[damageType.."MaximumHitTaken"]
+	end
+	return smallest / sum * #dmgTypeList
+end
+
 local resistTypeList = { "Fire", "Cold", "Lightning", "Chaos" }
 
 -- Calculate hit chance
@@ -3838,18 +3854,7 @@ function calcs.buildDefenceEstimations(env, actor)
 			end
 		end
 
-		-- second minimum used for power calcs, as there are issues using average or minimum
-		local minimum = m_huge
-		local SecondMinimum = m_huge
-		for _, damageType in ipairs(dmgTypeList) do
-			if output[damageType.."MaximumHitTaken"] < minimum then
-				SecondMinimum = minimum
-				minimum = output[damageType.."MaximumHitTaken"]
-			elseif output[damageType.."MaximumHitTaken"] < SecondMinimum then
-				SecondMinimum = output[damageType.."MaximumHitTaken"]
-			end
-		end
-		output.SecondMinimalMaximumHitTaken = SecondMinimum
+		output.HarmonicMaximumHitTaken = calcs.harmonicMaximumHitTaken(output)
 	end
 
 	-- effective health pool vs dots
