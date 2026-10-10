@@ -37,6 +37,11 @@ local function checkSpirit(item)
 	assert(lines["+2 to Level of all Attack Skills"], "Legacy +2 roll must survive today's +3 template")
 	assert(not lines["20% chance to gain Onslaught on Killing Hits with this Weapon"].extra)
 	assert(not item.aldurEstimate and not item.aldurUnavailable, "Actual forged values must not be estimated")
+	for _, line in ipairs(item.enchantModLines) do assert(not line.extra, "Copied rune marker must be recognized") end
+end
+for marker in pairs(aldur.ForgedLines) do
+	local mods, extra = modLib.parseMod(marker)
+	assert(mods and not extra, "Forging marker must not show unsupported: " .. marker)
 end
 local spirit = new("Item", spiritRaw); checkSpirit(spirit)
 assert(spirit.aldurForgedRune == "Ire of Aldur")

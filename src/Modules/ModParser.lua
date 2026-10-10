@@ -2277,6 +2277,11 @@ end
 
 -- List of special modifiers
 local specialModList = {
+	-- Forging markers describe the already-converted affixes on a game copy.
+	["forged by the ire of aldur"] = { },
+	["forged by the passion of aldur"] = { },
+	["forged by the breath of aldur"] = { },
+	["forged by the betrayal of aldur"] = { },
 	["transforms all fire and cold modifiers on the item into equivalent lightning modifiers"] = { },
 	["transforms all cold and lightning modifiers on the item into equivalent fire modifiers"] = { },
 	["when socketed, transforms all fire and lightning modifiers to equivalent cold modifiers"] = { },
