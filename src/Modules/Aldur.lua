@@ -80,7 +80,14 @@ function aldur.Transform(item)
 			target = aldur.Targets[name]
 		end
 	end
-	if not target or item.aldurForged then return end
+	if not target then return end
+	if item.aldurForged then
+		if not aldur.Targets[item.aldurForgedRune] then return nil, false, "The original Aldur forging rune is unknown." end
+		if aldur.Targets[item.aldurForgedRune] ~= target then
+			return nil, false, "This item was already forged by " .. item.aldurForgedRune .. "; a different Aldur transformation cannot be previewed."
+		end
+		return -- Actual game-forged modifiers already include this rune's result.
+	end
 	local result, changed, unavailable = { }, false, nil
 	-- Known crafted/imported affixes retain their identities, even when two
 	-- prefixes have been combined into one displayed damage line.

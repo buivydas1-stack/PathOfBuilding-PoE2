@@ -554,6 +554,7 @@ end
 
 function ItemClass:ParseRaw(raw, rarity, highQuality)
 	self.aldurForged = nil
+	self.aldurForgedRune = nil
 	self.pendingCopiedAffix = nil
 	self.pendingAffixList = nil
 	self.raw = raw
@@ -911,7 +912,8 @@ function ItemClass:ParseRaw(raw, rarity, highQuality)
 				elseif specName == "Implicit" then
 					self.implicit = true
 				elseif specName == "Aldur Forged" then
-					self.aldurForged = specVal == "true"
+					self.aldurForged = specVal == "true" or specVal == "Unknown" or aldur.Targets[specVal] ~= nil
+					self.aldurForgedRune = (aldur.Targets[specVal] or specVal == "Unknown") and specVal or nil
 				elseif specName == "Prefix" or specName == "Suffix" then
 					local desecrated = specVal:find("{desecrated}", 1, true)
 					local crafted = specVal:find("{crafted}", 1, true)
@@ -1360,6 +1362,7 @@ function ItemClass:ParseRaw(raw, rarity, highQuality)
 				-- their explicit modifiers already contain the conversion result.
 				if aldur.ForgedLines[modLine] then
 					self.aldurForged = true
+					self.aldurForgedRune = modLine:match("^Forged by the (.+)$")
 					modLine = aldur.ForgedLines[modLine]
 				end
 				-- Clipboard descriptions may wrap one augment modifier across lines.
@@ -1594,6 +1597,14 @@ function ItemClass:ParseRaw(raw, rarity, highQuality)
 	if raw:find("Item Class:", 1, true) and not raw:find("{ ", 1, true) then
 		self:InferMarketJewelAffixes()
 	end
+	-- Migrate the earlier boolean marker while the original bound rune is still
+	-- present. Preserve its identity through hypothetical socket comparisons.
+	if self.aldurForged and not self.aldurForgedRune then
+		for _, name in ipairs(self.runes or { }) do
+			if aldur.Targets[name] then self.aldurForgedRune = name; break end
+		end
+		self.aldurForgedRune = self.aldurForgedRune or "Unknown"
+	end
 	self:RecoverCopiedWeaponAffixes()
 	self.affixLimit = 0
 	if self.crafted then
@@ -1743,7 +1754,7 @@ function ItemClass:BuildRaw()
 	if self.unreleased then
 		t_insert(rawLines, "Unreleased: true")
 	end
-	if self.aldurForged then t_insert(rawLines, "Aldur Forged: true") end
+	if self.aldurForged then t_insert(rawLines, "Aldur Forged: " .. (self.aldurForgedRune or "Unknown")) end
 	if self.crafted then
 		t_insert(rawLines, "Crafted: true")
 		for i, affix in ipairs(self.prefixes or { }) do

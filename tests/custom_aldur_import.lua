@@ -39,6 +39,9 @@ local function checkSpirit(item)
 	assert(not item.aldurEstimate and not item.aldurUnavailable, "Actual forged values must not be estimated")
 end
 local spirit = new("Item", spiritRaw); checkSpirit(spirit)
+assert(spirit.aldurForgedRune == "Ire of Aldur")
+local oldMarker = new("Item", spirit:BuildRaw():gsub("Aldur Forged: Ire of Aldur", "Aldur Forged: true"))
+assert(oldMarker.aldurForgedRune == "Ire of Aldur"); checkSpirit(oldMarker)
 -- Recover the exact old fallback representation without touching a saved build.
 local legacy = spirit:BuildRaw():gsub("{copied:[%da-f,]+}", "")
 legacy = legacy:gsub("Suffix: [^\n]*AbyssModBowSpearAmanamuSuffixCompanionAndLocalAttackSpeed\n", "")
@@ -112,6 +115,31 @@ for _, row in ipairs(result.rows) do
 end
 local unavailable = report.Calculate(build, ambiguous:BuildRaw(), "Weapon 1", { ["Ire of Aldur"] = true })
 assert(unavailable.rows[1].unavailable and not next(unavailable.rows[1].values))
+local forgedReport = report.Calculate(build, spirit:BuildRaw(), "Weapon 1", names)
+for _, row in ipairs(forgedReport.rows) do
+	if row.name == "Ire of Aldur" then assert(not row.unavailable and next(row.values))
+	else assert(row.unavailable and not next(row.values), "Different Aldur on a forged copy must not report a false zero") end
+end
+build.itemsTab:SetDisplayItem(spirit)
+local forgedHover = new("Tooltip")
+build.itemsTab:AddRuneComparisonTooltip(forgedHover, 1, "Breath of Aldur")
+assert(text(forgedHover):find("N/A", 1, true) and text(forgedHover):find("already forged", 1, true))
+local forgedControl = build.itemsTab.controls.augmentReport
+forgedControl.result = forgedReport; forgedControl:Refresh()
+for _, entry in ipairs(forgedControl.list) do
+	if entry.row.name ~= "Ire of Aldur" then
+		assert(forgedControl:GetRowValue(4, 1, entry):find("N/A", 1, true))
+		local tooltip = new("Tooltip"); forgedControl:AddValueTooltip(tooltip, 1, entry)
+		assert(text(tooltip):find("already forged", 1, true))
+	end
+end
+local emptyForged = report.EmptyItem(spirit:BuildRaw())
+assert(emptyForged.aldurForgedRune == "Ire of Aldur" and not emptyForged.aldurUnavailable)
+assert(candidate(emptyForged, "Breath of Aldur").aldurUnavailable)
+local unknownForge = new("Item", emptyForged:BuildRaw():gsub("Aldur Forged: Ire of Aldur", "Aldur Forged: true"))
+assert(unknownForge.aldurForgedRune == "Unknown")
+assert(candidate(unknownForge, "Ire of Aldur").aldurUnavailable)
+print("PASS: forged rune identity, legacy migration, original-rune values and explicit N/A for different/unknown forging")
 -- Hover must replace the actual socket and retain all others, including rune
 -- count effects; compare the real UI output with a separate complete engine run.
 bow = candidate(bow, "Perfect Storm Rune", 2)
